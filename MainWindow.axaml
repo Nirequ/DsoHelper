@@ -1,0 +1,255 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="720"
+        x:Class="DsoHelper.MainWindow"
+        Title="DSO Helper"
+        Icon="/Assets/app.ico"
+        Width="780"
+        Height="720"
+        MinWidth="700"
+        MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="#0E1015">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.h1">
+            <Setter Property="FontSize" Value="26" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#F3F5FA" />
+        </Style>
+        <Style Selector="TextBlock.subtitle">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#8A93A6" />
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#7F8AA3" />
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#C9CFDC" />
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#6F7A90" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.axis">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#6F7A90" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#161922" />
+            <Setter Property="BorderBrush" Value="#262B38" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="18" />
+        </Style>
+        <Style Selector="Border.status">
+            <Setter Property="Background" Value="#12151D" />
+            <Setter Property="BorderBrush" Value="#222734" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="14,10" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#0F1219" />
+            <Setter Property="BorderBrush" Value="#2B3140" />
+            <Setter Property="Foreground" Value="#E8EAF0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Padding" Value="9,6" />
+        </Style>
+        <Style Selector="TextBox:readonly">
+            <Setter Property="Background" Value="#0F1219" />
+            <Setter Property="BorderBrush" Value="#2B3140" />
+            <Setter Property="Foreground" Value="#E8EAF0" />
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="#5B7CFA" />
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="Background" Value="#0F1219" />
+            <Setter Property="BorderBrush" Value="#2B3140" />
+            <Setter Property="Foreground" Value="#E8EAF0" />
+            <Setter Property="CornerRadius" Value="7" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#202532" />
+            <Setter Property="Foreground" Value="#DDE2EE" />
+            <Setter Property="BorderBrush" Value="#2B3140" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Padding" Value="12,6" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#5B7CFA" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#5B7CFA" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#6D8BFF" />
+            <Setter Property="BorderBrush" Value="#6D8BFF" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="22,20,22,16" RowSpacing="14">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="3">
+                <TextBlock Classes="h1" Text="DSO Helper" />
+                <TextBlock Classes="subtitle"
+                           Text="Fast Mount — быстрая смена плаща для вызова маунта" />
+            </StackPanel>
+            <Border Grid.Column="1"
+                    Background="#1B2130"
+                    BorderBrush="#2C3550"
+                    BorderThickness="1"
+                    CornerRadius="20"
+                    Padding="12,6"
+                    VerticalAlignment="Center">
+                <TextBlock Text="FAST MOUNT"
+                           FontSize="10"
+                           FontWeight="Bold"
+                           Foreground="#8FA6FF" />
+            </Border>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="12">
+                <Border Classes="card">
+                    <StackPanel Spacing="11">
+                        <TextBlock Classes="section" Text="ЗАПУСК" />
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <TextBlock Classes="label"
+                                       Text="Хоткей"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                                <TextBox x:Name="HotkeyBox"
+                                         Width="150"
+                                         IsReadOnly="True"
+                                         AutomationProperties.AutomationId="HotkeyBox"
+                                         PlaceholderText="Нажмите клавишу"
+                                         VerticalAlignment="Center" />
+                                <TextBlock x:Name="HotkeyStatusText"
+                                           Classes="hint"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <CheckBox x:Name="AlwaysOnTopCheck"
+                                      Grid.Column="2"
+                                      Content="Поверх окон"
+                                      VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="card">
+                    <StackPanel Spacing="12">
+                        <TextBlock Classes="section" Text="СЛОТ ПЛАЩА" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <TextBlock x:Name="SlotStatusText"
+                                           Classes="label"
+                                           Text="Слот не выбран" />
+                                <TextBlock x:Name="SlotCoordsText"
+                                           Classes="hint"
+                                           Text="Нажмите «Выбрать слот» и перетащите квадрат на ячейку инвентаря." />
+                            </StackPanel>
+                            <Button x:Name="PickSlotButton"
+                                    Grid.Column="1"
+                                    Content="Выбрать слот"
+                                    VerticalAlignment="Center"
+                                    Click="OnPickSlotClick" />
+                        </Grid>
+                        <TextBlock Classes="hint"
+                                   Text="Поставьте квадрат на слот, отпустите и подождите 3 секунды. Старый плащ после смены возвращается в эту же ячейку, поэтому второго слота не нужно." />
+                        <TextBlock Classes="hint"
+                                   Text="Позиция запоминается относительно окна игры: при смене разрешения или переходе в оконный режим слот менять не нужно." />
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="card">
+                    <StackPanel Spacing="12">
+                        <TextBlock Classes="section" Text="КЛАВИШИ И ЗАДЕРЖКИ" />
+                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="14">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="axis" Text="Инвентарь" />
+                                <TextBox x:Name="InventoryKeyBox"
+                                         Width="110" Height="34"
+                                         IsReadOnly="True"
+                                         AutomationProperties.AutomationId="InventoryKeyBox"
+                                         PlaceholderText="Нажмите клавишу" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Classes="axis" Text="Кнопка маунта" />
+                                <TextBox x:Name="MountKeyBox"
+                                         Width="110" Height="34"
+                                         IsReadOnly="True"
+                                         AutomationProperties.AutomationId="MountKeyBox"
+                                         PlaceholderText="Нажмите клавишу" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Classes="hint"
+                                   Text="Кликните по полю и нажмите нужную клавишу — название подставится само (например Space, F1, ←). Esc отменяет ввод." />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="axis" Text="После открытия инвентаря" />
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <NumericUpDown x:Name="InventoryDelayBox"
+                                                   Width="112" Height="34"
+                                                   Minimum="0" Maximum="10000"
+                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                    <TextBlock Classes="axis" Text="мс" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Classes="axis" Text="После действия" />
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <NumericUpDown x:Name="ClickDelayBox"
+                                                   Width="112" Height="34"
+                                                   Minimum="0" Maximum="10000"
+                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                    <TextBlock Classes="axis" Text="мс" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Button x:Name="RunButton"
+                        Classes="primary"
+                        Content="Выполнить Fast Mount"
+                        Height="48"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        FontSize="15"
+                        Click="OnRunClick" />
+                <TextBlock Classes="hint"
+                           TextAlignment="Center"
+                           Text="Хоткей срабатывает, когда активна игра. Кнопка «Выполнить» сама переключится в окно Drakensang." />
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Classes="status">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                <Ellipse x:Name="StatusDot"
+                         Width="8" Height="8"
+                         Fill="#6B7280"
+                         VerticalAlignment="Center" />
+                <TextBlock x:Name="StatusText"
+                           Grid.Column="1"
+                           Text="Готово"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="2"
+                           Classes="hint"
+                           Text="config.json"
+                           VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

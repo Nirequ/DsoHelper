@@ -1,0 +1,27 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DsoHelper.UI.SlotPickerWindow"
+        Title="Выбор слота"
+        Width="64"
+        Height="64"
+        WindowDecorations="None"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+    <Border Background="#405B7CFA"
+            BorderBrush="#9BB0FF"
+            BorderThickness="2"
+            CornerRadius="10"
+            Cursor="SizeAll">
+        <TextBlock x:Name="HintText"
+                   Text="+"
+                   FontSize="26"
+                   FontWeight="SemiBold"
+                   Foreground="#FFFFFF"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+    </Border>
+</Window>
