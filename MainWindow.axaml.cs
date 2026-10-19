@@ -72,7 +72,9 @@ public partial class MainWindow : Window
         MountKeyBox.TextChanged += (_, _) => ScheduleSave();
 
         InventoryDelayBox.ValueChanged += (_, _) => ScheduleSave();
-        ClickDelayBox.ValueChanged += (_, _) => ScheduleSave();
+        CapeSwapDelayBox.ValueChanged += (_, _) => ScheduleSave();
+        MountDelayBox.ValueChanged += (_, _) => ScheduleSave();
+        PostActionDelayBox.ValueChanged += (_, _) => ScheduleSave();
 
         AlwaysOnTopCheck.IsCheckedChanged += (_, _) =>
         {
@@ -90,7 +92,9 @@ public partial class MainWindow : Window
         MountKeyBox.Text = CanonicalKey(_settings.MountKey, "M");
 
         InventoryDelayBox.Value = _settings.InventoryDelayMs;
-        ClickDelayBox.Value = _settings.ClickDelayMs;
+        CapeSwapDelayBox.Value = _settings.CapeSwapDelayMs;
+        MountDelayBox.Value = _settings.MountDelayMs;
+        PostActionDelayBox.Value = _settings.PostActionDelayMs;
 
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
         UpdateSlotUi();
@@ -107,7 +111,9 @@ public partial class MainWindow : Window
         _settings.MountKey = CanonicalKey(MountKeyBox.Text, _settings.MountKey);
 
         _settings.InventoryDelayMs = ToInt(InventoryDelayBox);
-        _settings.ClickDelayMs = ToInt(ClickDelayBox);
+        _settings.CapeSwapDelayMs = ToInt(CapeSwapDelayBox);
+        _settings.MountDelayMs = ToInt(MountDelayBox);
+        _settings.PostActionDelayMs = ToInt(PostActionDelayBox);
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
     }
 

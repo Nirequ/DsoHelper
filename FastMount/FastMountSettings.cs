@@ -26,9 +26,16 @@ internal sealed class FastMountSettings
     /// <summary>Distance from the top edge of the game client area, in client-height units.</summary>
     public double? SlotTopRatio { get; set; }
 
-    public int InventoryDelayMs { get; set; } = 300;
+    public int InventoryDelayMs { get; set; } = 250;
 
-    public int ClickDelayMs { get; set; } = 250;
+    /// <summary>Пауза после смены плаща и до нажатия клавиши маунта, мс.</summary>
+    public int CapeSwapDelayMs { get; set; } = 500;
+
+    /// <summary>Пауза после вызова маунта и до возврата старого плаща, мс.</summary>
+    public int MountDelayMs { get; set; } = 700;
+
+    /// <summary>Пауза после возврата старого плаща и до закрытия инвентаря, мс.</summary>
+    public int PostActionDelayMs { get; set; } = 200;
 
     public bool AlwaysOnTop { get; set; }
 

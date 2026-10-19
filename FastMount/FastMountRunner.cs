@@ -35,7 +35,10 @@ internal static class FastMountRunner
             return false;
         }
 
-        if (settings.InventoryDelayMs < 0 || settings.ClickDelayMs < 0)
+        if (settings.InventoryDelayMs < 0 ||
+            settings.CapeSwapDelayMs < 0 ||
+            settings.MountDelayMs < 0 ||
+            settings.PostActionDelayMs < 0)
         {
             error = "Задержки не могут быть отрицательными.";
             return false;
@@ -77,15 +80,15 @@ internal static class FastMountRunner
 
             report("Надеваю плащ с быстрым маунтом");
             await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-            await DelayAsync(settings.ClickDelayMs, cancellationToken);
+            await DelayAsync(settings.CapeSwapDelayMs, cancellationToken);
 
             report("Вызываю маунта");
             InputSimulator.KeyPress(mountKey);
-            await DelayAsync(settings.ClickDelayMs, cancellationToken);
+            await DelayAsync(settings.MountDelayMs, cancellationToken);
 
             report("Возвращаю старый плащ");
             await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-            await DelayAsync(settings.ClickDelayMs, cancellationToken);
+            await DelayAsync(settings.PostActionDelayMs, cancellationToken);
 
             report("Закрываю инвентарь");
             InputSimulator.KeyPress(inventoryKey);

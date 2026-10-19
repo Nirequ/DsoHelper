@@ -195,7 +195,7 @@
                         </Grid>
                         <TextBlock Classes="hint"
                                    Text="Кликните по полю и нажмите нужную клавишу — название подставится само (например Space, F1, ←). Esc отменяет ввод." />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="10">
                             <StackPanel Spacing="5">
                                 <TextBlock Classes="axis" Text="После открытия инвентаря" />
                                 <StackPanel Orientation="Horizontal" Spacing="7">
@@ -207,9 +207,29 @@
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock Classes="axis" Text="После действия" />
+                                <TextBlock Classes="axis" Text="После смены плаща" />
                                 <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <NumericUpDown x:Name="ClickDelayBox"
+                                    <NumericUpDown x:Name="CapeSwapDelayBox"
+                                                   Width="112" Height="34"
+                                                   Minimum="0" Maximum="10000"
+                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                    <TextBlock Classes="axis" Text="мс" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Spacing="5">
+                                <TextBlock Classes="axis" Text="После вызова маунта" />
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <NumericUpDown x:Name="MountDelayBox"
+                                                   Width="112" Height="34"
+                                                   Minimum="0" Maximum="10000"
+                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                    <TextBlock Classes="axis" Text="мс" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+                                <TextBlock Classes="axis" Text="После возврата плаща" />
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <NumericUpDown x:Name="PostActionDelayBox"
                                                    Width="112" Height="34"
                                                    Minimum="0" Maximum="10000"
                                                    Increment="50" FormatString="0" ShowButtonSpinner="False" />
@@ -217,6 +237,8 @@
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
+                        <TextBlock Classes="hint"
+                                   Text="Если маунт вызывается медленно — увеличьте «После смены плаща»: игре нужно время применить новый плащ до нажатия клавиши маунта." />
                     </StackPanel>
                 </Border>
 
