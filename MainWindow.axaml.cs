@@ -75,6 +75,7 @@ public partial class MainWindow : Window
         CapeSwapDelayBox.ValueChanged += (_, _) => ScheduleSave();
         MountDelayBox.ValueChanged += (_, _) => ScheduleSave();
         PostActionDelayBox.ValueChanged += (_, _) => ScheduleSave();
+        CloseInventoryBeforeMountCheck.IsCheckedChanged += (_, _) => ScheduleSave();
 
         AlwaysOnTopCheck.IsCheckedChanged += (_, _) =>
         {
@@ -96,6 +97,8 @@ public partial class MainWindow : Window
         MountDelayBox.Value = _settings.MountDelayMs;
         PostActionDelayBox.Value = _settings.PostActionDelayMs;
 
+        CloseInventoryBeforeMountCheck.IsChecked = _settings.CloseInventoryBeforeMount;
+
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
         UpdateSlotUi();
     }
@@ -114,6 +117,7 @@ public partial class MainWindow : Window
         _settings.CapeSwapDelayMs = ToInt(CapeSwapDelayBox);
         _settings.MountDelayMs = ToInt(MountDelayBox);
         _settings.PostActionDelayMs = ToInt(PostActionDelayBox);
+        _settings.CloseInventoryBeforeMount = CloseInventoryBeforeMountCheck.IsChecked == true;
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
     }
 

@@ -239,6 +239,11 @@
                         </Grid>
                         <TextBlock Classes="hint"
                                    Text="Если маунт вызывается медленно — увеличьте «После смены плаща»: игре нужно время применить новый плащ до нажатия клавиши маунта." />
+                        <CheckBox x:Name="CloseInventoryBeforeMountCheck"
+                                  Content="Вызывать маунта с закрытым инвентарём"
+                                  AutomationProperties.AutomationId="CloseInventoryBeforeMountCheck" />
+                        <TextBlock Classes="hint"
+                                   Text="Включите, если быстрый вызов не срабатывает: некоторые версии игры применяют бонус плаща только при закрытом инвентаре. Макрос тогда закрывает инвентарь перед вызовом и открывает снова, чтобы вернуть плащ." />
                     </StackPanel>
                 </Border>
 

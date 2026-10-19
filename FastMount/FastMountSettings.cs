@@ -37,6 +37,12 @@ internal sealed class FastMountSettings
     /// <summary>Пауза после возврата старого плаща и до закрытия инвентаря, мс.</summary>
     public int PostActionDelayMs { get; set; } = 200;
 
+    /// <summary>
+    /// Закрывать инвентарь перед нажатием клавиши маунта. Нужно, если игра
+    /// не учитывает бонус плаща, пока инвентарь открыт.
+    /// </summary>
+    public bool CloseInventoryBeforeMount { get; set; }
+
     public bool AlwaysOnTop { get; set; }
 
     public static string FilePath => Path.Combine(AppContext.BaseDirectory, "config.json");
