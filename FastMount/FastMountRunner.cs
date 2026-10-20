@@ -37,17 +37,22 @@ internal static class FastMountRunner
 
         if (settings.SwitchInventoryTab)
         {
-            if (Array.IndexOf(TabResolver.Keys, settings.TabKey) < 0)
+            var tabIndex = TabResolver.IndexOf(settings.TabKey);
+            if (tabIndex == 0)
             {
                 error = "Выбрана неизвестная вкладка инвентаря.";
                 return false;
             }
 
-            if (!TabResolver.HasPoint(settings, settings.TabKey))
+            if (!TabResolver.HasBase(settings))
             {
-                error =
-                    $"Для вкладки {TabResolver.DisplayName(settings.TabKey)} не задана позиция. " +
-                    "Нажмите «Указать позицию» в разделе «Слот плаща».";
+                error = "Укажите позицию 1-й вкладки: нажмите «Указать вкладку 1» в разделе «Слот плаща».";
+                return false;
+            }
+
+            if (tabIndex > 1 && !TabResolver.HasStep(settings))
+            {
+                error = "Задайте шаг вкладок: нажмите «Указать вкладку 2» в разделе «Слот плаща».";
                 return false;
             }
         }
@@ -164,7 +169,7 @@ internal static class FastMountRunner
         {
             throw new InvalidOperationException(
                 $"Не удалось определить позицию вкладки {TabResolver.DisplayName(settings.TabKey)}. " +
-                "Выберите её заново или запустите игру.");
+                "Проверьте позицию 1-й вкладки и шаг вкладок.");
         }
 
         report($"Переключаюсь на вкладку {TabResolver.DisplayName(settings.TabKey)}");

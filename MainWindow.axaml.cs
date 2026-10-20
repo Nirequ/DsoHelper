@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private GlobalHotkey? _hotkey;
     private SlotPickerWindow? _slotPicker;
     private SlotPickerWindow? _tabPicker;
+    private SlotPickerWindow? _tabStepPicker;
     private CancellationTokenSource? _runCts;
     private bool _running;
     private bool _picking;
@@ -435,16 +436,27 @@ public partial class MainWindow : Window
             : $"Координаты экрана: {_settings.SlotX}, {_settings.SlotY}";
     }
 
-    private void OnPickTabClick(object? sender, RoutedEventArgs e)
+    private void OnPickTabClick(object? sender, RoutedEventArgs e) => ShowTabPicker(step: false);
+
+    private void OnPickTabStepClick(object? sender, RoutedEventArgs e) => ShowTabPicker(step: true);
+
+    private void ShowTabPicker(bool step)
     {
         if (_running)
         {
             return;
         }
 
-        if (_tabPicker is not null)
+        var existing = step ? _tabStepPicker : _tabPicker;
+        if (existing is not null)
         {
-            _tabPicker.Activate();
+            existing.Activate();
+            return;
+        }
+
+        if (step && !TabResolver.HasBase(_settings))
+        {
+            SetStatus("Сначала укажите позицию 1-й вкладки.", StatusKind.Error);
             return;
         }
 
@@ -459,42 +471,80 @@ public partial class MainWindow : Window
 
         _picking = true;
         PickTabButton.IsEnabled = false;
+        PickTabStepButton.IsEnabled = false;
         RunButton.IsEnabled = false;
 
         var picked = false;
-        var tabName = TabResolver.DisplayName(_settings.TabKey);
         var picker = new SlotPickerWindow();
         picker.SlotPicked += (_, point) =>
         {
             picked = true;
-            TabResolver.Capture(_settings, _settings.TabKey, point.X, point.Y);
+
+            if (step)
+            {
+                if (TabResolver.CaptureStep(_settings, point.X, point.Y))
+                {
+                    SetStatus(
+                        $"Шаг вкладок: {TabResolver.StepPixelsX(_settings)} × {TabResolver.StepPixelsY(_settings)} px",
+                        StatusKind.Success);
+                }
+                else
+                {
+                    SetStatus("Сначала укажите позицию 1-й вкладки.", StatusKind.Error);
+                }
+            }
+            else
+            {
+                TabResolver.CaptureBase(_settings, point.X, point.Y);
+                SetStatus(
+                    _settings.TabRightRatio is not null
+                        ? "Позиция 1-й вкладки сохранена"
+                        : "Позиция 1-й вкладки сохранена (игра не найдена, сохранены координаты экрана)",
+                    StatusKind.Success);
+            }
+
             UpdateTabUi();
             SaveSettings();
-
-            var hasRatio = TabResolver.Find(_settings, _settings.TabKey)?.RightRatio is not null;
-            SetStatus(
-                hasRatio
-                    ? $"Вкладка {tabName} выбрана — позиция подстроится под окно игры"
-                    : $"Вкладка {tabName} выбрана (игра не найдена, сохранены координаты экрана)",
-                StatusKind.Success);
         };
         picker.Closed += (_, _) =>
         {
-            _tabPicker = null;
+            if (step)
+            {
+                _tabStepPicker = null;
+            }
+            else
+            {
+                _tabPicker = null;
+            }
+
             _picking = false;
             PickTabButton.IsEnabled = true;
+            PickTabStepButton.IsEnabled = true;
             RunButton.IsEnabled = true;
+
             if (!picked)
             {
-                SetStatus("Выбор вкладки отменён", StatusKind.Idle);
+                SetStatus("Выбор отменён", StatusKind.Idle);
             }
         };
 
         picker.Position = new PixelPoint(cursor.X - half, cursor.Y - half);
-        _tabPicker = picker;
+        if (step)
+        {
+            _tabStepPicker = picker;
+        }
+        else
+        {
+            _tabPicker = picker;
+        }
+
         picker.Show(this);
         picker.Activate();
-        SetStatus($"Перетащите квадрат на заголовок вкладки {tabName} и отпустите", StatusKind.Busy);
+        SetStatus(
+            step
+                ? "Перетащите квадрат на заголовок 2-й вкладки и отпустите"
+                : "Перетащите квадрат на заголовок 1-й вкладки и отпустите",
+            StatusKind.Busy);
     }
 
     private void OnTabSelectClick(object? sender, RoutedEventArgs e)
@@ -531,15 +581,26 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!TabResolver.HasPoint(_settings, _settings.TabKey))
+        if (!TabResolver.HasBase(_settings))
         {
-            TabStatusText.Text = $"Вкладка {name}: позиция не задана — нажмите «Указать позицию».";
+            TabStatusText.Text = "Позиция 1-й вкладки не задана — нажмите «Указать вкладку 1».";
             TabStatusText.Foreground = ErrorBrush;
             return;
         }
 
+        if (TabResolver.IndexOf(_settings.TabKey) > 1 && !TabResolver.HasStep(_settings))
+        {
+            TabStatusText.Text = $"Вкладка {name}: нужен шаг — нажмите «Указать вкладку 2».";
+            TabStatusText.Foreground = ErrorBrush;
+            return;
+        }
+
+        var step = TabResolver.HasStep(_settings)
+            ? $"шаг {TabResolver.StepPixelsX(_settings)} × {TabResolver.StepPixelsY(_settings)} px"
+            : "шаг не задан";
+
         TabStatusText.Foreground = SuccessBrush;
-        TabStatusText.Text = $"Вкладка {name}: позиция задана.";
+        TabStatusText.Text = $"Вкладка {name}: {step}.";
     }
 
     private void ScheduleSave()

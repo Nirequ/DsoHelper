@@ -1,10 +1,11 @@
-using System.Collections.Generic;
+using System;
+using DsoHelper.Infrastructure;
 
 namespace DsoHelper.FastMount;
 
 /// <summary>
-/// Inventory tabs. The reference tool clicks the first tab after opening the
-/// inventory; here the user can pick any tab and save a position for each one.
+/// Inventory tabs. The user calibrates the first tab and the distance to the
+/// second one; every other tab is calculated from that step (like the AHK script).
 /// </summary>
 internal static class TabResolver
 {
@@ -18,29 +19,82 @@ internal static class TabResolver
     public static string DisplayName(string key) =>
         key == PremiumKey ? PremiumKey : key;
 
-    public static TabPoint? Find(FastMountSettings settings, string key) =>
-        settings.Tabs.TryGetValue(key, out var point) ? point : null;
+    /// <summary>1-based tab number, or 0 for an unknown key.</summary>
+    public static int IndexOf(string key)
+    {
+        var index = Array.IndexOf(Keys, key);
+        return index < 0 ? 0 : index + 1;
+    }
 
-    public static bool HasPoint(FastMountSettings settings, string key) =>
-        Find(settings, key) is { } point &&
-        ClientPointResolver.IsSet(point.RightRatio, point.TopRatio, point.X, point.Y);
+    public static bool HasBase(FastMountSettings settings) =>
+        ClientPointResolver.IsSet(
+            settings.TabRightRatio,
+            settings.TabTopRatio,
+            settings.TabX,
+            settings.TabY);
+
+    public static bool HasStep(FastMountSettings settings) =>
+        settings.TabStepRightRatio is not null ||
+        settings.TabStepTopRatio is not null ||
+        settings.TabStepX != 0 ||
+        settings.TabStepY != 0;
 
     public static bool TryResolve(FastMountSettings settings, string key, out int x, out int y)
     {
         x = 0;
         y = 0;
 
-        return Find(settings, key) is { } point &&
-               ClientPointResolver.TryResolve(
-                   point.RightRatio,
-                   point.TopRatio,
-                   point.X,
-                   point.Y,
-                   out x,
-                   out y);
+        var index = IndexOf(key);
+        if (index == 0)
+        {
+            return false;
+        }
+
+        if (!ClientPointResolver.TryResolve(
+                settings.TabRightRatio,
+                settings.TabTopRatio,
+                settings.TabX,
+                settings.TabY,
+                out x,
+                out y))
+        {
+            return false;
+        }
+
+        if (index > 1)
+        {
+            x += StepX(settings) * (index - 1);
+            y += StepY(settings) * (index - 1);
+        }
+
+        return true;
     }
 
-    public static void Capture(FastMountSettings settings, string key, int screenX, int screenY)
+    public static int StepPixelsX(FastMountSettings settings) => StepX(settings);
+
+    public static int StepPixelsY(FastMountSettings settings) => StepY(settings);
+
+    private static int StepX(FastMountSettings settings)
+    {
+        if (settings.TabStepRightRatio is { } ratio && GameWindow.TryGetClientBounds(out var bounds))
+        {
+            return (int)Math.Round(ratio * bounds.Height);
+        }
+
+        return settings.TabStepX;
+    }
+
+    private static int StepY(FastMountSettings settings)
+    {
+        if (settings.TabStepTopRatio is { } ratio && GameWindow.TryGetClientBounds(out var bounds))
+        {
+            return (int)Math.Round(ratio * bounds.Height);
+        }
+
+        return settings.TabStepY;
+    }
+
+    public static void CaptureBase(FastMountSettings settings, int screenX, int screenY)
     {
         ClientPointResolver.Capture(
             screenX,
@@ -50,12 +104,45 @@ internal static class TabResolver
             out var rightRatio,
             out var topRatio);
 
-        settings.Tabs[key] = new TabPoint
+        settings.TabX = x;
+        settings.TabY = y;
+        settings.TabRightRatio = rightRatio;
+        settings.TabTopRatio = topRatio;
+    }
+
+    /// <summary>
+    /// The user points at the second tab; the distance from the first tab becomes the step.
+    /// </summary>
+    public static bool CaptureStep(FastMountSettings settings, int screenX, int screenY)
+    {
+        if (!ClientPointResolver.TryResolve(
+                settings.TabRightRatio,
+                settings.TabTopRatio,
+                settings.TabX,
+                settings.TabY,
+                out var firstX,
+                out var firstY))
         {
-            X = x,
-            Y = y,
-            RightRatio = rightRatio,
-            TopRatio = topRatio
-        };
+            return false;
+        }
+
+        var stepX = screenX - firstX;
+        var stepY = screenY - firstY;
+
+        settings.TabStepX = stepX;
+        settings.TabStepY = stepY;
+
+        if (GameWindow.TryGetClientBounds(out var bounds))
+        {
+            settings.TabStepRightRatio = (double)stepX / bounds.Height;
+            settings.TabStepTopRatio = (double)stepY / bounds.Height;
+        }
+        else
+        {
+            settings.TabStepRightRatio = null;
+            settings.TabStepTopRatio = null;
+        }
+
+        return true;
     }
 }

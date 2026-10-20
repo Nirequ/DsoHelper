@@ -216,15 +216,18 @@
                                            Classes="hint"
                                            Text="Позиция не задана."
                                            VerticalAlignment="Center" />
-                                <Button x:Name="PickTabButton"
-                                        Grid.Column="1"
-                                        Content="Указать позицию"
-                                        VerticalAlignment="Center"
-                                        Click="OnPickTabClick" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button x:Name="PickTabButton"
+                                            Content="Указать вкладку 1"
+                                            Click="OnPickTabClick" />
+                                    <Button x:Name="PickTabStepButton"
+                                            Content="Указать вкладку 2"
+                                            Click="OnPickTabStepClick" />
+                                </StackPanel>
                             </Grid>
                         </StackPanel>
                         <TextBlock Classes="hint"
-                                   Text="Выберите вкладку, нажмите «Указать позицию» и поставьте квадрат на её заголовок. Позиция запоминается отдельно для каждой вкладки. После открытия инвентаря макрос кликнет по выбранной вкладке — как в DrakenHub, чтобы плащ всегда оказывался в нужной ячейке." />
+                                   Text="Поставьте квадрат на заголовок 1-й вкладки, затем нажмите «Указать вкладку 2» и наведите его на вторую — расстояние станет шагом. Остальные вкладки (включая prem) макрос рассчитает сам." />
                     </StackPanel>
                 </Border>
 

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -36,8 +35,24 @@ internal sealed class FastMountSettings
     /// <summary>Selected inventory tab: "1".."8" or "prem".</summary>
     public string TabKey { get; set; } = "1";
 
-    /// <summary>Saved positions for the inventory tabs.</summary>
-    public Dictionary<string, TabPoint> Tabs { get; set; } = new();
+    /// <summary>Position of the first inventory tab.</summary>
+    public int TabX { get; set; }
+
+    public int TabY { get; set; }
+
+    public double? TabRightRatio { get; set; }
+
+    public double? TabTopRatio { get; set; }
+
+    /// <summary>Distance between neighbouring tabs, in screen pixels.</summary>
+    public int TabStepX { get; set; }
+
+    public int TabStepY { get; set; }
+
+    /// <summary>The same step scaled to the client height, so it survives a resolution change.</summary>
+    public double? TabStepRightRatio { get; set; }
+
+    public double? TabStepTopRatio { get; set; }
 
     public int InventoryDelayMs { get; set; } = 30;
 
@@ -71,8 +86,7 @@ internal sealed class FastMountSettings
 
             var json = File.ReadAllText(FilePath);
             var settings = JsonSerializer.Deserialize<FastMountSettings>(json) ?? new FastMountSettings();
-            settings.Tabs ??= new();
-            settings.MigrateLegacyTab(json);
+            settings.MigrateTabPoints(json);
             return settings;
         }
         catch
@@ -82,12 +96,12 @@ internal sealed class FastMountSettings
     }
 
     /// <summary>
-    /// Older versions stored one tab position in TabX/TabY/TabRightRatio/TabTopRatio.
-    /// Move it into the per-tab dictionary once.
+    /// The previous version stored one point per tab in a "Tabs" dictionary.
+    /// Take the first tab from there; older configs already use the flat fields.
     /// </summary>
-    private void MigrateLegacyTab(string json)
+    private void MigrateTabPoints(string json)
     {
-        if (Tabs.Count > 0)
+        if (TabRightRatio is not null || TabX != 0 || TabY != 0)
         {
             return;
         }
@@ -95,25 +109,24 @@ internal sealed class FastMountSettings
         try
         {
             using var document = JsonDocument.Parse(json);
-            var root = document.RootElement;
-
-            var x = ReadInt(root, "TabX");
-            var y = ReadInt(root, "TabY");
-            var right = ReadDouble(root, "TabRightRatio");
-            var top = ReadDouble(root, "TabTopRatio");
-
-            if (x == 0 && y == 0 && right is null && top is null)
+            if (!document.RootElement.TryGetProperty("Tabs", out var tabs) ||
+                tabs.ValueKind != JsonValueKind.Object ||
+                !tabs.TryGetProperty("1", out var first) ||
+                first.ValueKind != JsonValueKind.Object)
             {
                 return;
             }
 
-            Tabs["1"] = new TabPoint { X = x, Y = y, RightRatio = right, TopRatio = top };
+            TabX = ReadInt(first, "X");
+            TabY = ReadInt(first, "Y");
+            TabRightRatio = ReadDouble(first, "RightRatio");
+            TabTopRatio = ReadDouble(first, "TopRatio");
             TabKey = "1";
             SwitchInventoryTab = true;
         }
         catch (JsonException)
         {
-            // Broken legacy section: the user can simply pick the tab again.
+            // Broken section: the user can simply pick the tab again.
         }
     }
 
