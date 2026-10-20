@@ -25,6 +25,7 @@ public partial class MainWindow : Window
 
     private GlobalHotkey? _hotkey;
     private SlotPickerWindow? _slotPicker;
+    private SlotPickerWindow? _tabPicker;
     private CancellationTokenSource? _runCts;
     private bool _running;
     private bool _picking;
@@ -101,6 +102,7 @@ public partial class MainWindow : Window
 
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
         UpdateSlotUi();
+        UpdateTabUi();
     }
 
     private void ReadSettingsFromUi()
@@ -421,6 +423,80 @@ public partial class MainWindow : Window
         SlotCoordsText.Text = _settings.SlotRightRatio is not null
             ? "Позиция привязана к окну игры и подстраивается под разрешение."
             : $"Координаты экрана: {_settings.SlotX}, {_settings.SlotY}";
+    }
+
+    private void OnPickTabClick(object? sender, RoutedEventArgs e)
+    {
+        if (_running)
+        {
+            return;
+        }
+
+        if (_tabPicker is not null)
+        {
+            _tabPicker.Activate();
+            return;
+        }
+
+        if (!NativeMethods.GetCursorPos(out var cursor))
+        {
+            SetStatus("Не удалось определить позицию курсора.", StatusKind.Error);
+            return;
+        }
+
+        var scaling = Screens.ScreenFromPoint(new PixelPoint(cursor.X, cursor.Y))?.Scaling ?? 1.0;
+        var half = (int)Math.Round(32 * scaling);
+
+        _picking = true;
+        PickTabButton.IsEnabled = false;
+        RunButton.IsEnabled = false;
+
+        var picked = false;
+        var picker = new SlotPickerWindow();
+        picker.SlotPicked += (_, point) =>
+        {
+            picked = true;
+            TabResolver.Capture(_settings, point.X, point.Y);
+            UpdateTabUi();
+            SaveSettings();
+            SetStatus(
+                _settings.TabRightRatio is not null
+                    ? "Вкладка выбрана — позиция подстроится под окно игры"
+                    : "Вкладка выбрана (игра не найдена, сохранены координаты экрана)",
+                StatusKind.Success);
+        };
+        picker.Closed += (_, _) =>
+        {
+            _tabPicker = null;
+            _picking = false;
+            PickTabButton.IsEnabled = true;
+            RunButton.IsEnabled = true;
+            if (!picked)
+            {
+                SetStatus("Выбор вкладки отменён", StatusKind.Idle);
+            }
+        };
+
+        picker.Position = new PixelPoint(cursor.X - half, cursor.Y - half);
+        _tabPicker = picker;
+        picker.Show(this);
+        picker.Activate();
+        SetStatus("Перетащите квадрат на заголовок 1-й вкладки и отпустите", StatusKind.Busy);
+    }
+
+    private void UpdateTabUi()
+    {
+        if (!TabResolver.HasTab(_settings))
+        {
+            TabStatusText.Text = "Не выбрана — макрос не будет переключать вкладку.";
+            TabStatusText.Foreground = IdleBrush;
+            return;
+        }
+
+        TabStatusText.Foreground = SuccessBrush;
+        TabStatusText.Text = _settings.TabRightRatio is not null
+            ? "Выбрана — позиция привязана к окну игры."
+            : $"Координаты экрана: {_settings.TabX}, {_settings.TabY}";
     }
 
     private void ScheduleSave()

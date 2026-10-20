@@ -7,7 +7,7 @@ namespace DsoHelper.FastMount;
 
 internal static class FastMountRunner
 {
-    private const int DoubleClickGapMs = 90;
+    private const int DoubleClickGapMs = 30;
 
     public static bool TryValidate(FastMountSettings settings, out string error)
     {
@@ -76,9 +76,7 @@ internal static class FastMountRunner
         {
             if (settings.CloseInventoryBeforeMount)
             {
-                report("Открываю инвентарь");
-                InputSimulator.KeyPress(inventoryKey);
-                await DelayAsync(settings.InventoryDelayMs, cancellationToken);
+                await OpenInventoryAsync(settings, inventoryKey, report, cancellationToken);
 
                 report("Надеваю плащ с быстрым маунтом");
                 await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
@@ -92,9 +90,7 @@ internal static class FastMountRunner
                 InputSimulator.KeyPress(mountKey);
                 await DelayAsync(settings.MountDelayMs, cancellationToken);
 
-                report("Открываю инвентарь");
-                InputSimulator.KeyPress(inventoryKey);
-                await DelayAsync(settings.InventoryDelayMs, cancellationToken);
+                await OpenInventoryAsync(settings, inventoryKey, report, cancellationToken);
 
                 report("Возвращаю старый плащ");
                 await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
@@ -105,9 +101,7 @@ internal static class FastMountRunner
             }
             else
             {
-                report("Открываю инвентарь");
-                InputSimulator.KeyPress(inventoryKey);
-                await DelayAsync(settings.InventoryDelayMs, cancellationToken);
+                await OpenInventoryAsync(settings, inventoryKey, report, cancellationToken);
 
                 report("Надеваю плащ с быстрым маунтом");
                 await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
@@ -132,6 +126,32 @@ internal static class FastMountRunner
                 NativeMethods.SetCursorPos(originalCursor.X, originalCursor.Y);
             }
         }
+    }
+
+    private static async Task OpenInventoryAsync(
+        FastMountSettings settings,
+        KeyInfo inventoryKey,
+        Action<string> report,
+        CancellationToken cancellationToken)
+    {
+        report("Открываю инвентарь");
+        InputSimulator.KeyPress(inventoryKey);
+        await DelayAsync(settings.InventoryDelayMs, cancellationToken);
+
+        if (!TabResolver.HasTab(settings))
+        {
+            return;
+        }
+
+        if (!TabResolver.TryResolve(settings, out var tabX, out var tabY))
+        {
+            throw new InvalidOperationException(
+                "Не удалось определить позицию вкладки инвентаря. Выберите её заново или запустите игру.");
+        }
+
+        report("Переключаюсь на первую вкладку инвентаря");
+        InputSimulator.LeftClick(tabX, tabY);
+        await DelayAsync(settings.InventoryDelayMs, cancellationToken);
     }
 
     private static async Task DoubleLeftClickAsync(int x, int y, CancellationToken cancellationToken)

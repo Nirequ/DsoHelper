@@ -26,16 +26,28 @@ internal sealed class FastMountSettings
     /// <summary>Distance from the top edge of the game client area, in client-height units.</summary>
     public double? SlotTopRatio { get; set; }
 
-    public int InventoryDelayMs { get; set; } = 250;
+    /// <summary>
+    /// Optional point on the first inventory tab. When set, the macro clicks it
+    /// right after opening the inventory (like the reference tool).
+    /// </summary>
+    public int TabX { get; set; }
+
+    public int TabY { get; set; }
+
+    public double? TabRightRatio { get; set; }
+
+    public double? TabTopRatio { get; set; }
+
+    public int InventoryDelayMs { get; set; } = 30;
 
     /// <summary>Пауза после смены плаща и до нажатия клавиши маунта, мс.</summary>
-    public int CapeSwapDelayMs { get; set; } = 500;
+    public int CapeSwapDelayMs { get; set; } = 30;
 
     /// <summary>Пауза после вызова маунта и до возврата старого плаща, мс.</summary>
-    public int MountDelayMs { get; set; } = 700;
+    public int MountDelayMs { get; set; } = 30;
 
     /// <summary>Пауза после возврата старого плаща и до закрытия инвентаря, мс.</summary>
-    public int PostActionDelayMs { get; set; } = 200;
+    public int PostActionDelayMs { get; set; } = 30;
 
     /// <summary>
     /// Закрывать инвентарь перед нажатием клавиши маунта. Нужно, если игра
