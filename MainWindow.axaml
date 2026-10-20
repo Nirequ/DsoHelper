@@ -94,6 +94,24 @@
             <Setter Property="Background" Value="#6D8BFF" />
             <Setter Property="BorderBrush" Value="#6D8BFF" />
         </Style>
+        <Style Selector="Button.tab">
+            <Setter Property="MinWidth" Value="34" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Button.tab.selected">
+            <Setter Property="Background" Value="#5B7CFA" />
+            <Setter Property="BorderBrush" Value="#5B7CFA" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.tab.selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#6D8BFF" />
+            <Setter Property="BorderBrush" Value="#6D8BFF" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto" Margin="22,20,22,16" RowSpacing="14">
@@ -170,21 +188,43 @@
                         <TextBlock Classes="hint"
                                    Text="Позиция запоминается относительно окна игры: при смене разрешения или переходе в оконный режим слот менять не нужно." />
                         <Border Height="1" Background="#262B38" />
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                            <StackPanel Spacing="4" VerticalAlignment="Center">
-                                <TextBlock Classes="label" Text="1-я вкладка инвентаря (необязательно)" />
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <TextBlock Classes="label"
+                                           Text="Вкладка инвентаря"
+                                           VerticalAlignment="Center" />
+                                <CheckBox x:Name="SwitchTabCheck"
+                                          Grid.Column="1"
+                                          Content="Переключать"
+                                          VerticalAlignment="Center" />
+                            </Grid>
+                            <StackPanel x:Name="TabButtonsPanel"
+                                        Orientation="Horizontal"
+                                        Spacing="6">
+                                <Button Classes="tab" Tag="1" Content="1" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="2" Content="2" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="3" Content="3" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="4" Content="4" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="5" Content="5" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="6" Content="6" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="7" Content="7" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="8" Content="8" Click="OnTabSelectClick" />
+                                <Button Classes="tab" Tag="prem" Content="prem" Click="OnTabSelectClick" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
                                 <TextBlock x:Name="TabStatusText"
                                            Classes="hint"
-                                           Text="Не выбрана — макрос не будет переключать вкладку." />
-                            </StackPanel>
-                            <Button x:Name="PickTabButton"
-                                    Grid.Column="1"
-                                    Content="Указать вкладку"
-                                    VerticalAlignment="Center"
-                                    Click="OnPickTabClick" />
-                        </Grid>
+                                           Text="Позиция не задана."
+                                           VerticalAlignment="Center" />
+                                <Button x:Name="PickTabButton"
+                                        Grid.Column="1"
+                                        Content="Указать позицию"
+                                        VerticalAlignment="Center"
+                                        Click="OnPickTabClick" />
+                            </Grid>
+                        </StackPanel>
                         <TextBlock Classes="hint"
-                                   Text="Как в DrakenHub: после открытия инвентаря макрос кликает по 1-й вкладке, чтобы плащ всегда оказывался в нужной ячейке. Нажмите «Указать вкладку» и поставьте квадрат на заголовок первой вкладки." />
+                                   Text="Выберите вкладку, нажмите «Указать позицию» и поставьте квадрат на её заголовок. Позиция запоминается отдельно для каждой вкладки. После открытия инвентаря макрос кликнет по выбранной вкладке — как в DrakenHub, чтобы плащ всегда оказывался в нужной ячейке." />
                     </StackPanel>
                 </Border>
 

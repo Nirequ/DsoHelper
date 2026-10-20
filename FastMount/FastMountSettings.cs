@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -27,16 +28,16 @@ internal sealed class FastMountSettings
     public double? SlotTopRatio { get; set; }
 
     /// <summary>
-    /// Optional point on the first inventory tab. When set, the macro clicks it
-    /// right after opening the inventory (like the reference tool).
+    /// Click an inventory tab right after opening the inventory so the cape is
+    /// always in the same cell (like the reference tool).
     /// </summary>
-    public int TabX { get; set; }
+    public bool SwitchInventoryTab { get; set; }
 
-    public int TabY { get; set; }
+    /// <summary>Selected inventory tab: "1".."8" or "prem".</summary>
+    public string TabKey { get; set; } = "1";
 
-    public double? TabRightRatio { get; set; }
-
-    public double? TabTopRatio { get; set; }
+    /// <summary>Saved positions for the inventory tabs.</summary>
+    public Dictionary<string, TabPoint> Tabs { get; set; } = new();
 
     public int InventoryDelayMs { get; set; } = 30;
 
@@ -69,13 +70,60 @@ internal sealed class FastMountSettings
             }
 
             var json = File.ReadAllText(FilePath);
-            return JsonSerializer.Deserialize<FastMountSettings>(json) ?? new FastMountSettings();
+            var settings = JsonSerializer.Deserialize<FastMountSettings>(json) ?? new FastMountSettings();
+            settings.Tabs ??= new();
+            settings.MigrateLegacyTab(json);
+            return settings;
         }
         catch
         {
             return new FastMountSettings();
         }
     }
+
+    /// <summary>
+    /// Older versions stored one tab position in TabX/TabY/TabRightRatio/TabTopRatio.
+    /// Move it into the per-tab dictionary once.
+    /// </summary>
+    private void MigrateLegacyTab(string json)
+    {
+        if (Tabs.Count > 0)
+        {
+            return;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+
+            var x = ReadInt(root, "TabX");
+            var y = ReadInt(root, "TabY");
+            var right = ReadDouble(root, "TabRightRatio");
+            var top = ReadDouble(root, "TabTopRatio");
+
+            if (x == 0 && y == 0 && right is null && top is null)
+            {
+                return;
+            }
+
+            Tabs["1"] = new TabPoint { X = x, Y = y, RightRatio = right, TopRatio = top };
+            TabKey = "1";
+            SwitchInventoryTab = true;
+        }
+        catch (JsonException)
+        {
+            // Broken legacy section: the user can simply pick the tab again.
+        }
+    }
+
+    private static int ReadInt(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.TryGetInt32(out var number) ? number : 0;
+
+    private static double? ReadDouble(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number
+            ? value.GetDouble()
+            : null;
 
     public void Save()
     {

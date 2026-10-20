@@ -35,6 +35,23 @@ internal static class FastMountRunner
             return false;
         }
 
+        if (settings.SwitchInventoryTab)
+        {
+            if (Array.IndexOf(TabResolver.Keys, settings.TabKey) < 0)
+            {
+                error = "Выбрана неизвестная вкладка инвентаря.";
+                return false;
+            }
+
+            if (!TabResolver.HasPoint(settings, settings.TabKey))
+            {
+                error =
+                    $"Для вкладки {TabResolver.DisplayName(settings.TabKey)} не задана позиция. " +
+                    "Нажмите «Указать позицию» в разделе «Слот плаща».";
+                return false;
+            }
+        }
+
         if (settings.InventoryDelayMs < 0 ||
             settings.CapeSwapDelayMs < 0 ||
             settings.MountDelayMs < 0 ||
@@ -138,18 +155,19 @@ internal static class FastMountRunner
         InputSimulator.KeyPress(inventoryKey);
         await DelayAsync(settings.InventoryDelayMs, cancellationToken);
 
-        if (!TabResolver.HasTab(settings))
+        if (!settings.SwitchInventoryTab)
         {
             return;
         }
 
-        if (!TabResolver.TryResolve(settings, out var tabX, out var tabY))
+        if (!TabResolver.TryResolve(settings, settings.TabKey, out var tabX, out var tabY))
         {
             throw new InvalidOperationException(
-                "Не удалось определить позицию вкладки инвентаря. Выберите её заново или запустите игру.");
+                $"Не удалось определить позицию вкладки {TabResolver.DisplayName(settings.TabKey)}. " +
+                "Выберите её заново или запустите игру.");
         }
 
-        report("Переключаюсь на первую вкладку инвентаря");
+        report($"Переключаюсь на вкладку {TabResolver.DisplayName(settings.TabKey)}");
         InputSimulator.LeftClick(tabX, tabY);
         await DelayAsync(settings.InventoryDelayMs, cancellationToken);
     }

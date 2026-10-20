@@ -78,6 +78,13 @@ public partial class MainWindow : Window
         PostActionDelayBox.ValueChanged += (_, _) => ScheduleSave();
         CloseInventoryBeforeMountCheck.IsCheckedChanged += (_, _) => ScheduleSave();
 
+        SwitchTabCheck.IsCheckedChanged += (_, _) =>
+        {
+            _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
+            UpdateTabUi();
+            ScheduleSave();
+        };
+
         AlwaysOnTopCheck.IsCheckedChanged += (_, _) =>
         {
             Topmost = AlwaysOnTopCheck.IsChecked == true;
@@ -100,6 +107,8 @@ public partial class MainWindow : Window
 
         CloseInventoryBeforeMountCheck.IsChecked = _settings.CloseInventoryBeforeMount;
 
+        SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
+
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
         UpdateSlotUi();
         UpdateTabUi();
@@ -120,6 +129,7 @@ public partial class MainWindow : Window
         _settings.MountDelayMs = ToInt(MountDelayBox);
         _settings.PostActionDelayMs = ToInt(PostActionDelayBox);
         _settings.CloseInventoryBeforeMount = CloseInventoryBeforeMountCheck.IsChecked == true;
+        _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
     }
 
@@ -452,17 +462,20 @@ public partial class MainWindow : Window
         RunButton.IsEnabled = false;
 
         var picked = false;
+        var tabName = TabResolver.DisplayName(_settings.TabKey);
         var picker = new SlotPickerWindow();
         picker.SlotPicked += (_, point) =>
         {
             picked = true;
-            TabResolver.Capture(_settings, point.X, point.Y);
+            TabResolver.Capture(_settings, _settings.TabKey, point.X, point.Y);
             UpdateTabUi();
             SaveSettings();
+
+            var hasRatio = TabResolver.Find(_settings, _settings.TabKey)?.RightRatio is not null;
             SetStatus(
-                _settings.TabRightRatio is not null
-                    ? "Вкладка выбрана — позиция подстроится под окно игры"
-                    : "Вкладка выбрана (игра не найдена, сохранены координаты экрана)",
+                hasRatio
+                    ? $"Вкладка {tabName} выбрана — позиция подстроится под окно игры"
+                    : $"Вкладка {tabName} выбрана (игра не найдена, сохранены координаты экрана)",
                 StatusKind.Success);
         };
         picker.Closed += (_, _) =>
@@ -481,22 +494,52 @@ public partial class MainWindow : Window
         _tabPicker = picker;
         picker.Show(this);
         picker.Activate();
-        SetStatus("Перетащите квадрат на заголовок 1-й вкладки и отпустите", StatusKind.Busy);
+        SetStatus($"Перетащите квадрат на заголовок вкладки {tabName} и отпустите", StatusKind.Busy);
+    }
+
+    private void OnTabSelectClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string key })
+        {
+            return;
+        }
+
+        _settings.TabKey = key;
+        UpdateTabUi();
+        ScheduleSave();
     }
 
     private void UpdateTabUi()
     {
-        if (!TabResolver.HasTab(_settings))
+        foreach (var child in TabButtonsPanel.Children)
         {
-            TabStatusText.Text = "Не выбрана — макрос не будет переключать вкладку.";
+            if (child is not Button button)
+            {
+                continue;
+            }
+
+            var selected = string.Equals(button.Tag as string, _settings.TabKey, StringComparison.Ordinal);
+            button.Classes.Set("selected", selected);
+        }
+
+        var name = TabResolver.DisplayName(_settings.TabKey);
+
+        if (!_settings.SwitchInventoryTab)
+        {
+            TabStatusText.Text = "Выключено — макрос не будет переключать вкладку.";
             TabStatusText.Foreground = IdleBrush;
             return;
         }
 
+        if (!TabResolver.HasPoint(_settings, _settings.TabKey))
+        {
+            TabStatusText.Text = $"Вкладка {name}: позиция не задана — нажмите «Указать позицию».";
+            TabStatusText.Foreground = ErrorBrush;
+            return;
+        }
+
         TabStatusText.Foreground = SuccessBrush;
-        TabStatusText.Text = _settings.TabRightRatio is not null
-            ? "Выбрана — позиция привязана к окну игры."
-            : $"Координаты экрана: {_settings.TabX}, {_settings.TabY}";
+        TabStatusText.Text = $"Вкладка {name}: позиция задана.";
     }
 
     private void ScheduleSave()
