@@ -1,0 +1,102 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DsoHelper.UI.SellPreviewWindow"
+        Title="Проверка области продажи"
+        Width="940"
+        Height="700"
+        WindowDecorations="BorderOnly"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBackdropBrush}">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="LetterSpacing" Value="1.3" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.summary">
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="12.5" />
+        </Style>
+        <Style Selector="Button:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2D3240" />
+            <Setter Property="BorderBrush" Value="#4C5364" />
+        </Style>
+        <Style Selector="Button.purchase">
+            <Setter Property="Background" Value="{StaticResource GoldButtonBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ObsidianBlackBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldLightBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LetterSpacing" Value="0.8" />
+            <Setter Property="Padding" Value="18,8" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16" RowSpacing="12">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" PointerPressed="OnHeaderPointerPressed">
+            <StackPanel Spacing="3">
+                <TextBlock Classes="title" Text="ПРОВЕРКА ОБЛАСТИ ПРОДАЖИ" />
+                <TextBlock Classes="hint"
+                           Text="Кликните по ячейке, чтобы исключить её: серые ячейки не будут проданы." />
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Width="36" Height="30"
+                    Padding="0"
+                    Content="✕"
+                    VerticalAlignment="Top"
+                    Click="OnCancelClick" />
+        </Grid>
+
+        <Border Grid.Row="1"
+                Background="{StaticResource DeepDungeonBrush}"
+                BorderBrush="{StaticResource CardInnerBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="2"
+                Padding="1"
+                ClipToBounds="True">
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+                <Canvas x:Name="Surface" Background="Transparent">
+                    <Image x:Name="Screenshot" Stretch="Fill" />
+                    <Canvas x:Name="GridLayer" />
+                </Canvas>
+            </Viewbox>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <StackPanel Spacing="5" VerticalAlignment="Center">
+                <TextBlock x:Name="SummaryText" Classes="summary" Text="Будет продано: 0 из 0 ячеек." />
+                <TextBlock Classes="hint"
+                           Text="Продажа идёт правым кликом. У торговца должно быть открыто окно «Купить и продать»." />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button Content="Всё" Click="OnAllClick" />
+                <Button Content="Ничего" Click="OnNoneClick" />
+                <Button Content="Отмена" Click="OnCancelClick" />
+                <Button x:Name="SaveButton" Classes="purchase" Content="Сохранить" Click="OnSaveClick" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

@@ -116,6 +116,31 @@ internal static class NativeMethods
 
     internal delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
+    internal const uint Srccopy = 0x00CC0020;
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct BitmapInfoHeader
+    {
+        public uint Size;
+        public int Width;
+        public int Height;
+        public ushort Planes;
+        public ushort BitCount;
+        public uint Compression;
+        public uint SizeImage;
+        public int XPelsPerMeter;
+        public int YPelsPerMeter;
+        public uint ClrUsed;
+        public uint ClrImportant;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct BitmapInfo
+    {
+        public BitmapInfoHeader Header;
+        public uint Colors;
+    }
+
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr SetWindowsHookEx(int hookId, LowLevelKeyboardProc callback, IntPtr module, uint threadId);
 
@@ -184,5 +209,48 @@ internal static class NativeMethods
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     internal static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int maxCount);
-    
+
+    [DllImport("user32.dll")]
+    internal static extern IntPtr GetDC(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    internal static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr CreateCompatibleDC(IntPtr hDC);
+
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int width, int height);
+
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr SelectObject(IntPtr hDC, IntPtr value);
+
+    [DllImport("gdi32.dll")]
+    internal static extern bool DeleteObject(IntPtr value);
+
+    [DllImport("gdi32.dll")]
+    internal static extern bool DeleteDC(IntPtr hDC);
+
+    [DllImport("gdi32.dll")]
+    internal static extern bool BitBlt(
+        IntPtr destination,
+        int x,
+        int y,
+        int width,
+        int height,
+        IntPtr source,
+        int sourceX,
+        int sourceY,
+        uint operation);
+
+    [DllImport("gdi32.dll")]
+    internal static extern int GetDIBits(
+        IntPtr hDC,
+        IntPtr bitmap,
+        uint start,
+        uint lines,
+        byte[] bits,
+        ref BitmapInfo info,
+        uint usage);
+
 }

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -6,8 +9,11 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using DsoHelper.AutoSell;
 using DsoHelper.FastMount;
 using DsoHelper.Infrastructure;
 using DsoHelper.UI;
@@ -26,9 +32,13 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _saveTimer;
 
     private GlobalHotkey? _hotkey;
+    private GlobalHotkey? _sellHotkey;
     private SlotPickerWindow? _slotPicker;
     private SlotPickerWindow? _tabPicker;
     private SlotPickerWindow? _tabStepPicker;
+    private SlotPickerWindow? _sellCellPicker;
+    private SlotPickerWindow? _sellStepPicker;
+    private SellPreviewWindow? _sellPreview;
     private CancellationTokenSource? _runCts;
     private bool _running;
     private bool _picking;
@@ -51,6 +61,7 @@ public partial class MainWindow : Window
 
         Topmost = _settings.AlwaysOnTop;
         ApplyHotkey(showError: false);
+        ApplySellHotkey(showError: false);
         SetStatus("Готово к работе", StatusKind.Idle);
 
         Closing += OnClosing;
@@ -68,14 +79,30 @@ public partial class MainWindow : Window
         AddHandler(InputElement.KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
 
         HotkeyBox.LostFocus += (_, _) => CommitHotkey();
+        SellHotkeyBox.LostFocus += (_, _) => CommitSellHotkey();
         InventoryKeyBox.LostFocus += (_, _) => RevertKeyIfInvalid(InventoryKeyBox, _settings.InventoryKey);
         MountKeyBox.LostFocus += (_, _) => RevertKeyIfInvalid(MountKeyBox, _settings.MountKey);
 
         HotkeyBox.TextChanged += (_, _) => ScheduleSave();
+        SellHotkeyBox.TextChanged += (_, _) => ScheduleSave();
         InventoryKeyBox.TextChanged += (_, _) => ScheduleSave();
         MountKeyBox.TextChanged += (_, _) => ScheduleSave();
 
         DelayBox.ValueChanged += (_, _) => ScheduleSave();
+
+        SellColumnsBox.ValueChanged += (_, _) =>
+        {
+            _settings.SellColumns = Math.Clamp(ToInt(SellColumnsBox), 1, SellGridResolver.MaxColumns);
+            UpdateSellUi();
+            ScheduleSave();
+        };
+
+        SellRowsBox.ValueChanged += (_, _) =>
+        {
+            _settings.SellRows = Math.Clamp(ToInt(SellRowsBox), 1, SellGridResolver.MaxRows);
+            UpdateSellUi();
+            ScheduleSave();
+        };
 
         SwitchTabCheck.IsCheckedChanged += (_, _) =>
         {
@@ -101,11 +128,18 @@ public partial class MainWindow : Window
 
         DelayBox.Value = _settings.DelayMs;
 
+        SellHotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.SellHotkey, out var sellHotkey, out _)
+            ? sellHotkey.Display
+            : _settings.SellHotkey;
+        SellColumnsBox.Value = Math.Clamp(_settings.SellColumns, 1, SellGridResolver.MaxColumns);
+        SellRowsBox.Value = Math.Clamp(_settings.SellRows, 1, SellGridResolver.MaxRows);
+
         SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
 
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
         UpdateSlotUi();
         UpdateTabUi();
+        UpdateSellUi();
     }
 
     private void ReadSettingsFromUi()
@@ -119,6 +153,13 @@ public partial class MainWindow : Window
         _settings.MountKey = CanonicalKey(MountKeyBox.Text, _settings.MountKey);
 
         _settings.DelayMs = ToInt(DelayBox);
+        if (HotkeyParser.TryParseHotkey(SellHotkeyBox.Text, out var sellHotkey, out _))
+        {
+            _settings.SellHotkey = sellHotkey.Display;
+        }
+
+        _settings.SellColumns = Math.Clamp(ToInt(SellColumnsBox), 1, SellGridResolver.MaxColumns);
+        _settings.SellRows = Math.Clamp(ToInt(SellRowsBox), 1, SellGridResolver.MaxRows);
         _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
     }
@@ -129,16 +170,40 @@ public partial class MainWindow : Window
     private static string CanonicalKey(string? text, string fallback) =>
         KeyCatalog.TryParseKey(text, out var key) && !key.IsModifier ? key.Display : fallback;
 
-    private void ApplyHotkey(bool showError)
-    {
-        _hotkey?.Dispose();
-        _hotkey = null;
+    private void ApplyHotkey(bool showError) =>
+        ApplyHotkeyCore(
+            ref _hotkey,
+            HotkeyBox,
+            HotkeyStatusText,
+            SellHotkeyBox,
+            OnHotkeyPressed,
+            value => _settings.Hotkey = value,
+            showError);
 
-        var text = HotkeyBox.Text?.Trim() ?? string.Empty;
+    private void ApplySellHotkey(bool showError) =>
+        ApplyHotkeyCore(
+            ref _sellHotkey,
+            SellHotkeyBox,
+            SellHotkeyStatusText,
+            HotkeyBox,
+            OnSellHotkeyPressed,
+            value => _settings.SellHotkey = value,
+            showError);
+
+    private void ApplyHotkeyCore(
+        ref GlobalHotkey? slot,
+        TextBox box,
+        TextBlock status,
+        TextBox otherBox,
+        Action pressed,
+        Action<string> store,
+        bool showError)
+    {
+        var text = box.Text?.Trim() ?? string.Empty;
         if (!HotkeyParser.TryParseHotkey(text, out var definition, out var error))
         {
-            HotkeyStatusText.Text = "некорректный хоткей";
-            HotkeyStatusText.Foreground = ErrorBrush;
+            status.Text = "некорректный хоткей";
+            status.Foreground = ErrorBrush;
             if (showError)
             {
                 SetStatus(error, StatusKind.Error);
@@ -147,16 +212,33 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (HotkeyParser.TryParseHotkey(otherBox.Text, out var other, out _) &&
+            other.VirtualKey == definition.VirtualKey &&
+            other.Modifiers == definition.Modifiers)
+        {
+            status.Text = "занят другим действием";
+            status.Foreground = ErrorBrush;
+            if (showError)
+            {
+                SetStatus("Этот хоткей уже используется другим действием.", StatusKind.Error);
+            }
+
+            return;
+        }
+
+        slot?.Dispose();
+        slot = null;
+
         try
         {
             var hotkey = new GlobalHotkey(definition.Modifiers, definition.VirtualKey);
-            hotkey.Pressed += OnHotkeyPressed;
-            _hotkey = hotkey;
+            hotkey.Pressed += pressed;
+            slot = hotkey;
 
-            HotkeyBox.Text = definition.Display;
-            HotkeyStatusText.Text = $"активен · {definition.Display}";
-            HotkeyStatusText.Foreground = SuccessBrush;
-            _settings.Hotkey = definition.Display;
+            box.Text = definition.Display;
+            status.Text = $"активен · {definition.Display}";
+            status.Foreground = SuccessBrush;
+            store(definition.Display);
             ScheduleSave();
 
             if (showError)
@@ -166,8 +248,8 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            HotkeyStatusText.Text = "недоступен";
-            HotkeyStatusText.Foreground = ErrorBrush;
+            status.Text = "недоступен";
+            status.Foreground = ErrorBrush;
             if (showError)
             {
                 SetStatus(ex.Message, StatusKind.Error);
@@ -190,6 +272,19 @@ public partial class MainWindow : Window
         });
     }
 
+    private void OnSellHotkeyPressed()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!GameWindow.IsForeground())
+            {
+                return;
+            }
+
+            _ = RunAutoSellAsync(interactive: false);
+        });
+    }
+
     private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Source is not TextBox box)
@@ -199,7 +294,11 @@ public partial class MainWindow : Window
 
         if (ReferenceEquals(box, HotkeyBox))
         {
-            HandleHotkeyKey(e);
+            HandleHotkeyKey(e, HotkeyBox, ApplyHotkey);
+        }
+        else if (ReferenceEquals(box, SellHotkeyBox))
+        {
+            HandleHotkeyKey(e, SellHotkeyBox, ApplySellHotkey);
         }
         else if (ReferenceEquals(box, InventoryKeyBox) || ReferenceEquals(box, MountKeyBox))
         {
@@ -207,7 +306,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void HandleHotkeyKey(KeyEventArgs e)
+    private void HandleHotkeyKey(KeyEventArgs e, TextBox box, Action<bool> apply)
     {
         if (e.Key == Key.Tab)
         {
@@ -218,7 +317,7 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.Escape)
         {
-            HotkeyBox.Text = _settings.Hotkey;
+            box.Text = ReferenceEquals(box, HotkeyBox) ? _settings.Hotkey : _settings.SellHotkey;
             return;
         }
 
@@ -232,14 +331,14 @@ public partial class MainWindow : Window
             var preview = KeyCatalog.DescribeModifiers(e.KeyModifiers);
             if (!string.IsNullOrEmpty(preview))
             {
-                HotkeyBox.Text = preview;
+                box.Text = preview;
             }
 
             return;
         }
 
-        HotkeyBox.Text = KeyCatalog.ComposeHotkey(e.KeyModifiers, key.Display);
-        ApplyHotkey(showError: true);
+        box.Text = KeyCatalog.ComposeHotkey(e.KeyModifiers, key.Display);
+        apply(true);
     }
 
     private void HandleGameKey(TextBox box, KeyEventArgs e)
@@ -275,6 +374,16 @@ public partial class MainWindow : Window
         ApplyHotkey(showError: true);
     }
 
+    private void CommitSellHotkey()
+    {
+        if (!HotkeyParser.TryParseHotkey(SellHotkeyBox.Text, out _, out _))
+        {
+            SellHotkeyBox.Text = _settings.SellHotkey;
+        }
+
+        ApplySellHotkey(showError: true);
+    }
+
     private void RevertKeyIfInvalid(TextBox box, string fallback)
     {
         var canonical = CanonicalKey(box.Text, fallback);
@@ -303,6 +412,8 @@ public partial class MainWindow : Window
 
         _running = true;
         RunButton.IsEnabled = false;
+        SellNowButton.IsEnabled = false;
+        PreviewSellButton.IsEnabled = false;
         _runCts = new CancellationTokenSource();
 
         try
@@ -345,6 +456,78 @@ public partial class MainWindow : Window
             _runCts = null;
             _running = false;
             RunButton.IsEnabled = true;
+            SellNowButton.IsEnabled = true;
+            PreviewSellButton.IsEnabled = true;
+        }
+    }
+
+    private async void OnSellNowClick(object? sender, RoutedEventArgs e)
+    {
+        await RunAutoSellAsync(interactive: true);
+    }
+
+    private async Task RunAutoSellAsync(bool interactive)
+    {
+        if (_running || _picking)
+        {
+            return;
+        }
+
+        ReadSettingsFromUi();
+        if (!AutoSellRunner.TryValidate(_settings, out var error))
+        {
+            SetStatus(error, StatusKind.Error);
+            return;
+        }
+
+        _running = true;
+        RunButton.IsEnabled = false;
+        SellNowButton.IsEnabled = false;
+        PreviewSellButton.IsEnabled = false;
+        _runCts = new CancellationTokenSource();
+
+        try
+        {
+            if (interactive)
+            {
+                if (GameWindow.TryActivate())
+                {
+                    SetStatus("Окно игры активировано…", StatusKind.Busy);
+                    await Task.Delay(350);
+                }
+                else
+                {
+                    for (var i = 3; i >= 1; i--)
+                    {
+                        SetStatus($"Переключитесь в игру: {i}…", StatusKind.Busy);
+                        await Task.Delay(1000);
+                    }
+                }
+            }
+
+            await AutoSellRunner.RunAsync(
+                _settings,
+                message => Dispatcher.UIThread.Post(() => SetStatus(message, StatusKind.Busy)),
+                _runCts.Token);
+
+            SetStatus("Авто-продажа выполнена", StatusKind.Success);
+        }
+        catch (OperationCanceledException)
+        {
+            SetStatus("Продажа отменена", StatusKind.Idle);
+        }
+        catch (Exception ex)
+        {
+            SetStatus("Ошибка: " + ex.Message, StatusKind.Error);
+        }
+        finally
+        {
+            _runCts.Dispose();
+            _runCts = null;
+            _running = false;
+            RunButton.IsEnabled = true;
+            SellNowButton.IsEnabled = true;
+            PreviewSellButton.IsEnabled = true;
         }
     }
 
@@ -599,6 +782,317 @@ public partial class MainWindow : Window
         TabStatusText.Text = $"Вкладка {name}: {step}.";
     }
 
+    private void OnPickSellCellClick(object? sender, RoutedEventArgs e) => ShowSellPicker(step: false);
+
+    private void OnPickSellStepClick(object? sender, RoutedEventArgs e) => ShowSellPicker(step: true);
+
+    private void ShowSellPicker(bool step)
+    {
+        if (_running)
+        {
+            return;
+        }
+
+        var existing = step ? _sellStepPicker : _sellCellPicker;
+        if (existing is not null)
+        {
+            existing.Activate();
+            return;
+        }
+
+        if (step && !SellGridResolver.HasBase(_settings))
+        {
+            SetStatus("Сначала укажите первую ячейку области продажи.", StatusKind.Error);
+            return;
+        }
+
+        if (!NativeMethods.GetCursorPos(out var cursor))
+        {
+            SetStatus("Не удалось определить позицию курсора.", StatusKind.Error);
+            return;
+        }
+
+        var scaling = Screens.ScreenFromPoint(new PixelPoint(cursor.X, cursor.Y))?.Scaling ?? 1.0;
+        var half = (int)Math.Round(32 * scaling);
+
+        _picking = true;
+        PickSellCellButton.IsEnabled = false;
+        PickSellStepButton.IsEnabled = false;
+        PreviewSellButton.IsEnabled = false;
+        SellNowButton.IsEnabled = false;
+        RunButton.IsEnabled = false;
+
+        var picked = false;
+        var picker = new SlotPickerWindow();
+        picker.SlotPicked += (_, point) =>
+        {
+            picked = true;
+
+            if (step)
+            {
+                if (SellGridResolver.CaptureStep(_settings, point.X, point.Y))
+                {
+                    SetStatus(
+                        $"Шаг ячеек: {SellGridResolver.StepPixelsX(_settings)} × {SellGridResolver.StepPixelsY(_settings)} px",
+                        StatusKind.Success);
+                }
+                else
+                {
+                    SetStatus("Сначала укажите первую ячейку области продажи.", StatusKind.Error);
+                }
+            }
+            else
+            {
+                SellGridResolver.CaptureBase(_settings, point.X, point.Y);
+                SetStatus(
+                    _settings.SellRightRatio is not null
+                        ? "Первая ячейка сохранена — область подстроится под окно игры"
+                        : "Первая ячейка сохранена (игра не найдена, сохранены координаты экрана)",
+                    StatusKind.Success);
+            }
+
+            UpdateSellUi();
+            SaveSettings();
+        };
+        picker.Closed += (_, _) =>
+        {
+            if (step)
+            {
+                _sellStepPicker = null;
+            }
+            else
+            {
+                _sellCellPicker = null;
+            }
+
+            _picking = false;
+            SetSellButtonsEnabled(true);
+
+            Show();
+            Activate();
+
+            if (!picked)
+            {
+                SetStatus("Выбор отменён", StatusKind.Idle);
+            }
+        };
+
+        picker.Position = new PixelPoint(cursor.X - half, cursor.Y - half);
+        if (step)
+        {
+            _sellStepPicker = picker;
+        }
+        else
+        {
+            _sellCellPicker = picker;
+        }
+
+        Hide();
+        picker.Show();
+        SetStatus(
+            step
+                ? "Наведите квадрат на соседнюю ячейку и кликните (Esc — отмена)"
+                : "Наведите квадрат на первую ячейку сумки и кликните (Esc — отмена)",
+            StatusKind.Busy);
+    }
+
+    private void UpdateSellUi()
+    {
+        if (!SellGridResolver.HasBase(_settings))
+        {
+            SellGridStatusText.Text = "Область не задана";
+            SellGridStatusText.Foreground = ErrorBrush;
+            SellGridCoordsText.Text = "Нажмите «Ячейка 1» и кликните по левой верхней ячейке сумки.";
+            return;
+        }
+
+        var columns = Math.Clamp(_settings.SellColumns, 1, SellGridResolver.MaxColumns);
+        var rows = Math.Clamp(_settings.SellRows, 1, SellGridResolver.MaxRows);
+        var hasStep = SellGridResolver.HasStep(_settings);
+
+        if ((columns > 1 || rows > 1) && !hasStep)
+        {
+            SellGridStatusText.Text = "Нужен шаг ячеек";
+            SellGridStatusText.Foreground = ErrorBrush;
+            SellGridCoordsText.Text = "Нажмите «Шаг» и кликните по соседней ячейке.";
+            return;
+        }
+
+        SellGridStatusText.Text = "Область задана";
+        SellGridStatusText.Foreground = SuccessBrush;
+
+        var step = hasStep
+            ? $"шаг {SellGridResolver.StepPixelsX(_settings)} × {SellGridResolver.StepPixelsY(_settings)} px"
+            : "одна ячейка";
+        var cellCount = columns * rows;
+        var skipped = _settings.SellSkip.Count(index => index >= 0 && index < cellCount);
+
+        SellGridCoordsText.Text = $"{columns} × {rows} ячеек, {step}" +
+                                  (skipped > 0 ? $", исключено: {skipped}" : string.Empty) + ".";
+    }
+
+    private async void OnPreviewSellClick(object? sender, RoutedEventArgs e)
+    {
+        if (_running || _picking)
+        {
+            return;
+        }
+
+        ReadSettingsFromUi();
+
+        if (!SellGridResolver.HasBase(_settings))
+        {
+            SetStatus("Сначала выберите первую ячейку области продажи.", StatusKind.Error);
+            return;
+        }
+
+        if ((_settings.SellColumns > 1 || _settings.SellRows > 1) && !SellGridResolver.HasStep(_settings))
+        {
+            SetStatus("Сначала укажите шаг ячеек: «Шаг» и клик по соседней ячейке.", StatusKind.Error);
+            return;
+        }
+
+        if (!GameWindow.TryGetClientBounds(out var bounds))
+        {
+            SetStatus("Окно Drakensang не найдено — откройте игру и окно торговца.", StatusKind.Error);
+            return;
+        }
+
+        _picking = true;
+        SetSellButtonsEnabled(false);
+        Hide();
+
+        try
+        {
+            // Let the game repaint without our window on top.
+            await Task.Delay(400);
+
+            var capture = ScreenCapture.Capture(bounds);
+            var bitmap = CreateBitmap(capture.Pixels, capture.Width, capture.Height);
+            var cells = BuildSellPreviewCells(bounds);
+
+            if (cells.Count == 0)
+            {
+                _picking = false;
+                SetSellButtonsEnabled(true);
+                Show();
+                Activate();
+                SetStatus("Область продажи вне окна игры — выберите ячейки заново.", StatusKind.Error);
+                return;
+            }
+
+            var preview = new SellPreviewWindow();
+            preview.Initialize(bitmap, capture.Width, capture.Height, cells, _settings.SellSkip);
+            preview.Saved += (_, skip) =>
+            {
+                _settings.SellSkip = skip.ToList();
+                UpdateSellUi();
+                SaveSettings();
+                SetStatus($"Область продажи сохранена: исключено ячеек {skip.Count}.", StatusKind.Success);
+            };
+            preview.Closed += (_, _) =>
+            {
+                _sellPreview = null;
+                _picking = false;
+                SetSellButtonsEnabled(true);
+                Show();
+                Activate();
+            };
+
+            _sellPreview = preview;
+            preview.Show();
+
+            var expected = _settings.SellColumns * _settings.SellRows;
+            if (cells.Count < expected)
+            {
+                SetStatus(
+                    $"Внимание: {expected - cells.Count} ячеек вне окна игры — проверьте калибровку области.",
+                    StatusKind.Error);
+            }
+            else
+            {
+                SetStatus("Проверьте область: клик по ячейке исключает её из продажи.", StatusKind.Busy);
+            }
+        }
+        catch (Exception ex)
+        {
+            _picking = false;
+            SetSellButtonsEnabled(true);
+            Show();
+            Activate();
+            SetStatus("Не удалось сделать снимок: " + ex.Message, StatusKind.Error);
+        }
+    }
+
+    private List<SellPreviewWindow.Cell> BuildSellPreviewCells(ClientBounds bounds)
+    {
+        var cells = new List<SellPreviewWindow.Cell>();
+
+        if (!SellGridResolver.TryResolveGrid(
+                _settings,
+                out var firstX,
+                out var firstY,
+                out var stepX,
+                out var stepY))
+        {
+            return cells;
+        }
+
+        var width = Math.Max(24, Math.Abs(stepX));
+        var height = Math.Max(24, Math.Abs(stepY));
+
+        for (var row = 0; row < _settings.SellRows; row++)
+        {
+            for (var column = 0; column < _settings.SellColumns; column++)
+            {
+                var x = firstX + column * stepX;
+                var y = firstY + row * stepY;
+
+                if (x < bounds.Left || x >= bounds.Right || y < bounds.Top || y >= bounds.Bottom)
+                {
+                    continue;
+                }
+
+                cells.Add(new SellPreviewWindow.Cell(
+                    SellGridResolver.IndexOf(column, row, _settings.SellColumns),
+                    x - width / 2.0 - bounds.Left,
+                    y - height / 2.0 - bounds.Top,
+                    width,
+                    height));
+            }
+        }
+
+        return cells;
+    }
+
+    private static WriteableBitmap CreateBitmap(byte[] pixels, int width, int height)
+    {
+        var bitmap = new WriteableBitmap(
+            new PixelSize(width, height),
+            new Vector(96, 96),
+            PixelFormat.Bgra8888,
+            AlphaFormat.Opaque);
+
+        using var buffer = bitmap.Lock();
+        var rowBytes = buffer.RowBytes;
+
+        for (var y = 0; y < height; y++)
+        {
+            Marshal.Copy(pixels, y * width * 4, IntPtr.Add(buffer.Address, y * rowBytes), width * 4);
+        }
+
+        return bitmap;
+    }
+
+    private void SetSellButtonsEnabled(bool enabled)
+    {
+        PickSellCellButton.IsEnabled = enabled;
+        PickSellStepButton.IsEnabled = enabled;
+        PreviewSellButton.IsEnabled = enabled;
+        SellNowButton.IsEnabled = enabled;
+        RunButton.IsEnabled = enabled;
+    }
+
     private void ScheduleSave()
     {
         if (_saveTimer is null)
@@ -654,6 +1148,8 @@ public partial class MainWindow : Window
         SaveSettings();
         _hotkey?.Dispose();
         _hotkey = null;
+        _sellHotkey?.Dispose();
+        _sellHotkey = null;
     }
 
     private void SetStatus(string text, StatusKind kind)

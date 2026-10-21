@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -57,6 +58,39 @@ internal sealed class FastMountSettings
     /// <summary>Пауза между действиями макроса, мс. Одна на весь сценарий.</summary>
     public int DelayMs { get; set; } = 30;
 
+    // ---- Auto-sell -------------------------------------------------------
+
+    /// <summary>Hotkey that sells the configured bag area while the game is focused.</summary>
+    public string SellHotkey { get; set; } = "F9";
+
+    /// <summary>First cell of the selling grid (its centre).</summary>
+    public int SellX { get; set; }
+
+    public int SellY { get; set; }
+
+    public double? SellRightRatio { get; set; }
+
+    public double? SellTopRatio { get; set; }
+
+    /// <summary>Distance between neighbouring cells, in screen pixels.</summary>
+    public int SellStepX { get; set; }
+
+    public int SellStepY { get; set; }
+
+    public double? SellStepRightRatio { get; set; }
+
+    public double? SellStepTopRatio { get; set; }
+
+    public int SellColumns { get; set; } = 8;
+
+    public int SellRows { get; set; } = 6;
+
+    /// <summary>
+    /// Row-major cell indices that must not be sold (unchecked in the preview).
+    /// Missing entries mean "sell everything in the grid".
+    /// </summary>
+    public List<int> SellSkip { get; set; } = new();
+
     public bool AlwaysOnTop { get; set; }
 
     public static string FilePath => Path.Combine(AppContext.BaseDirectory, "config.json");
@@ -74,6 +108,12 @@ internal sealed class FastMountSettings
             var settings = JsonSerializer.Deserialize<FastMountSettings>(json) ?? new FastMountSettings();
             settings.MigrateTabPoints(json);
             settings.MigrateDelay(json);
+
+            // Hand-edited or older configs may miss the auto-sell section.
+            settings.SellSkip ??= new List<int>();
+            settings.SellColumns = Math.Clamp(settings.SellColumns, 1, SellGridResolver.MaxColumns);
+            settings.SellRows = Math.Clamp(settings.SellRows, 1, SellGridResolver.MaxRows);
+
             return settings;
         }
         catch

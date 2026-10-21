@@ -99,6 +99,9 @@
         <Style Selector="Border.chapterTab.cyan">
             <Setter Property="BorderBrush" Value="#662CB67D" />
         </Style>
+        <Style Selector="Border.chapterTab.crimson">
+            <Setter Property="BorderBrush" Value="#66C93B3B" />
+        </Style>
 
         <Style Selector="Border.statusFrame">
             <Setter Property="Background" Value="{StaticResource ObsidianBlackBrush}" />
@@ -672,6 +675,107 @@
                                 <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource EssenceCyanBrush}" VerticalAlignment="Center" />
                                 <TextBlock Classes="chapterTitle" Text="III" Foreground="{StaticResource EssenceCyanBrush}" />
                                 <TextBlock Classes="chapterTitle" Text="КЛАВИШИ И ЗАДЕРЖКИ" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- IV. Auto-sell -->
+                    <Grid>
+                        <Border Classes="cardFrame" Margin="0,16,0,0">
+                            <Border Classes="cardInner">
+                                <Grid>
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                    <StackPanel Margin="22,26,22,18" Spacing="13">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                            <TextBlock Classes="label"
+                                                       Text="Хоткей"
+                                                       VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                                                <TextBox x:Name="SellHotkeyBox"
+                                                         Width="160"
+                                                         IsReadOnly="True"
+                                                         AutomationProperties.AutomationId="SellHotkeyBox"
+                                                         PlaceholderText="Нажмите клавишу"
+                                                         VerticalAlignment="Center" />
+                                                <TextBlock x:Name="SellHotkeyStatusText"
+                                                           Classes="hint"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock Classes="hint"
+                                                   Text="Хоткей срабатывает, когда активна игра. Продажа идёт правым кликом, поэтому у торговца должно быть открыто окно «Купить и продать»." />
+
+                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                <TextBlock x:Name="SellGridStatusText"
+                                                           Classes="label"
+                                                           Text="Область не задана" />
+                                                <TextBlock x:Name="SellGridCoordsText"
+                                                           Classes="hint"
+                                                           Text="Нажмите «Ячейка 1» и кликните по левой верхней ячейке сумки." />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <Button x:Name="PickSellCellButton"
+                                                        Classes="outline"
+                                                        Content="Ячейка 1"
+                                                        Click="OnPickSellCellClick" />
+                                                <Button x:Name="PickSellStepButton"
+                                                        Classes="outline"
+                                                        Content="Шаг"
+                                                        Click="OnPickSellStepClick" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="14">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Classes="axis" Text="Столбцы" />
+                                                <NumericUpDown x:Name="SellColumnsBox"
+                                                               Width="110" Height="38"
+                                                               Minimum="1" Maximum="20"
+                                                               Increment="1" FormatString="0" ShowButtonSpinner="False" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <TextBlock Classes="axis" Text="Строки" />
+                                                <NumericUpDown x:Name="SellRowsBox"
+                                                               Width="110" Height="38"
+                                                               Minimum="1" Maximum="20"
+                                                               Increment="1" FormatString="0" ShowButtonSpinner="False" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button x:Name="PreviewSellButton"
+                                                    Classes="outline"
+                                                    Content="Проверить область…"
+                                                    Click="OnPreviewSellClick" />
+                                            <Button x:Name="SellNowButton"
+                                                    Classes="outline"
+                                                    Content="Продать сейчас"
+                                                    Click="OnSellNowClick" />
+                                        </StackPanel>
+
+                                        <TextBlock Classes="hint"
+                                                   Text="«Проверить область» делает снимок игры: кликните по ячейке, чтобы исключить её из продажи. Макрос ничего не открывает и не закрывает — только правые клики по включённым ячейкам." />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <Border Classes="chapterTab crimson"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="18,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource CrimsonRedBrush}" VerticalAlignment="Center" />
+                                <TextBlock Classes="chapterTitle" Text="IV" Foreground="{StaticResource CrimsonRedBrush}" />
+                                <TextBlock Classes="chapterTitle" Text="АВТО-ПРОДАЖА" />
                             </StackPanel>
                         </Border>
                     </Grid>
