@@ -96,50 +96,22 @@ internal static class FastMountRunner
 
         try
         {
-            if (settings.CloseInventoryBeforeMount)
-            {
-                await OpenInventoryAsync(settings, inventoryKey, report, cancellationToken);
+            await OpenInventoryAsync(settings, inventoryKey, report, cancellationToken);
 
-                report("Надеваю плащ с быстрым маунтом");
-                await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-                await DelayAsync(settings.CapeSwapDelayMs, cancellationToken);
+            report("Надеваю плащ с быстрым маунтом");
+            await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
+            await DelayAsync(settings.CapeSwapDelayMs, cancellationToken);
 
-                report("Закрываю инвентарь");
-                InputSimulator.KeyPress(inventoryKey);
-                await DelayAsync(settings.InventoryDelayMs, cancellationToken);
+            report("Вызываю маунта");
+            InputSimulator.KeyPress(mountKey);
+            await DelayAsync(settings.MountDelayMs, cancellationToken);
 
-                report("Вызываю маунта");
-                InputSimulator.KeyPress(mountKey);
-                await DelayAsync(settings.MountDelayMs, cancellationToken);
+            report("Возвращаю старый плащ");
+            await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
+            await DelayAsync(settings.PostActionDelayMs, cancellationToken);
 
-                await OpenInventoryAsync(settings, inventoryKey, report, cancellationToken);
-
-                report("Возвращаю старый плащ");
-                await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-                await DelayAsync(settings.PostActionDelayMs, cancellationToken);
-
-                report("Закрываю инвентарь");
-                InputSimulator.KeyPress(inventoryKey);
-            }
-            else
-            {
-                await OpenInventoryAsync(settings, inventoryKey, report, cancellationToken);
-
-                report("Надеваю плащ с быстрым маунтом");
-                await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-                await DelayAsync(settings.CapeSwapDelayMs, cancellationToken);
-
-                report("Вызываю маунта");
-                InputSimulator.KeyPress(mountKey);
-                await DelayAsync(settings.MountDelayMs, cancellationToken);
-
-                report("Возвращаю старый плащ");
-                await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-                await DelayAsync(settings.PostActionDelayMs, cancellationToken);
-
-                report("Закрываю инвентарь");
-                InputSimulator.KeyPress(inventoryKey);
-            }
+            report("Закрываю инвентарь");
+            InputSimulator.KeyPress(inventoryKey);
         }
         finally
         {

@@ -541,9 +541,7 @@
                                         </Grid>
 
                                         <TextBlock Classes="hint"
-                                                   Text="Квадрат сам следует за мышью. Кликните левой кнопкой по ячейке — координаты запишутся сразу, Esc отменяет. Старый плащ после смены возвращается в эту же ячейку, поэтому второго слота не нужно." />
-                                        <TextBlock Classes="hint"
-                                                   Text="Позиция запоминается относительно окна игры: при смене разрешения или переходе в оконный режим слот менять не нужно." />
+                                                   Text="Квадрат сам следует за мышью. Кликните левой кнопкой по ячейке — координаты запишутся сразу, Esc отменяет." />
 
                                         <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
 
@@ -694,16 +692,6 @@
                                                 </StackPanel>
                                             </StackPanel>
                                         </Grid>
-                                        <TextBlock Classes="hint"
-                                                   Text="DrakenHub использует 30 мс на каждое действие — столько же стоит по умолчанию здесь. Увеличивайте только если какое-то действие не успевает сработать." />
-
-                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
-
-                                        <CheckBox x:Name="CloseInventoryBeforeMountCheck"
-                                                  Content="Вызывать маунта с закрытым инвентарём (экспериментально)"
-                                                  AutomationProperties.AutomationId="CloseInventoryBeforeMountCheck" />
-                                        <TextBlock Classes="hint"
-                                                   Text="DrakenHub вызывает маунта с открытым инвентарём, поэтому по умолчанию выключено. Включите, только если быстрый вызов не срабатывает: макрос закроет инвентарь перед вызовом и откроет снова, чтобы вернуть плащ." />
                                     </StackPanel>
                                 </Grid>
                             </Border>
