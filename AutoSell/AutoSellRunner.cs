@@ -49,6 +49,12 @@ internal static class AutoSellRunner
             return false;
         }
 
+        if (settings.SellUseRarity && !RarityCatalog.AnySelected(settings))
+        {
+            error = "Выберите хотя бы одну редкость для продажи или отключите фильтр редкости.";
+            return false;
+        }
+
         error = string.Empty;
         return true;
     }
@@ -80,7 +86,9 @@ internal static class AutoSellRunner
         }
 
         var skip = settings.SellSkip;
-        var targets = new List<(int X, int Y)>();
+        var cellWidth = Math.Abs(stepX) > 0 ? Math.Abs(stepX) : 44;
+        var cellHeight = Math.Abs(stepY) > 0 ? Math.Abs(stepY) : 44;
+        var targets = new List<SellTarget>();
 
         for (var row = 0; row < settings.SellRows; row++)
         {
@@ -101,7 +109,14 @@ internal static class AutoSellRunner
                         "Ячейка области оказалась вне окна игры. Проверьте калибровку области продажи.");
                 }
 
-                targets.Add((x, y));
+                targets.Add(new SellTarget(
+                    index,
+                    x,
+                    y,
+                    x - cellWidth / 2 - bounds.Left,
+                    y - cellHeight / 2 - bounds.Top,
+                    cellWidth,
+                    cellHeight));
             }
         }
 
@@ -111,11 +126,81 @@ internal static class AutoSellRunner
         }
 
         var hasOriginalCursor = NativeMethods.GetCursorPos(out var originalCursor);
-        var clicked = 0;
 
         try
         {
-            foreach (var (x, y) in targets)
+            if (hasOriginalCursor && settings.SellUseRarity)
+            {
+                // Move the cursor away so a tooltip or hover highlight cannot hide
+                // the item borders while the screen is being read.
+                NativeMethods.SetCursorPos(bounds.Left + 2, bounds.Top + 2);
+                await Task.Delay(120, cancellationToken);
+            }
+
+            if (settings.SellUseRarity)
+            {
+                if (!RarityCatalog.AnySelected(settings))
+                {
+                    throw new InvalidOperationException(
+                        "Выберите хотя бы одну редкость для продажи или отключите фильтр редкости.");
+                }
+
+                report("Определяю редкость предметов");
+                ScreenCaptureResult capture;
+                try
+                {
+                    capture = ScreenCapture.Capture(bounds);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        "Не удалось снять экран для определения редкости: " + ex.Message, ex);
+                }
+
+                var allowed = new List<SellTarget>();
+                var unknown = 0;
+
+                foreach (var target in targets)
+                {
+                    var rarity = RarityDetector.Detect(
+                        capture.Pixels,
+                        capture.Width,
+                        capture.Height,
+                        target.Left,
+                        target.Top,
+                        target.Width,
+                        target.Height);
+
+                    if (rarity == ItemRarity.Unknown)
+                    {
+                        unknown++;
+                    }
+
+                    if (RarityCatalog.IsSellable(settings, rarity))
+                    {
+                        allowed.Add(target);
+                    }
+                }
+
+                if (allowed.Count == 0)
+                {
+                    throw new InvalidOperationException(
+                        unknown == targets.Count
+                            ? "Редкость не распознана ни у одного предмета. Отключите фильтр редкости или проверьте область по снимку."
+                            : "Среди предметов нет выбранных редкостей — продавать нечего.");
+                }
+
+                targets = allowed;
+
+                if (unknown > 0)
+                {
+                    report($"Редкость не распознана у {unknown} — пропускаю их");
+                }
+            }
+
+            var clicked = 0;
+
+            foreach (var target in targets)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -126,7 +211,7 @@ internal static class AutoSellRunner
                         "Игра перестала быть активной — продажа остановлена.");
                 }
 
-                InputSimulator.RightClick(x, y);
+                InputSimulator.RightClick(target.X, target.Y);
                 clicked++;
 
                 if (clicked % 5 == 0)
@@ -136,6 +221,8 @@ internal static class AutoSellRunner
 
                 await DelayAsync(settings.DelayMs, cancellationToken);
             }
+
+            report($"Обработано ячеек: {clicked} из {targets.Count}");
         }
         finally
         {
@@ -144,9 +231,16 @@ internal static class AutoSellRunner
                 NativeMethods.SetCursorPos(originalCursor.X, originalCursor.Y);
             }
         }
-
-        report($"Обработано ячеек: {clicked} из {targets.Count}");
     }
+
+    private readonly record struct SellTarget(
+        int Index,
+        int X,
+        int Y,
+        int Left,
+        int Top,
+        int Width,
+        int Height);
 
     private static async Task DelayAsync(int milliseconds, CancellationToken cancellationToken)
     {

@@ -60,7 +60,7 @@
             <StackPanel Spacing="3">
                 <TextBlock Classes="title" Text="ПРОВЕРКА ОБЛАСТИ ПРОДАЖИ" />
                 <TextBlock Classes="hint"
-                           Text="Кликните по ячейке, чтобы исключить её: серые ячейки не будут проданы." />
+                           Text="Сплошная рамка — предмет будет продан, пунктир — пропущен по редкости. Кликните по продаваемой ячейке, чтобы исключить её вручную." />
             </StackPanel>
             <Button Grid.Column="1"
                     Width="36" Height="30"
@@ -88,6 +88,7 @@
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
             <StackPanel Spacing="5" VerticalAlignment="Center">
                 <TextBlock x:Name="SummaryText" Classes="summary" Text="Будет продано: 0 из 0 ячеек." />
+                <TextBlock x:Name="RarityBreakdownText" Classes="hint" Text="" />
                 <TextBlock Classes="hint"
                            Text="Продажа идёт правым кликом. У торговца должно быть открыто окно «Купить и продать»." />
             </StackPanel>

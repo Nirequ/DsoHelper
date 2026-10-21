@@ -261,6 +261,52 @@
             <Setter Property="BorderBrush" Value="#F7D48A" />
         </Style>
 
+        <!-- Section tabs (Fast Mount / Auto-Sell) -->
+        <Style Selector="Button.sectionTab">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LetterSpacing" Value="1.1" />
+            <Setter Property="Background" Value="{StaticResource DeepDungeonBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.sectionTab:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBrush}" />
+        </Style>
+        <Style Selector="Button.sectionTab.selected">
+            <Setter Property="Background" Value="{StaticResource GoldButtonBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldLightBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ObsidianBlackBrush}" />
+        </Style>
+        <Style Selector="Button.sectionTab.selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AncientGoldLightBrush}" />
+            <Setter Property="BorderBrush" Value="#F7D48A" />
+        </Style>
+
+        <!-- Destructive action (auto-sell) -->
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="{StaticResource CrimsonRedBrush}" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#E06A6A" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="LetterSpacing" Value="1.2" />
+        </Style>
+        <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#D95454" />
+            <Setter Property="BorderBrush" Value="#F08A8A" />
+        </Style>
+        <Style Selector="Button.danger:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#A82E2E" />
+        </Style>
+
         <!-- DSO-style diamond checkbox -->
         <Style Selector="CheckBox">
             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
@@ -404,7 +450,8 @@
                     <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
                         <TextBlock Classes="eyebrow" Text="DRAKENSANG ONLINE" />
                         <TextBlock Classes="h1" Text="DSO HELPER" FontSize="24" />
-                        <TextBlock Classes="subtitle"
+                        <TextBlock x:Name="SectionSubtitleText"
+                                   Classes="subtitle"
                                    Text="Fast Mount — быстрая смена плаща" />
                     </StackPanel>
 
@@ -457,13 +504,30 @@
                             Background="{StaticResource GoldRuleRightBrush}"
                             VerticalAlignment="Center" />
                 </Grid>
+
+                <!-- Section tabs -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Button x:Name="FastMountTabButton"
+                            Classes="sectionTab selected"
+                            Content="FAST MOUNT"
+                            Tag="fastmount"
+                            Click="OnSectionTabClick" />
+                    <Button x:Name="AutoSellTabButton"
+                            Grid.Column="1"
+                            Classes="sectionTab"
+                            Content="АВТО-ПРОДАЖА"
+                            Tag="autosell"
+                            Click="OnSectionTabClick" />
+                </Grid>
             </StackPanel>
 
             <!-- Chapters -->
-            <ScrollViewer Grid.Row="1"
+            <ScrollViewer x:Name="ChaptersScroll"
+                          Grid.Row="1"
                           HorizontalScrollBarVisibility="Disabled"
                           VerticalScrollBarVisibility="Hidden">
-                <StackPanel Spacing="19">
+                <Grid>
+                    <StackPanel x:Name="FastMountSection" Spacing="19">
                     <!-- I. Launch -->
                     <Grid>
                         <Border Classes="cardFrame" Margin="0,16,0,0">
@@ -678,7 +742,9 @@
                             </StackPanel>
                         </Border>
                     </Grid>
+                    </StackPanel>
 
+                    <StackPanel x:Name="AutoSellSection" Spacing="19" IsVisible="False">
                     <!-- IV. Auto-sell -->
                     <Grid>
                         <Border Classes="cardFrame" Margin="0,16,0,0">
@@ -750,16 +816,77 @@
                                             </StackPanel>
                                         </Grid>
 
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Button x:Name="PreviewSellButton"
-                                                    Classes="outline"
-                                                    Content="Проверить область…"
-                                                    Click="OnPreviewSellClick" />
-                                            <Button x:Name="SellNowButton"
-                                                    Classes="outline"
-                                                    Content="Продать сейчас"
-                                                    Click="OnSellNowClick" />
-                                        </StackPanel>
+                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                            <TextBlock Classes="subheading" Text="РЕДКОСТЬ" />
+                                            <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <CheckBox x:Name="SellUseRarityCheck"
+                                                  Content="Продавать только выбранные редкости"
+                                                  IsCheckedChanged="OnSellRarityChanged" />
+
+                                        <Grid x:Name="SellRarityPanel"
+                                              ColumnDefinitions="Auto,Auto,Auto"
+                                              RowDefinitions="Auto,Auto"
+                                              ColumnSpacing="16"
+                                              RowSpacing="6">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                                      Width="8" Height="8" Stretch="Fill"
+                                                      Fill="{StaticResource RarityBasicBrush}"
+                                                      VerticalAlignment="Center" />
+                                                <CheckBox x:Name="SellBasicCheck"
+                                                          Content="Обычные"
+                                                          IsCheckedChanged="OnSellRarityChanged" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                                      Width="8" Height="8" Stretch="Fill"
+                                                      Fill="{StaticResource RarityImprovedBrush}"
+                                                      VerticalAlignment="Center" />
+                                                <CheckBox x:Name="SellImprovedCheck"
+                                                          Content="Улучшенные"
+                                                          IsCheckedChanged="OnSellRarityChanged" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5">
+                                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                                      Width="8" Height="8" Stretch="Fill"
+                                                      Fill="{StaticResource RarityExtraordinaryBrush}"
+                                                      VerticalAlignment="Center" />
+                                                <CheckBox x:Name="SellExtraordinaryCheck"
+                                                          Content="Необычные"
+                                                          IsCheckedChanged="OnSellRarityChanged" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="5">
+                                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                                      Width="8" Height="8" Stretch="Fill"
+                                                      Fill="{StaticResource RarityLegendaryBrush}"
+                                                      VerticalAlignment="Center" />
+                                                <CheckBox x:Name="SellLegendaryCheck"
+                                                          Content="Легендарные"
+                                                          IsCheckedChanged="OnSellRarityChanged" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                                      Width="8" Height="8" Stretch="Fill"
+                                                      Fill="{StaticResource RarityUniqueBrush}"
+                                                      VerticalAlignment="Center" />
+                                                <CheckBox x:Name="SellUniqueCheck"
+                                                          Content="Уникальные"
+                                                          IsCheckedChanged="OnSellRarityChanged" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock Classes="hint"
+                                                   Text="Редкость определяется по цвету рамки на снимке. Предметы с нераспознанной рамкой не продаются — проверьте область по снимку." />
+
+                                        <Button x:Name="PreviewSellButton"
+                                                Classes="outline"
+                                                HorizontalAlignment="Left"
+                                                Content="Проверить область…"
+                                                Click="OnPreviewSellClick" />
 
                                         <TextBlock Classes="hint"
                                                    Text="«Проверить область» делает снимок игры: кликните по ячейке, чтобы исключить её из продажи. Макрос ничего не открывает и не закрывает — только правые клики по включённым ячейкам." />
@@ -779,54 +906,89 @@
                             </StackPanel>
                         </Border>
                     </Grid>
-
                 </StackPanel>
+                </Grid>
             </ScrollViewer>
 
             <!-- Primary action, always within reach -->
-            <StackPanel Grid.Row="2" Spacing="8">
-                <Border BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
-                        BorderThickness="1"
-                        CornerRadius="4"
-                        Padding="3"
-                        BoxShadow="0 0 30 0 #66E0A93B">
-                    <Border Background="{StaticResource ObsidianBlackBrush}"
-                            BorderBrush="{StaticResource AncientGoldBrush}"
+            <Grid Grid.Row="2">
+                <StackPanel x:Name="FastMountActions" Spacing="8">
+                    <Border BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
                             BorderThickness="1"
-                            CornerRadius="2"
-                            Padding="2">
-                        <Button x:Name="RunButton"
-                                Classes="primary"
-                                Height="52"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                Click="OnRunClick">
-                            <StackPanel Orientation="Horizontal"
-                                        Spacing="12"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center">
-                                <Grid Width="24" Height="16" VerticalAlignment="Center">
-                                    <Path Data="M1,8 C6,1 18,1 23,8 C18,15 6,15 1,8 Z"
-                                          Stroke="{StaticResource ObsidianBlackBrush}"
-                                          StrokeThickness="1.6" />
-                                    <Path Data="M12,4 C14,6 14,10 12,12 C10,10 10,6 12,4 Z"
-                                          Fill="{StaticResource ObsidianBlackBrush}" />
-                                </Grid>
-                                <TextBlock Text="ВЫПОЛНИТЬ FAST MOUNT"
+                            CornerRadius="4"
+                            Padding="3"
+                            BoxShadow="0 0 30 0 #66E0A93B">
+                        <Border Background="{StaticResource ObsidianBlackBrush}"
+                                BorderBrush="{StaticResource AncientGoldBrush}"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                Padding="2">
+                            <Button x:Name="RunButton"
+                                    Classes="primary"
+                                    Height="52"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
+                                    Click="OnRunClick">
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="12"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                    <Grid Width="24" Height="16" VerticalAlignment="Center">
+                                        <Path Data="M1,8 C6,1 18,1 23,8 C18,15 6,15 1,8 Z"
+                                              Stroke="{StaticResource ObsidianBlackBrush}"
+                                              StrokeThickness="1.6" />
+                                        <Path Data="M12,4 C14,6 14,10 12,12 C10,10 10,6 12,4 Z"
+                                              Fill="{StaticResource ObsidianBlackBrush}" />
+                                    </Grid>
+                                    <TextBlock Text="ВЫПОЛНИТЬ FAST MOUNT"
+                                               FontFamily="{StaticResource DisplayFont}"
+                                               FontSize="16"
+                                               LetterSpacing="1.2"
+                                               Foreground="{StaticResource ObsidianBlackBrush}" />
+                                </StackPanel>
+                            </Button>
+                        </Border>
+                    </Border>
+
+                    <TextBlock Classes="hint"
+                               TextAlignment="Center"
+                               Text="Хоткей срабатывает, когда активна игра. Кнопка «Выполнить» сама переключится в окно Drakensang." />
+                </StackPanel>
+
+                <StackPanel x:Name="AutoSellActions" Spacing="8" IsVisible="False">
+                    <Border BorderBrush="{StaticResource CrimsonRedBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="3"
+                            Opacity="0.95"
+                            BoxShadow="0 0 26 0 #55C93B3B">
+                        <Border Background="{StaticResource ObsidianBlackBrush}"
+                                BorderBrush="{StaticResource CrimsonRedBrush}"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                Padding="2">
+                            <Button x:Name="SellNowButton"
+                                    Classes="danger"
+                                    Height="52"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
+                                    Click="OnSellNowClick">
+                                <TextBlock Text="ПРОДАТЬ СЕЙЧАС"
                                            FontFamily="{StaticResource DisplayFont}"
                                            FontSize="16"
                                            LetterSpacing="1.2"
-                                           Foreground="{StaticResource ObsidianBlackBrush}" />
-                            </StackPanel>
-                        </Button>
+                                           Foreground="#FFFFFF" />
+                            </Button>
+                        </Border>
                     </Border>
-                </Border>
 
-                <TextBlock Classes="hint"
-                           TextAlignment="Center"
-                           Text="Хоткей срабатывает, когда активна игра. Кнопка «Выполнить» сама переключится в окно Drakensang." />
-            </StackPanel>
+                    <TextBlock Classes="hint"
+                               TextAlignment="Center"
+                               Text="Хоткей срабатывает, когда активна игра. Окно торговца «Купить и продать» должно быть открыто." />
+                </StackPanel>
+            </Grid>
 
             <!-- Status plaque -->
             <Border Grid.Row="3" Classes="statusFrame">

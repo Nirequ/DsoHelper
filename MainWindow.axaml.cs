@@ -42,6 +42,7 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _runCts;
     private bool _running;
     private bool _picking;
+    private bool _loadingUi;
 
     public MainWindow()
     {
@@ -120,26 +121,43 @@ public partial class MainWindow : Window
 
     private void LoadSettingsIntoUi()
     {
-        HotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.Hotkey, out var hotkey, out _)
-            ? hotkey.Display
-            : _settings.Hotkey;
-        InventoryKeyBox.Text = CanonicalKey(_settings.InventoryKey, "I");
-        MountKeyBox.Text = CanonicalKey(_settings.MountKey, "M");
+        _loadingUi = true;
 
-        DelayBox.Value = _settings.DelayMs;
+        try
+        {
+            HotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.Hotkey, out var hotkey, out _)
+                ? hotkey.Display
+                : _settings.Hotkey;
+            InventoryKeyBox.Text = CanonicalKey(_settings.InventoryKey, "I");
+            MountKeyBox.Text = CanonicalKey(_settings.MountKey, "M");
 
-        SellHotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.SellHotkey, out var sellHotkey, out _)
-            ? sellHotkey.Display
-            : _settings.SellHotkey;
-        SellColumnsBox.Value = Math.Clamp(_settings.SellColumns, 1, SellGridResolver.MaxColumns);
-        SellRowsBox.Value = Math.Clamp(_settings.SellRows, 1, SellGridResolver.MaxRows);
+            DelayBox.Value = _settings.DelayMs;
 
-        SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
+            SellHotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.SellHotkey, out var sellHotkey, out _)
+                ? sellHotkey.Display
+                : _settings.SellHotkey;
+            SellColumnsBox.Value = Math.Clamp(_settings.SellColumns, 1, SellGridResolver.MaxColumns);
+            SellRowsBox.Value = Math.Clamp(_settings.SellRows, 1, SellGridResolver.MaxRows);
 
-        AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
-        UpdateSlotUi();
-        UpdateTabUi();
-        UpdateSellUi();
+            SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
+
+            SellUseRarityCheck.IsChecked = _settings.SellUseRarity;
+            SellBasicCheck.IsChecked = _settings.SellBasic;
+            SellImprovedCheck.IsChecked = _settings.SellImproved;
+            SellExtraordinaryCheck.IsChecked = _settings.SellExtraordinary;
+            SellLegendaryCheck.IsChecked = _settings.SellLegendary;
+            SellUniqueCheck.IsChecked = _settings.SellUnique;
+
+            AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
+            UpdateSlotUi();
+            UpdateTabUi();
+            UpdateRarityUi();
+            UpdateSellUi();
+        }
+        finally
+        {
+            _loadingUi = false;
+        }
     }
 
     private void ReadSettingsFromUi()
@@ -160,8 +178,70 @@ public partial class MainWindow : Window
 
         _settings.SellColumns = Math.Clamp(ToInt(SellColumnsBox), 1, SellGridResolver.MaxColumns);
         _settings.SellRows = Math.Clamp(ToInt(SellRowsBox), 1, SellGridResolver.MaxRows);
+        _settings.SellUseRarity = SellUseRarityCheck.IsChecked == true;
+        _settings.SellBasic = SellBasicCheck.IsChecked == true;
+        _settings.SellImproved = SellImprovedCheck.IsChecked == true;
+        _settings.SellExtraordinary = SellExtraordinaryCheck.IsChecked == true;
+        _settings.SellLegendary = SellLegendaryCheck.IsChecked == true;
+        _settings.SellUnique = SellUniqueCheck.IsChecked == true;
         _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
+    }
+
+    private void OnSellRarityChanged(object? sender, RoutedEventArgs e)
+    {
+        UpdateRarityUi();
+
+        if (_loadingUi)
+        {
+            return;
+        }
+
+        _settings.SellUseRarity = SellUseRarityCheck.IsChecked == true;
+        _settings.SellBasic = SellBasicCheck.IsChecked == true;
+        _settings.SellImproved = SellImprovedCheck.IsChecked == true;
+        _settings.SellExtraordinary = SellExtraordinaryCheck.IsChecked == true;
+        _settings.SellLegendary = SellLegendaryCheck.IsChecked == true;
+        _settings.SellUnique = SellUniqueCheck.IsChecked == true;
+
+        UpdateSellUi();
+        ScheduleSave();
+    }
+
+    private void UpdateRarityUi()
+    {
+        var useRarity = SellUseRarityCheck.IsChecked == true;
+        SellRarityPanel.IsEnabled = useRarity;
+        SellRarityPanel.Opacity = useRarity ? 1 : 0.45;
+    }
+
+    private void OnSectionTabClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string section })
+        {
+            return;
+        }
+
+        var fastMount = !string.Equals(section, "autosell", StringComparison.OrdinalIgnoreCase);
+
+        FastMountSection.IsVisible = fastMount;
+        AutoSellSection.IsVisible = !fastMount;
+        FastMountActions.IsVisible = fastMount;
+        AutoSellActions.IsVisible = !fastMount;
+
+        FastMountTabButton.Classes.Set("selected", fastMount);
+        AutoSellTabButton.Classes.Set("selected", !fastMount);
+
+        SectionSubtitleText.Text = fastMount
+            ? "Fast Mount — быстрая смена плаща"
+            : "Авто-продажа — фильтр по редкости";
+
+        ChaptersScroll.Offset = default;
+
+        if (!fastMount)
+        {
+            UpdateSellUi();
+        }
     }
 
     private static int ToInt(NumericUpDown box) =>
@@ -926,8 +1006,11 @@ public partial class MainWindow : Window
             : "одна ячейка";
         var cellCount = columns * rows;
         var skipped = _settings.SellSkip.Count(index => index >= 0 && index < cellCount);
+        var rarity = _settings.SellUseRarity
+            ? $"редкости: {RarityCatalog.Allowed(_settings).Count()} из 5"
+            : "все редкости";
 
-        SellGridCoordsText.Text = $"{columns} × {rows} ячеек, {step}" +
+        SellGridCoordsText.Text = $"{columns} × {rows} ячеек, {step}, {rarity}" +
                                   (skipped > 0 ? $", исключено: {skipped}" : string.Empty) + ".";
     }
 
@@ -969,7 +1052,7 @@ public partial class MainWindow : Window
 
             var capture = ScreenCapture.Capture(bounds);
             var bitmap = CreateBitmap(capture.Pixels, capture.Width, capture.Height);
-            var cells = BuildSellPreviewCells(bounds);
+            var cells = BuildSellPreviewCells(bounds, capture);
 
             if (cells.Count == 0)
             {
@@ -982,7 +1065,14 @@ public partial class MainWindow : Window
             }
 
             var preview = new SellPreviewWindow();
-            preview.Initialize(bitmap, capture.Width, capture.Height, cells, _settings.SellSkip);
+            preview.Initialize(
+                bitmap,
+                capture.Width,
+                capture.Height,
+                cells,
+                _settings.SellSkip,
+                _settings.SellUseRarity,
+                RarityCatalog.Allowed(_settings));
             preview.Saved += (_, skip) =>
             {
                 _settings.SellSkip = skip.ToList();
@@ -1024,7 +1114,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private List<SellPreviewWindow.Cell> BuildSellPreviewCells(ClientBounds bounds)
+    private List<SellPreviewWindow.Cell> BuildSellPreviewCells(ClientBounds bounds, ScreenCaptureResult capture)
     {
         var cells = new List<SellPreviewWindow.Cell>();
 
@@ -1038,8 +1128,8 @@ public partial class MainWindow : Window
             return cells;
         }
 
-        var width = Math.Max(24, Math.Abs(stepX));
-        var height = Math.Max(24, Math.Abs(stepY));
+        var width = Math.Abs(stepX) > 0 ? Math.Abs(stepX) : 44;
+        var height = Math.Abs(stepY) > 0 ? Math.Abs(stepY) : 44;
 
         for (var row = 0; row < _settings.SellRows; row++)
         {
@@ -1053,12 +1143,25 @@ public partial class MainWindow : Window
                     continue;
                 }
 
+                var left = x - width / 2 - bounds.Left;
+                var top = y - height / 2 - bounds.Top;
+
+                var rarity = RarityDetector.Detect(
+                    capture.Pixels,
+                    capture.Width,
+                    capture.Height,
+                    left,
+                    top,
+                    width,
+                    height);
+
                 cells.Add(new SellPreviewWindow.Cell(
                     SellGridResolver.IndexOf(column, row, _settings.SellColumns),
-                    x - width / 2.0 - bounds.Left,
-                    y - height / 2.0 - bounds.Top,
+                    left,
+                    top,
                     width,
-                    height));
+                    height,
+                    rarity));
             }
         }
 

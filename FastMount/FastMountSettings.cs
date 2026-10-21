@@ -91,6 +91,19 @@ internal sealed class FastMountSettings
     /// </summary>
     public List<int> SellSkip { get; set; } = new();
 
+    /// <summary>Sell only items whose rarity is checked below.</summary>
+    public bool SellUseRarity { get; set; } = true;
+
+    public bool SellBasic { get; set; } = true;
+
+    public bool SellImproved { get; set; } = true;
+
+    public bool SellExtraordinary { get; set; }
+
+    public bool SellLegendary { get; set; }
+
+    public bool SellUnique { get; set; }
+
     public bool AlwaysOnTop { get; set; }
 
     public static string FilePath => Path.Combine(AppContext.BaseDirectory, "config.json");
