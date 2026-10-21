@@ -8,19 +8,14 @@ using DsoHelper.Infrastructure;
 namespace DsoHelper.UI;
 
 /// <summary>
-/// A small topmost square that the user drags over an inventory cell.
-/// After the mouse is released the position is confirmed in a few seconds.
+/// A small topmost square that follows the mouse cursor. A left click records the
+/// point under the cursor immediately; Esc (or right click) cancels.
 /// </summary>
 public partial class SlotPickerWindow : Window
 {
-    private const int ConfirmSeconds = 3;
     private const double DefaultMarkerSize = 64;
 
-    private readonly DispatcherTimer _countdown;
-
-    private bool _dragging;
-    private PixelPoint _dragOffset;
-    private int _secondsLeft;
+    private readonly DispatcherTimer _follow;
 
     public event EventHandler<PixelPoint>? SlotPicked;
 
@@ -28,106 +23,70 @@ public partial class SlotPickerWindow : Window
     {
         InitializeComponent();
 
-        _countdown = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _countdown.Tick += OnCountdownTick;
+        _follow = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(15) };
+        _follow.Tick += (_, _) => FollowCursor();
 
         PointerPressed += OnPointerPressed;
-        PointerMoved += OnPointerMoved;
-        PointerReleased += OnPointerReleased;
         KeyDown += OnKeyDown;
     }
 
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
+        FollowCursor();
+        _follow.Start();
         Activate();
+        Focus();
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _countdown.Stop();
+        _follow.Stop();
         base.OnClosed(e);
+    }
+
+    private void FollowCursor()
+    {
+        if (!NativeMethods.GetCursorPos(out var cursor))
+        {
+            return;
+        }
+
+        var halfWidth = (int)Math.Round(GetMarkerWidth() * RenderScaling / 2);
+        var halfHeight = (int)Math.Round(GetMarkerHeight() * RenderScaling / 2);
+        var next = new PixelPoint(cursor.X - halfWidth, cursor.Y - halfHeight);
+
+        if (Position != next)
+        {
+            Position = next;
+        }
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        var point = e.GetCurrentPoint(this);
+
+        if (point.Properties.IsRightButtonPressed)
+        {
+            Close();
+            e.Handled = true;
+            return;
+        }
+
+        if (!point.Properties.IsLeftButtonPressed)
         {
             return;
         }
 
-        _countdown.Stop();
-        HintText.Text = "+";
-        _dragging = true;
-        _dragOffset = GetDragOffset();
-        e.Pointer.Capture(this);
-        e.Handled = true;
-    }
-
-    private PixelPoint GetDragOffset()
-    {
-        var center = new PixelPoint(
-            (int)Math.Round(GetMarkerWidth() * RenderScaling / 2),
-            (int)Math.Round(GetMarkerHeight() * RenderScaling / 2));
-
-        return NativeMethods.GetCursorPos(out var cursor)
-            ? new PixelPoint(cursor.X - Position.X, cursor.Y - Position.Y)
-            : center;
-    }
-
-    private void OnPointerMoved(object? sender, PointerEventArgs e)
-    {
-        if (!_dragging || !NativeMethods.GetCursorPos(out var cursor))
+        if (!NativeMethods.GetCursorPos(out var cursor))
         {
             return;
         }
 
-        Position = new PixelPoint(cursor.X - _dragOffset.X, cursor.Y - _dragOffset.Y);
-        e.Handled = true;
-    }
-
-    private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        if (!_dragging)
-        {
-            return;
-        }
-
-        _dragging = false;
-        e.Pointer.Capture(null);
-        StartCountdown();
-        e.Handled = true;
-    }
-
-    private void StartCountdown()
-    {
-        _secondsLeft = ConfirmSeconds;
-        HintText.Text = _secondsLeft.ToString();
-        _countdown.Stop();
-        _countdown.Start();
-    }
-
-    private void OnCountdownTick(object? sender, EventArgs e)
-    {
-        _secondsLeft--;
-        if (_secondsLeft > 0)
-        {
-            HintText.Text = _secondsLeft.ToString();
-            return;
-        }
-
-        _countdown.Stop();
-        Confirm();
-    }
-
-    private void Confirm()
-    {
-        var center = new PixelPoint(
-            Position.X + (int)Math.Round(GetMarkerWidth() * RenderScaling / 2),
-            Position.Y + (int)Math.Round(GetMarkerHeight() * RenderScaling / 2));
-
-        SlotPicked?.Invoke(this, center);
+        _follow.Stop();
+        SlotPicked?.Invoke(this, new PixelPoint(cursor.X, cursor.Y));
         Close();
+        e.Handled = true;
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -141,8 +100,13 @@ public partial class SlotPickerWindow : Window
 
         if (e.Key is Key.Enter or Key.Space)
         {
-            _countdown.Stop();
-            Confirm();
+            if (NativeMethods.GetCursorPos(out var cursor))
+            {
+                _follow.Stop();
+                SlotPicked?.Invoke(this, new PixelPoint(cursor.X, cursor.Y));
+            }
+
+            Close();
             e.Handled = true;
         }
     }

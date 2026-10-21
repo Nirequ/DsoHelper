@@ -2,340 +2,813 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="720"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="800"
         x:Class="DsoHelper.MainWindow"
         Title="DSO Helper"
         Icon="/Assets/app.ico"
-        Width="780"
+        Width="560"
         Height="720"
-        MinWidth="700"
-        MinHeight="640"
+        MinWidth="520"
+        MinHeight="620"
         WindowStartupLocation="CenterScreen"
-        Background="#0E1015">
+        WindowDecorations="BorderOnly"
+        CanResize="False"
+        Opacity="0.9"
+        Background="{StaticResource WindowBackdropBrush}">
 
     <Window.Styles>
+        <!-- Typography -->
         <Style Selector="TextBlock.h1">
-            <Setter Property="FontSize" Value="26" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#F3F5FA" />
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="31" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="LetterSpacing" Value="1.4" />
+        </Style>
+        <Style Selector="TextBlock.eyebrow">
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="{StaticResource AncientGoldBrush}" />
+            <Setter Property="LetterSpacing" Value="2.2" />
         </Style>
         <Style Selector="TextBlock.subtitle">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="#8A93A6" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
         </Style>
-        <Style Selector="TextBlock.section">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#7F8AA3" />
+        <Style Selector="TextBlock.chapterTitle">
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="LetterSpacing" Value="1.2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.subheading">
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="LetterSpacing" Value="1.6" />
         </Style>
         <Style Selector="TextBlock.label">
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="#C9CFDC" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         </Style>
         <Style Selector="TextBlock.hint">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="#6F7A90" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
         <Style Selector="TextBlock.axis">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="#6F7A90" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="#161922" />
-            <Setter Property="BorderBrush" Value="#262B38" />
+
+        <!-- Frames and plaques -->
+        <Style Selector="Border.cardFrame">
+            <Setter Property="Background" Value="{StaticResource ObsidianBlackBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="18" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="BoxShadow" Value="0 16 34 0 #5A000000" />
         </Style>
-        <Style Selector="Border.status">
-            <Setter Property="Background" Value="#12151D" />
-            <Setter Property="BorderBrush" Value="#222734" />
+        <Style Selector="Border.cardInner">
+            <Setter Property="Background" Value="{StaticResource DeepDungeonBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource CardInnerBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="9" />
-            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="0" />
         </Style>
+        <Style Selector="Border.chapterTab">
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="13,6" />
+            <Setter Property="BoxShadow" Value="0 4 12 0 #55000000" />
+        </Style>
+        <Style Selector="Border.chapterTab.gold">
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBorderFaintBrush}" />
+        </Style>
+        <Style Selector="Border.chapterTab.arcane">
+            <Setter Property="BorderBrush" Value="#668A5CF5" />
+        </Style>
+        <Style Selector="Border.chapterTab.cyan">
+            <Setter Property="BorderBrush" Value="#662CB67D" />
+        </Style>
+
+        <Style Selector="Border.statusFrame">
+            <Setter Property="Background" Value="{StaticResource ObsidianBlackBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="3" />
+        </Style>
+        <Style Selector="Border.statusInner">
+            <Setter Property="Background" Value="{StaticResource DeepDungeonBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource CardInnerBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style Selector="Border.chip">
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="8,3" />
+        </Style>
+
+        <!-- Inset fields -->
         <Style Selector="TextBox">
-            <Setter Property="Background" Value="#0F1219" />
-            <Setter Property="BorderBrush" Value="#2B3140" />
-            <Setter Property="Foreground" Value="#E8EAF0" />
-            <Setter Property="CornerRadius" Value="7" />
-            <Setter Property="Padding" Value="9,6" />
+            <Setter Property="Background" Value="{StaticResource ObsidianDeepBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="CaretBrush" Value="{StaticResource AncientGoldBrush}" />
+            <Setter Property="SelectionBrush" Value="{StaticResource AncientGoldTintBrush}" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
-        <Style Selector="TextBox:readonly">
-            <Setter Property="Background" Value="#0F1219" />
-            <Setter Property="BorderBrush" Value="#2B3140" />
-            <Setter Property="Foreground" Value="#E8EAF0" />
+        <Style Selector="TextBox:pointerover">
+            <Setter Property="BorderBrush" Value="{StaticResource TextSecondaryBrush}" />
         </Style>
         <Style Selector="TextBox:focus">
-            <Setter Property="BorderBrush" Value="#5B7CFA" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBrush}" />
         </Style>
+
         <Style Selector="NumericUpDown">
-            <Setter Property="Background" Value="#0F1219" />
-            <Setter Property="BorderBrush" Value="#2B3140" />
-            <Setter Property="Foreground" Value="#E8EAF0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="{StaticResource ObsidianDeepBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
+        <Style Selector="NumericUpDown:pointerover">
+            <Setter Property="BorderBrush" Value="{StaticResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="NumericUpDown:focus">
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBrush}" />
+        </Style>
+
+        <!-- Buttons -->
         <Style Selector="Button">
-            <Setter Property="Background" Value="#202532" />
-            <Setter Property="Foreground" Value="#DDE2EE" />
-            <Setter Property="BorderBrush" Value="#2B3140" />
-            <Setter Property="CornerRadius" Value="7" />
-            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="12.5" />
         </Style>
+        <Style Selector="Button:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2D3240" />
+            <Setter Property="BorderBrush" Value="#4C5364" />
+        </Style>
+        <Style Selector="Button:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1F232D" />
+        </Style>
+
+        <Style Selector="Button.outline">
+            <Setter Property="Background" Value="{StaticResource ObsidianBlackBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource AncientGoldBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBorderFaintBrush}" />
+        </Style>
+        <Style Selector="Button.outline:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBrush}" />
+        </Style>
+
         <Style Selector="Button.primary">
-            <Setter Property="Background" Value="#5B7CFA" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#5B7CFA" />
-            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Background" Value="{StaticResource GoldButtonBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ObsidianBlackBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldLightBrush}" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="LetterSpacing" Value="1.2" />
         </Style>
         <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#6D8BFF" />
-            <Setter Property="BorderBrush" Value="#6D8BFF" />
+            <Setter Property="Background" Value="{StaticResource AncientGoldLightBrush}" />
+            <Setter Property="BorderBrush" Value="#F7D48A" />
         </Style>
-        <Style Selector="Button.tab">
-            <Setter Property="MinWidth" Value="34" />
+        <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AncientGoldDarkBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldDarkBrush}" />
+        </Style>
+
+        <!-- Custom window caption buttons (system title bar is disabled) -->
+        <Style Selector="Button.window">
+            <Setter Property="Width" Value="34" />
             <Setter Property="Height" Value="30" />
-            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="2" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Button.window:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBorderFaintBrush}" />
+        </Style>
+        <Style Selector="Button.window:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource DeepDungeonBrush}" />
+        </Style>
+        <Style Selector="Button.window.close:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3A1717" />
+            <Setter Property="BorderBrush" Value="#8C2F2F" />
+        </Style>
+
+        <Style Selector="Button.tab">
+            <Setter Property="MinWidth" Value="38" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="9,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Background" Value="{StaticResource DeepDungeonBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBrush}" />
         </Style>
         <Style Selector="Button.tab.selected">
-            <Setter Property="Background" Value="#5B7CFA" />
-            <Setter Property="BorderBrush" Value="#5B7CFA" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Background" Value="{StaticResource GoldButtonBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldLightBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ObsidianBlackBrush}" />
         </Style>
         <Style Selector="Button.tab.selected:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#6D8BFF" />
-            <Setter Property="BorderBrush" Value="#6D8BFF" />
+            <Setter Property="Background" Value="{StaticResource AncientGoldLightBrush}" />
+            <Setter Property="BorderBrush" Value="#F7D48A" />
+        </Style>
+
+        <!-- DSO-style diamond checkbox -->
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Grid ColumnDefinitions="Auto,*" Background="Transparent">
+                        <Grid Width="18" Height="18" VerticalAlignment="Center">
+                            <Border x:Name="CheckBoxBox"
+                                    Width="14" Height="14"
+                                    Background="{StaticResource ObsidianDeepBrush}"
+                                    BorderBrush="{StaticResource TextDisabledBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="1">
+                                <Border.RenderTransform>
+                                    <RotateTransform Angle="45" />
+                                </Border.RenderTransform>
+                            </Border>
+                            <Path x:Name="CheckMark"
+                                  Data="M 2,9 L 7,14 L 16,3"
+                                  Width="18" Height="18"
+                                  Stretch="None"
+                                  Stroke="{StaticResource AncientGoldBrush}"
+                                  StrokeThickness="1.8"
+                                  IsVisible="False"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Grid>
+                        <ContentPresenter Grid.Column="1"
+                                          Margin="9,0,0,0"
+                                          VerticalAlignment="Center"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Foreground="{TemplateBinding Foreground}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="CheckBox:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="CheckBox:pointerover /template/ Border#CheckBoxBox">
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBrush}" />
+        </Style>
+        <Style Selector="CheckBox:checked">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="CheckBox:checked /template/ Border#CheckBoxBox">
+            <Setter Property="Background" Value="{StaticResource AncientGoldTintBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AncientGoldBrush}" />
+        </Style>
+        <Style Selector="CheckBox:checked /template/ Path#CheckMark">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="CheckBox:disabled">
+            <Setter Property="Opacity" Value="0.5" />
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto" Margin="22,20,22,16" RowSpacing="14">
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="3">
-                <TextBlock Classes="h1" Text="DSO Helper" />
-                <TextBlock Classes="subtitle"
-                           Text="Fast Mount — быстрая смена плаща для вызова маунта" />
+    <Grid>
+        <!-- Dragon-scale relief over the stone backdrop -->
+        <Image Source="avares://DsoHelper/Assets/Textures/dragon-scales.png"
+               Stretch="UniformToFill"
+               Opacity="0.28"
+               IsHitTestVisible="False" />
+
+        <Border Height="190"
+                VerticalAlignment="Top"
+                Background="{StaticResource HeaderGlowBrush}"
+                IsHitTestVisible="False" />
+
+        <!-- Engraved frame corners -->
+        <Path Data="M0,26 L0,0 L26,0"
+              Stroke="{StaticResource AncientGoldBrush}"
+              StrokeThickness="1.2"
+              Opacity="0.5"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Top"
+              Margin="12"
+              IsHitTestVisible="False" />
+        <Path Data="M0,0 L26,0 L26,26"
+              Stroke="{StaticResource AncientGoldBrush}"
+              StrokeThickness="1.2"
+              Opacity="0.5"
+              HorizontalAlignment="Right"
+              VerticalAlignment="Top"
+              Margin="12"
+              IsHitTestVisible="False" />
+        <Path Data="M0,0 L0,26 L26,26"
+              Stroke="{StaticResource AncientGoldBrush}"
+              StrokeThickness="1.2"
+              Opacity="0.5"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Bottom"
+              Margin="12"
+              IsHitTestVisible="False" />
+        <Path Data="M26,0 L26,26 L0,26"
+              Stroke="{StaticResource AncientGoldBrush}"
+              StrokeThickness="1.2"
+              Opacity="0.5"
+              HorizontalAlignment="Right"
+              VerticalAlignment="Bottom"
+              Margin="12"
+              IsHitTestVisible="False" />
+
+        <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="30,25,30,22" RowSpacing="16">
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Spacing="17">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="17"
+                      Background="Transparent"
+                      PointerPressed="OnTitleBarPointerPressed">
+                    <Border Width="52"
+                            Height="52"
+                            CornerRadius="26"
+                            Background="{StaticResource ObsidianBlackBrush}"
+                            BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
+                            BorderThickness="1"
+                            BoxShadow="0 0 24 0 #55E0A93B"
+                            VerticalAlignment="Center">
+                        <Viewbox Width="38" Height="38">
+                            <Canvas Width="64" Height="64">
+                                <Path Data="M32,2 L59,13 L54,43 C52,52 43,59 32,62 C21,59 12,52 10,43 L5,13 Z"
+                                      Fill="{StaticResource ElevatedSurfaceBrush}"
+                                      Stroke="{StaticResource AncientGoldBrush}"
+                                      StrokeThickness="1.2" />
+                                <Path Data="M22,17 L26,11 L27,18 Z M42,17 L38,11 L37,18 Z"
+                                      Fill="{StaticResource AncientGoldBrush}"
+                                      Opacity="0.72" />
+                                <Path Data="M19,31 C24,24 29,21 32,21 C35,21 40,24 45,31 C40,38 35,41 32,41 C29,41 24,38 19,31 Z"
+                                      Fill="{StaticResource ObsidianBlackBrush}"
+                                      Stroke="{StaticResource AncientGoldBrush}"
+                                      StrokeThickness="1.2" />
+                                <Path Data="M32,24 C35,28 35,34 32,38 C29,34 29,28 32,24 Z"
+                                      Fill="{StaticResource AncientGoldBrush}" />
+                            </Canvas>
+                        </Viewbox>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                        <TextBlock Classes="eyebrow" Text="DRAKENSANG ONLINE" />
+                        <TextBlock Classes="h1" Text="DSO HELPER" FontSize="24" />
+                        <TextBlock Classes="subtitle"
+                                   Text="Fast Mount — быстрая смена плаща" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Button Classes="window"
+                                Click="OnMinimizeClick"
+                                ToolTip.Tip="Свернуть в трей">
+                            <Path Data="M0,6 L12,6"
+                                  Stroke="{StaticResource AncientGoldBrush}"
+                                  StrokeThickness="1.5"
+                                  Width="12" Height="12"
+                                  Stretch="None"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Button>
+                        <Button Classes="window close"
+                                Click="OnCloseClick"
+                                ToolTip.Tip="Закрыть">
+                            <Path Data="M1,1 L11,11 M11,1 L1,11"
+                                  Stroke="{StaticResource AncientGoldBrush}"
+                                  StrokeThickness="1.5"
+                                  Width="12" Height="12"
+                                  Stretch="None"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Ornate divider -->
+                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="11">
+                    <Border Height="1"
+                            Background="{StaticResource GoldRuleLeftBrush}"
+                            VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Path Data="M0,4 L7,0 L14,4 L7,8 Z"
+                              Width="14" Height="8" Stretch="Fill"
+                              Fill="{StaticResource AncientGoldBrush}"
+                              Opacity="0.45" />
+                        <Path Data="M6,0 L12,6 L6,12 L0,6 Z"
+                              Width="12" Height="12" Stretch="Fill"
+                              Fill="{StaticResource AncientGoldBrush}" />
+                        <Path Data="M0,4 L7,0 L14,4 L7,8 Z"
+                              Width="14" Height="8" Stretch="Fill"
+                              Fill="{StaticResource AncientGoldBrush}"
+                              Opacity="0.45" />
+                    </StackPanel>
+                    <Border Grid.Column="2"
+                            Height="1"
+                            Background="{StaticResource GoldRuleRightBrush}"
+                            VerticalAlignment="Center" />
+                </Grid>
             </StackPanel>
-            <Border Grid.Column="1"
-                    Background="#1B2130"
-                    BorderBrush="#2C3550"
-                    BorderThickness="1"
-                    CornerRadius="20"
-                    Padding="12,6"
-                    VerticalAlignment="Center">
-                <TextBlock Text="FAST MOUNT"
-                           FontSize="10"
-                           FontWeight="Bold"
-                           Foreground="#8FA6FF" />
-            </Border>
-        </Grid>
 
-        <ScrollViewer Grid.Row="1"
-                      HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="12">
-                <Border Classes="card">
-                    <StackPanel Spacing="11">
-                        <TextBlock Classes="section" Text="ЗАПУСК" />
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                            <TextBlock Classes="label"
-                                       Text="Хоткей"
-                                       VerticalAlignment="Center" />
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-                                <TextBox x:Name="HotkeyBox"
-                                         Width="150"
-                                         IsReadOnly="True"
-                                         AutomationProperties.AutomationId="HotkeyBox"
-                                         PlaceholderText="Нажмите клавишу"
-                                         VerticalAlignment="Center" />
-                                <TextBlock x:Name="HotkeyStatusText"
-                                           Classes="hint"
-                                           VerticalAlignment="Center" />
+            <!-- Chapters -->
+            <ScrollViewer Grid.Row="1"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Visible"
+                          AllowAutoHide="False">
+                <StackPanel Spacing="19">
+                    <!-- I. Launch -->
+                    <Grid>
+                        <Border Classes="cardFrame" Margin="0,16,0,0">
+                            <Border Classes="cardInner">
+                                <Grid>
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                    <StackPanel Margin="22,26,22,18" Spacing="14">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                            <TextBlock Classes="label"
+                                                       Text="Хоткей"
+                                                       VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                                                <TextBox x:Name="HotkeyBox"
+                                                         Width="160"
+                                                         IsReadOnly="True"
+                                                         AutomationProperties.AutomationId="HotkeyBox"
+                                                         PlaceholderText="Нажмите клавишу"
+                                                         VerticalAlignment="Center" />
+                                                <TextBlock x:Name="HotkeyStatusText"
+                                                           Classes="hint"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <CheckBox x:Name="AlwaysOnTopCheck"
+                                                      Grid.Column="2"
+                                                      Content="Поверх окон"
+                                                      VerticalAlignment="Center" />
+                                        </Grid>
+                                        <TextBlock Classes="hint"
+                                                   Text="Хоткей срабатывает, когда окно Drakensang активно." />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <Border Classes="chapterTab gold"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="18,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                <TextBlock Classes="chapterTitle" Text="I" Foreground="{StaticResource AncientGoldBrush}" />
+                                <TextBlock Classes="chapterTitle" Text="ЗАПУСК" />
                             </StackPanel>
-                            <CheckBox x:Name="AlwaysOnTopCheck"
-                                      Grid.Column="2"
-                                      Content="Поверх окон"
-                                      VerticalAlignment="Center" />
-                        </Grid>
-                    </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- II. Cape slot -->
+                    <Grid>
+                        <Border Classes="cardFrame" Margin="0,16,0,0">
+                            <Border Classes="cardInner">
+                                <Grid>
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                    <StackPanel Margin="22,26,22,18" Spacing="13">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                <TextBlock x:Name="SlotStatusText"
+                                                           Classes="label"
+                                                           Text="Слот не выбран" />
+                                                <TextBlock x:Name="SlotCoordsText"
+                                                           Classes="hint"
+                                                           Text="Нажмите «Выбрать слот» и кликните по ячейке: квадрат следует за курсором." />
+                                            </StackPanel>
+                                            <Button x:Name="PickSlotButton"
+                                                    Grid.Column="1"
+                                                    Classes="outline"
+                                                    Content="Выбрать слот"
+                                                    VerticalAlignment="Center"
+                                                    Click="OnPickSlotClick" />
+                                        </Grid>
+
+                                        <TextBlock Classes="hint"
+                                                   Text="Квадрат сам следует за мышью. Кликните левой кнопкой по ячейке — координаты запишутся сразу, Esc отменяет. Старый плащ после смены возвращается в эту же ячейку, поэтому второго слота не нужно." />
+                                        <TextBlock Classes="hint"
+                                                   Text="Позиция запоминается относительно окна игры: при смене разрешения или переходе в оконный режим слот менять не нужно." />
+
+                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                        <StackPanel Spacing="10">
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                <TextBlock Classes="subheading" Text="ВКЛАДКА ИНВЕНТАРЯ" />
+                                                <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                            </Grid>
+
+                                            <CheckBox x:Name="SwitchTabCheck"
+                                                      Content="Переключать вкладку"
+                                                      VerticalAlignment="Center" />
+
+                                            <StackPanel x:Name="TabButtonsPanel"
+                                                        Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <Button Classes="tab" Tag="1" Content="1" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="2" Content="2" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="3" Content="3" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="4" Content="4" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="5" Content="5" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="6" Content="6" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="7" Content="7" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="8" Content="8" Click="OnTabSelectClick" />
+                                                <Button Classes="tab" Tag="prem" Content="prem" Click="OnTabSelectClick" />
+                                            </StackPanel>
+
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                                <TextBlock x:Name="TabStatusText"
+                                                           Classes="hint"
+                                                           Text="Позиция не задана."
+                                                           VerticalAlignment="Center" />
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                    <Button x:Name="PickTabButton"
+                                                            Classes="outline"
+                                                            Content="Указать вкладку 1"
+                                                            Click="OnPickTabClick" />
+                                                    <Button x:Name="PickTabStepButton"
+                                                            Classes="outline"
+                                                            Content="Указать вкладку 2"
+                                                            Click="OnPickTabStepClick" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <TextBlock Classes="hint"
+                                                   Text="Квадрат следует за мышью: кликните по заголовку 1-й вкладки, затем нажмите «Указать вкладку 2» и кликните по второй — расстояние станет шагом. Остальные вкладки (включая prem) макрос рассчитает сам." />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <Border Classes="chapterTab arcane"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="18,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource MysticArcaneBrush}" VerticalAlignment="Center" />
+                                <TextBlock Classes="chapterTitle" Text="II" Foreground="{StaticResource MysticArcaneBrush}" />
+                                <TextBlock Classes="chapterTitle" Text="СЛОТ ПЛАЩА" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- III. Keys and delays -->
+                    <Grid>
+                        <Border Classes="cardFrame" Margin="0,16,0,0">
+                            <Border Classes="cardInner">
+                                <Grid>
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                    <StackPanel Margin="22,26,22,18" Spacing="13">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                            <TextBlock Classes="subheading" Text="КЛАВИШИ" />
+                                            <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="14">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Classes="axis" Text="Инвентарь" />
+                                                <TextBox x:Name="InventoryKeyBox"
+                                                         Width="126" Height="38"
+                                                         IsReadOnly="True"
+                                                         AutomationProperties.AutomationId="InventoryKeyBox"
+                                                         PlaceholderText="Нажмите клавишу" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <TextBlock Classes="axis" Text="Кнопка маунта" />
+                                                <TextBox x:Name="MountKeyBox"
+                                                         Width="126" Height="38"
+                                                         IsReadOnly="True"
+                                                         AutomationProperties.AutomationId="MountKeyBox"
+                                                         PlaceholderText="Нажмите клавишу" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock Classes="hint"
+                                                   Text="Кликните по полю и нажмите нужную клавишу — название подставится само (например Space, F1, ←). Esc отменяет ввод." />
+
+                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                            <TextBlock Classes="subheading" Text="ЗАДЕРЖКИ, МС" />
+                                            <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="11">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Classes="axis" Text="После открытия инвентаря" />
+                                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                                    <NumericUpDown x:Name="InventoryDelayBox"
+                                                                   Width="130" Height="38"
+                                                                   Minimum="0" Maximum="10000"
+                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                                    <TextBlock Classes="axis" Text="мс" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <TextBlock Classes="axis" Text="После смены плаща" />
+                                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                                    <NumericUpDown x:Name="CapeSwapDelayBox"
+                                                                   Width="130" Height="38"
+                                                                   Minimum="0" Maximum="10000"
+                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                                    <TextBlock Classes="axis" Text="мс" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="1" Spacing="5">
+                                                <TextBlock Classes="axis" Text="После вызова маунта" />
+                                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                                    <NumericUpDown x:Name="MountDelayBox"
+                                                                   Width="130" Height="38"
+                                                                   Minimum="0" Maximum="10000"
+                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                                    <TextBlock Classes="axis" Text="мс" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+                                                <TextBlock Classes="axis" Text="После возврата плаща" />
+                                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                                    <NumericUpDown x:Name="PostActionDelayBox"
+                                                                   Width="130" Height="38"
+                                                                   Minimum="0" Maximum="10000"
+                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                                    <TextBlock Classes="axis" Text="мс" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock Classes="hint"
+                                                   Text="DrakenHub использует 30 мс на каждое действие — столько же стоит по умолчанию здесь. Увеличивайте только если какое-то действие не успевает сработать." />
+
+                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                        <CheckBox x:Name="CloseInventoryBeforeMountCheck"
+                                                  Content="Вызывать маунта с закрытым инвентарём (экспериментально)"
+                                                  AutomationProperties.AutomationId="CloseInventoryBeforeMountCheck" />
+                                        <TextBlock Classes="hint"
+                                                   Text="DrakenHub вызывает маунта с открытым инвентарём, поэтому по умолчанию выключено. Включите, только если быстрый вызов не срабатывает: макрос закроет инвентарь перед вызовом и откроет снова, чтобы вернуть плащ." />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <Border Classes="chapterTab cyan"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="18,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource EssenceCyanBrush}" VerticalAlignment="Center" />
+                                <TextBlock Classes="chapterTitle" Text="III" Foreground="{StaticResource EssenceCyanBrush}" />
+                                <TextBlock Classes="chapterTitle" Text="КЛАВИШИ И ЗАДЕРЖКИ" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Primary action, always within reach -->
+            <StackPanel Grid.Row="2" Spacing="8">
+                <Border BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="3"
+                        BoxShadow="0 0 30 0 #66E0A93B">
+                    <Border Background="{StaticResource ObsidianBlackBrush}"
+                            BorderBrush="{StaticResource AncientGoldBrush}"
+                            BorderThickness="1"
+                            CornerRadius="2"
+                            Padding="2">
+                        <Button x:Name="RunButton"
+                                Classes="primary"
+                                Height="52"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Click="OnRunClick">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="12"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                <Grid Width="24" Height="16" VerticalAlignment="Center">
+                                    <Path Data="M1,8 C6,1 18,1 23,8 C18,15 6,15 1,8 Z"
+                                          Stroke="{StaticResource ObsidianBlackBrush}"
+                                          StrokeThickness="1.6" />
+                                    <Path Data="M12,4 C14,6 14,10 12,12 C10,10 10,6 12,4 Z"
+                                          Fill="{StaticResource ObsidianBlackBrush}" />
+                                </Grid>
+                                <TextBlock Text="ВЫПОЛНИТЬ FAST MOUNT"
+                                           FontFamily="{StaticResource DisplayFont}"
+                                           FontSize="16"
+                                           LetterSpacing="1.2"
+                                           Foreground="{StaticResource ObsidianBlackBrush}" />
+                            </StackPanel>
+                        </Button>
+                    </Border>
                 </Border>
 
-                <Border Classes="card">
-                    <StackPanel Spacing="12">
-                        <TextBlock Classes="section" Text="СЛОТ ПЛАЩА" />
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                            <StackPanel Spacing="4" VerticalAlignment="Center">
-                                <TextBlock x:Name="SlotStatusText"
-                                           Classes="label"
-                                           Text="Слот не выбран" />
-                                <TextBlock x:Name="SlotCoordsText"
-                                           Classes="hint"
-                                           Text="Нажмите «Выбрать слот» и перетащите квадрат на ячейку инвентаря." />
-                            </StackPanel>
-                            <Button x:Name="PickSlotButton"
-                                    Grid.Column="1"
-                                    Content="Выбрать слот"
-                                    VerticalAlignment="Center"
-                                    Click="OnPickSlotClick" />
-                        </Grid>
-                        <TextBlock Classes="hint"
-                                   Text="Поставьте квадрат на слот, отпустите и подождите 3 секунды. Старый плащ после смены возвращается в эту же ячейку, поэтому второго слота не нужно." />
-                        <TextBlock Classes="hint"
-                                   Text="Позиция запоминается относительно окна игры: при смене разрешения или переходе в оконный режим слот менять не нужно." />
-                        <Border Height="1" Background="#262B38" />
-                        <StackPanel Spacing="8">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                <TextBlock Classes="label"
-                                           Text="Вкладка инвентаря"
-                                           VerticalAlignment="Center" />
-                                <CheckBox x:Name="SwitchTabCheck"
-                                          Grid.Column="1"
-                                          Content="Переключать"
-                                          VerticalAlignment="Center" />
-                            </Grid>
-                            <StackPanel x:Name="TabButtonsPanel"
-                                        Orientation="Horizontal"
-                                        Spacing="6">
-                                <Button Classes="tab" Tag="1" Content="1" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="2" Content="2" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="3" Content="3" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="4" Content="4" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="5" Content="5" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="6" Content="6" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="7" Content="7" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="8" Content="8" Click="OnTabSelectClick" />
-                                <Button Classes="tab" Tag="prem" Content="prem" Click="OnTabSelectClick" />
-                            </StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                                <TextBlock x:Name="TabStatusText"
-                                           Classes="hint"
-                                           Text="Позиция не задана."
-                                           VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <Button x:Name="PickTabButton"
-                                            Content="Указать вкладку 1"
-                                            Click="OnPickTabClick" />
-                                    <Button x:Name="PickTabStepButton"
-                                            Content="Указать вкладку 2"
-                                            Click="OnPickTabStepClick" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                        <TextBlock Classes="hint"
-                                   Text="Поставьте квадрат на заголовок 1-й вкладки, затем нажмите «Указать вкладку 2» и наведите его на вторую — расстояние станет шагом. Остальные вкладки (включая prem) макрос рассчитает сам." />
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="card">
-                    <StackPanel Spacing="12">
-                        <TextBlock Classes="section" Text="КЛАВИШИ И ЗАДЕРЖКИ" />
-                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="14">
-                            <StackPanel Spacing="5">
-                                <TextBlock Classes="axis" Text="Инвентарь" />
-                                <TextBox x:Name="InventoryKeyBox"
-                                         Width="110" Height="34"
-                                         IsReadOnly="True"
-                                         AutomationProperties.AutomationId="InventoryKeyBox"
-                                         PlaceholderText="Нажмите клавишу" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock Classes="axis" Text="Кнопка маунта" />
-                                <TextBox x:Name="MountKeyBox"
-                                         Width="110" Height="34"
-                                         IsReadOnly="True"
-                                         AutomationProperties.AutomationId="MountKeyBox"
-                                         PlaceholderText="Нажмите клавишу" />
-                            </StackPanel>
-                        </Grid>
-                        <TextBlock Classes="hint"
-                                   Text="Кликните по полю и нажмите нужную клавишу — название подставится само (например Space, F1, ←). Esc отменяет ввод." />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="10">
-                            <StackPanel Spacing="5">
-                                <TextBlock Classes="axis" Text="После открытия инвентаря" />
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <NumericUpDown x:Name="InventoryDelayBox"
-                                                   Width="112" Height="34"
-                                                   Minimum="0" Maximum="10000"
-                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                    <TextBlock Classes="axis" Text="мс" />
-                                </StackPanel>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock Classes="axis" Text="После смены плаща" />
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <NumericUpDown x:Name="CapeSwapDelayBox"
-                                                   Width="112" Height="34"
-                                                   Minimum="0" Maximum="10000"
-                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                    <TextBlock Classes="axis" Text="мс" />
-                                </StackPanel>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Spacing="5">
-                                <TextBlock Classes="axis" Text="После вызова маунта" />
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <NumericUpDown x:Name="MountDelayBox"
-                                                   Width="112" Height="34"
-                                                   Minimum="0" Maximum="10000"
-                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                    <TextBlock Classes="axis" Text="мс" />
-                                </StackPanel>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
-                                <TextBlock Classes="axis" Text="После возврата плаща" />
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <NumericUpDown x:Name="PostActionDelayBox"
-                                                   Width="112" Height="34"
-                                                   Minimum="0" Maximum="10000"
-                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                    <TextBlock Classes="axis" Text="мс" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                        <TextBlock Classes="hint"
-                                   Text="DrakenHub использует 30 мс на каждое действие — столько же стоит по умолчанию здесь. Увеличивайте только если какое-то действие не успевает сработать." />
-                        <CheckBox x:Name="CloseInventoryBeforeMountCheck"
-                                  Content="Вызывать маунта с закрытым инвентарём (экспериментально)"
-                                  AutomationProperties.AutomationId="CloseInventoryBeforeMountCheck" />
-                        <TextBlock Classes="hint"
-                                   Text="DrakenHub вызывает маунта с открытым инвентарём, поэтому по умолчанию выключено. Включите, только если быстрый вызов не срабатывает: макрос закроет инвентарь перед вызовом и откроет снова, чтобы вернуть плащ." />
-                    </StackPanel>
-                </Border>
-
-                <Button x:Name="RunButton"
-                        Classes="primary"
-                        Content="Выполнить Fast Mount"
-                        Height="48"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Center"
-                        FontSize="15"
-                        Click="OnRunClick" />
                 <TextBlock Classes="hint"
                            TextAlignment="Center"
                            Text="Хоткей срабатывает, когда активна игра. Кнопка «Выполнить» сама переключится в окно Drakensang." />
             </StackPanel>
-        </ScrollViewer>
 
-        <Border Grid.Row="2" Classes="status">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                <Ellipse x:Name="StatusDot"
-                         Width="8" Height="8"
-                         Fill="#6B7280"
-                         VerticalAlignment="Center" />
-                <TextBlock x:Name="StatusText"
-                           Grid.Column="1"
-                           Text="Готово"
-                           VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis" />
-                <TextBlock Grid.Column="2"
-                           Classes="hint"
-                           Text="config.json"
-                           VerticalAlignment="Center" />
-            </Grid>
-        </Border>
+            <!-- Status plaque -->
+            <Border Grid.Row="3" Classes="statusFrame">
+                <Border Classes="statusInner">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11">
+                        <Grid Width="16" Height="16" VerticalAlignment="Center">
+                            <Path Data="M8,0 L16,8 L8,16 L0,8 Z"
+                                  Width="16" Height="16" Stretch="Fill"
+                                  Fill="{Binding Fill, ElementName=StatusDot}"
+                                  Opacity="0.18" />
+                            <Path x:Name="StatusDot"
+                                  Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                  Width="8" Height="8" Stretch="Fill"
+                                  Fill="{StaticResource TextSecondaryBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock x:Name="StatusText"
+                                   Grid.Column="1"
+                                   Text="Готово"
+                                   FontFamily="{StaticResource BodyFont}"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                        <Border Grid.Column="2" Classes="chip" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                      Width="7" Height="7" Stretch="Fill"
+                                      Fill="{StaticResource AncientGoldBrush}"
+                                      VerticalAlignment="Center" />
+                                <TextBlock Text="CONFIG.JSON"
+                                           FontFamily="{StaticResource DisplayFont}"
+                                           FontSize="9"
+                                           LetterSpacing="1.1"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

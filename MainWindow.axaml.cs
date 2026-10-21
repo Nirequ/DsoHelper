@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using DsoHelper.FastMount;
 using DsoHelper.Infrastructure;
 using DsoHelper.UI;
@@ -15,10 +16,11 @@ namespace DsoHelper;
 
 public partial class MainWindow : Window
 {
-    private static readonly IBrush IdleBrush = new SolidColorBrush(Color.Parse("#6B7280"));
-    private static readonly IBrush BusyBrush = new SolidColorBrush(Color.Parse("#FBBF24"));
-    private static readonly IBrush SuccessBrush = new SolidColorBrush(Color.Parse("#4ADE80"));
-    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#F87171"));
+    // Mirrors UI/Palette.axaml (Drakensang helper palette).
+    private static readonly IBrush IdleBrush = new SolidColorBrush(Color.Parse("#8C93A2"));
+    private static readonly IBrush BusyBrush = new SolidColorBrush(Color.Parse("#E0A93B"));
+    private static readonly IBrush SuccessBrush = new SolidColorBrush(Color.Parse("#2CB67D"));
+    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#C93B3B"));
 
     private readonly FastMountSettings _settings;
     private readonly DispatcherTimer _saveTimer;
@@ -405,6 +407,10 @@ public partial class MainWindow : Window
             _picking = false;
             PickSlotButton.IsEnabled = true;
             RunButton.IsEnabled = true;
+
+            Show();
+            Activate();
+
             if (!picked)
             {
                 SetStatus("Выбор слота отменён", StatusKind.Idle);
@@ -413,9 +419,9 @@ public partial class MainWindow : Window
 
         picker.Position = new PixelPoint(cursor.X - half, cursor.Y - half);
         _slotPicker = picker;
-        picker.Show(this);
-        picker.Activate();
-        SetStatus("Перетащите квадрат на слот и отпустите", StatusKind.Busy);
+        Hide();
+        picker.Show();
+        SetStatus("Наведите квадрат на слот и кликните левой кнопкой (Esc — отмена)", StatusKind.Busy);
     }
 
     private void UpdateSlotUi()
@@ -424,7 +430,7 @@ public partial class MainWindow : Window
         {
             SlotStatusText.Text = "Слот не выбран";
             SlotStatusText.Foreground = ErrorBrush;
-            SlotCoordsText.Text = "Нажмите «Выбрать слот» и перетащите квадрат на ячейку инвентаря.";
+            SlotCoordsText.Text = "Нажмите «Выбрать слот» и кликните по ячейке: квадрат следует за курсором.";
             return;
         }
 
@@ -522,6 +528,9 @@ public partial class MainWindow : Window
             PickTabStepButton.IsEnabled = true;
             RunButton.IsEnabled = true;
 
+            Show();
+            Activate();
+
             if (!picked)
             {
                 SetStatus("Выбор отменён", StatusKind.Idle);
@@ -538,12 +547,12 @@ public partial class MainWindow : Window
             _tabPicker = picker;
         }
 
-        picker.Show(this);
-        picker.Activate();
+        Hide();
+        picker.Show();
         SetStatus(
             step
-                ? "Перетащите квадрат на заголовок 2-й вкладки и отпустите"
-                : "Перетащите квадрат на заголовок 1-й вкладки и отпустите",
+                ? "Наведите квадрат на 2-ю вкладку и кликните (Esc — отмена)"
+                : "Наведите квадрат на 1-ю вкладку и кликните (Esc — отмена)",
             StatusKind.Busy);
     }
 
@@ -626,6 +635,30 @@ public partial class MainWindow : Window
             SetStatus("Не удалось сохранить настройки: " + ex.Message, StatusKind.Error);
         }
     }
+
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        if (e.Source is Visual source &&
+            source.FindAncestorOfType<Button>(includeSelf: true) is not null)
+        {
+            return;
+        }
+
+        if (WindowState == WindowState.Normal)
+        {
+            BeginMoveDrag(e);
+        }
+    }
+
+    private void OnMinimizeClick(object? sender, RoutedEventArgs e) =>
+        WindowState = WindowState.Minimized;
+
+    private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
