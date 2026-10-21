@@ -459,8 +459,7 @@
             <!-- Chapters -->
             <ScrollViewer Grid.Row="1"
                           HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Visible"
-                          AllowAutoHide="False">
+                          VerticalScrollBarVisibility="Hidden">
                 <StackPanel Spacing="19">
                     <!-- I. Launch -->
                     <Grid>
@@ -646,52 +645,20 @@
                                         <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
 
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                            <TextBlock Classes="subheading" Text="ЗАДЕРЖКИ, МС" />
+                                            <TextBlock Classes="subheading" Text="ЗАДЕРЖКА, МС" />
                                             <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
                                         </Grid>
 
-                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="11">
-                                            <StackPanel Spacing="5">
-                                                <TextBlock Classes="axis" Text="После открытия инвентаря" />
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <NumericUpDown x:Name="InventoryDelayBox"
-                                                                   Width="130" Height="38"
-                                                                   Minimum="0" Maximum="10000"
-                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                                    <TextBlock Classes="axis" Text="мс" />
-                                                </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Classes="axis" Text="Пауза между действиями" />
+                                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                                <NumericUpDown x:Name="DelayBox"
+                                                               Width="130" Height="38"
+                                                               Minimum="0" Maximum="10000"
+                                                               Increment="50" FormatString="0" ShowButtonSpinner="False" />
+                                                <TextBlock Classes="axis" Text="мс" />
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" Spacing="5">
-                                                <TextBlock Classes="axis" Text="После смены плаща" />
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <NumericUpDown x:Name="CapeSwapDelayBox"
-                                                                   Width="130" Height="38"
-                                                                   Minimum="0" Maximum="10000"
-                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                                    <TextBlock Classes="axis" Text="мс" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="1" Spacing="5">
-                                                <TextBlock Classes="axis" Text="После вызова маунта" />
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <NumericUpDown x:Name="MountDelayBox"
-                                                                   Width="130" Height="38"
-                                                                   Minimum="0" Maximum="10000"
-                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                                    <TextBlock Classes="axis" Text="мс" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
-                                                <TextBlock Classes="axis" Text="После возврата плаща" />
-                                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                                    <NumericUpDown x:Name="PostActionDelayBox"
-                                                                   Width="130" Height="38"
-                                                                   Minimum="0" Maximum="10000"
-                                                                   Increment="50" FormatString="0" ShowButtonSpinner="False" />
-                                                    <TextBlock Classes="axis" Text="мс" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Grid>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </Border>

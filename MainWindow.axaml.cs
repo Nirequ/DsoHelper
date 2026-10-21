@@ -75,10 +75,7 @@ public partial class MainWindow : Window
         InventoryKeyBox.TextChanged += (_, _) => ScheduleSave();
         MountKeyBox.TextChanged += (_, _) => ScheduleSave();
 
-        InventoryDelayBox.ValueChanged += (_, _) => ScheduleSave();
-        CapeSwapDelayBox.ValueChanged += (_, _) => ScheduleSave();
-        MountDelayBox.ValueChanged += (_, _) => ScheduleSave();
-        PostActionDelayBox.ValueChanged += (_, _) => ScheduleSave();
+        DelayBox.ValueChanged += (_, _) => ScheduleSave();
 
         SwitchTabCheck.IsCheckedChanged += (_, _) =>
         {
@@ -102,10 +99,7 @@ public partial class MainWindow : Window
         InventoryKeyBox.Text = CanonicalKey(_settings.InventoryKey, "I");
         MountKeyBox.Text = CanonicalKey(_settings.MountKey, "M");
 
-        InventoryDelayBox.Value = _settings.InventoryDelayMs;
-        CapeSwapDelayBox.Value = _settings.CapeSwapDelayMs;
-        MountDelayBox.Value = _settings.MountDelayMs;
-        PostActionDelayBox.Value = _settings.PostActionDelayMs;
+        DelayBox.Value = _settings.DelayMs;
 
         SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
 
@@ -124,10 +118,7 @@ public partial class MainWindow : Window
         _settings.InventoryKey = CanonicalKey(InventoryKeyBox.Text, _settings.InventoryKey);
         _settings.MountKey = CanonicalKey(MountKeyBox.Text, _settings.MountKey);
 
-        _settings.InventoryDelayMs = ToInt(InventoryDelayBox);
-        _settings.CapeSwapDelayMs = ToInt(CapeSwapDelayBox);
-        _settings.MountDelayMs = ToInt(MountDelayBox);
-        _settings.PostActionDelayMs = ToInt(PostActionDelayBox);
+        _settings.DelayMs = ToInt(DelayBox);
         _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
     }

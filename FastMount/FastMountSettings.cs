@@ -54,16 +54,8 @@ internal sealed class FastMountSettings
 
     public double? TabStepTopRatio { get; set; }
 
-    public int InventoryDelayMs { get; set; } = 30;
-
-    /// <summary>Пауза после смены плаща и до нажатия клавиши маунта, мс.</summary>
-    public int CapeSwapDelayMs { get; set; } = 30;
-
-    /// <summary>Пауза после вызова маунта и до возврата старого плаща, мс.</summary>
-    public int MountDelayMs { get; set; } = 30;
-
-    /// <summary>Пауза после возврата старого плаща и до закрытия инвентаря, мс.</summary>
-    public int PostActionDelayMs { get; set; } = 30;
+    /// <summary>Пауза между действиями макроса, мс. Одна на весь сценарий.</summary>
+    public int DelayMs { get; set; } = 30;
 
     public bool AlwaysOnTop { get; set; }
 
@@ -81,11 +73,47 @@ internal sealed class FastMountSettings
             var json = File.ReadAllText(FilePath);
             var settings = JsonSerializer.Deserialize<FastMountSettings>(json) ?? new FastMountSettings();
             settings.MigrateTabPoints(json);
+            settings.MigrateDelay(json);
             return settings;
         }
         catch
         {
             return new FastMountSettings();
+        }
+    }
+
+    /// <summary>
+    /// The previous version stored four separate delays. Use the largest one once
+    /// and drop the rest.
+    /// </summary>
+    private void MigrateDelay(string json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            if (document.RootElement.TryGetProperty("DelayMs", out _))
+            {
+                return;
+            }
+
+            var delay = 0;
+            foreach (var name in new[]
+                     {
+                         "InventoryDelayMs", "CapeSwapDelayMs",
+                         "MountDelayMs", "PostActionDelayMs"
+                     })
+            {
+                delay = Math.Max(delay, ReadInt(document.RootElement, name));
+            }
+
+            if (delay > 0)
+            {
+                DelayMs = delay;
+            }
+        }
+        catch (JsonException)
+        {
+            // Broken section: the default delay is fine.
         }
     }
 

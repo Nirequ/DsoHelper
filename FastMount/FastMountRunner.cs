@@ -57,12 +57,9 @@ internal static class FastMountRunner
             }
         }
 
-        if (settings.InventoryDelayMs < 0 ||
-            settings.CapeSwapDelayMs < 0 ||
-            settings.MountDelayMs < 0 ||
-            settings.PostActionDelayMs < 0)
+        if (settings.DelayMs < 0)
         {
-            error = "Задержки не могут быть отрицательными.";
+            error = "Задержка не может быть отрицательной.";
             return false;
         }
 
@@ -100,15 +97,15 @@ internal static class FastMountRunner
 
             report("Надеваю плащ с быстрым маунтом");
             await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-            await DelayAsync(settings.CapeSwapDelayMs, cancellationToken);
+            await DelayAsync(settings.DelayMs, cancellationToken);
 
             report("Вызываю маунта");
             InputSimulator.KeyPress(mountKey);
-            await DelayAsync(settings.MountDelayMs, cancellationToken);
+            await DelayAsync(settings.DelayMs, cancellationToken);
 
             report("Возвращаю старый плащ");
             await DoubleLeftClickAsync(slotX, slotY, cancellationToken);
-            await DelayAsync(settings.PostActionDelayMs, cancellationToken);
+            await DelayAsync(settings.DelayMs, cancellationToken);
 
             report("Закрываю инвентарь");
             InputSimulator.KeyPress(inventoryKey);
@@ -130,7 +127,7 @@ internal static class FastMountRunner
     {
         report("Открываю инвентарь");
         InputSimulator.KeyPress(inventoryKey);
-        await DelayAsync(settings.InventoryDelayMs, cancellationToken);
+        await DelayAsync(settings.DelayMs, cancellationToken);
 
         if (!settings.SwitchInventoryTab)
         {
@@ -146,7 +143,7 @@ internal static class FastMountRunner
 
         report($"Переключаюсь на вкладку {TabResolver.DisplayName(settings.TabKey)}");
         InputSimulator.LeftClick(tabX, tabY);
-        await DelayAsync(settings.InventoryDelayMs, cancellationToken);
+        await DelayAsync(settings.DelayMs, cancellationToken);
     }
 
     private static async Task DoubleLeftClickAsync(int x, int y, CancellationToken cancellationToken)
