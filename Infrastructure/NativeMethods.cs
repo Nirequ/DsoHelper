@@ -182,7 +182,41 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     internal static extern bool SetForegroundWindow(IntPtr hWnd);
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    [DllImport("user32.dll")]
     internal static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int maxCount);
-    
+
+    [DllImport("user32.dll")]
+    internal static extern bool GetWindowRect(IntPtr hWnd, out Rect rect);
+
+    // Snapshot процессов (поиск окна игры по владельцу, а не по заголовку).
+    internal const uint Th32csSnapProcess = 0x00000002;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern IntPtr CreateToolhelp32Snapshot(uint flags, uint processId);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    internal static extern bool Process32First(IntPtr snapshot, ref ProcessEntry32 entry);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    internal static extern bool Process32Next(IntPtr snapshot, ref ProcessEntry32 entry);
+
+    [DllImport("kernel32.dll")]
+    internal static extern bool CloseHandle(IntPtr handle);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct ProcessEntry32
+    {
+        public uint Size;
+        public uint CountUsage;
+        public uint ProcessId;
+        public IntPtr DefaultHeapId;
+        public uint ModuleId;
+        public uint CountThreads;
+        public uint ParentProcessId;
+        public int PriClassBase;
+        public uint Flags;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string ImageFile;
+    }
 }

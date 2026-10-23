@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace DsoHelper.Infrastructure;
@@ -12,7 +13,111 @@ internal readonly record struct ClientBounds(int Left, int Top, int Width, int H
 
 internal static class GameWindow
 {
+    /// <summary>Признак имени исполняемого файла клиента.</summary>
+    private const string ProcessImageMarker = "drakensang";
+
+    /// <summary>
+    /// PID всех процессов, чей exe похож на клиент Drakensang.
+    /// Быстрее снепшота каждого вызова: миллисекунда, безопасно для хука.
+    /// </summary>
+    public static bool TryCollectGameProcessIds(HashSet<uint> processIds)
+    {
+        processIds.Clear();
+
+        var snapshot = NativeMethods.CreateToolhelp32Snapshot(
+            NativeMethods.Th32csSnapProcess,
+            0);
+        if (snapshot == IntPtr.Zero || snapshot == new IntPtr(-1))
+        {
+            return false;
+        }
+
+        try
+        {
+            var entry = new NativeMethods.ProcessEntry32
+            {
+                Size = (uint)System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.ProcessEntry32>()
+            };
+
+            if (NativeMethods.Process32First(snapshot, ref entry))
+            {
+                do
+                {
+                    if (entry.ImageFile?.Contains(
+                            ProcessImageMarker,
+                            StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        processIds.Add(entry.ProcessId);
+                    }
+                }
+                while (NativeMethods.Process32Next(snapshot, ref entry));
+            }
+        }
+        finally
+        {
+            NativeMethods.CloseHandle(snapshot);
+        }
+
+        return processIds.Count > 0;
+    }
+
     public static bool TryFind(out IntPtr window)
+    {
+        // Первичный путь: окно процесса клиента (имя exe содержит маркер).
+        HashSet<uint> processIds = [];
+        if (TryCollectGameProcessIds(processIds) &&
+            FindWindowOfProcesses(processIds, out window))
+        {
+            return true;
+        }
+
+        // Резерв: нестандартное имя exe — старый поиск по заголовку.
+        return TryFindByTitle(out window);
+    }
+
+    private static bool FindWindowOfProcesses(HashSet<uint> processIds, out IntPtr window)
+    {
+        IntPtr any = IntPtr.Zero;
+        IntPtr withTitle = IntPtr.Zero;
+
+        NativeMethods.EnumWindows((hWnd, _) =>
+        {
+            if (!NativeMethods.IsWindowVisible(hWnd))
+            {
+                return true;
+            }
+
+            NativeMethods.GetWindowThreadProcessId(hWnd, out var processId);
+            if (processId == 0 || !processIds.Contains(processId))
+            {
+                return true;
+            }
+
+            if (any == IntPtr.Zero)
+            {
+                any = hWnd;
+            }
+
+            var title = new StringBuilder(260);
+            if (NativeMethods.GetWindowText(hWnd, title, title.Capacity) > 0)
+            {
+                if (withTitle == IntPtr.Zero)
+                {
+                    withTitle = hWnd;
+                }
+
+                // Главное окно игры всегда с заголовком — останавливаемся.
+                return false;
+            }
+
+            return true;
+        }, IntPtr.Zero);
+
+        window = withTitle != IntPtr.Zero ? withTitle : any;
+        return window != IntPtr.Zero;
+    }
+
+    private static bool TryFindByTitle(out IntPtr window)
     {
         var found = IntPtr.Zero;
 
@@ -89,8 +194,9 @@ internal static class GameWindow
     }
 
     /// <summary>
-    /// True when the Drakensang window currently owns the foreground.
-    /// Cheap enough to be called from a keyboard hook.
+    /// True, когда активное окно принадлежит процессу клиента Drakensang.
+    /// Проверка по PID процесса, а не по заголовку: таб браузера с «Drakensang»
+    /// в заголовке больше не считается игрой.
     /// </summary>
     public static bool IsForeground()
     {
@@ -100,26 +206,15 @@ internal static class GameWindow
             return false;
         }
 
-        var title = new StringBuilder(256);
-        if (NativeMethods.GetWindowText(foreground, title, title.Capacity) > 0 &&
-            title.ToString().Contains("Drakensang", StringComparison.OrdinalIgnoreCase))
+        HashSet<uint> processIds = [];
+        if (TryCollectGameProcessIds(processIds))
         {
-            return true;
+            NativeMethods.GetWindowThreadProcessId(foreground, out var foregroundProcess);
+            return processIds.Contains(foregroundProcess);
         }
 
-        // The active window may be a different top-level window of the same game process.
-        if (!TryFind(out var game) || game == IntPtr.Zero)
-        {
-            return false;
-        }
-
-        if (game == foreground)
-        {
-            return true;
-        }
-
-        NativeMethods.GetWindowThreadProcessId(game, out var gameProcess);
-        NativeMethods.GetWindowThreadProcessId(foreground, out var foregroundProcess);
-        return gameProcess != 0 && gameProcess == foregroundProcess;
+        // Резерв (exe не распознан): окно заголовка должно совпасть с активным,
+        // но ничего кроме игры приложению-фокуснику не прощаем.
+        return TryFindByTitle(out var game) && game == foreground;
     }
 }

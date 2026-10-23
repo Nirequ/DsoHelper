@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DsoHelper.FastMount;
 
@@ -61,8 +62,7 @@ internal sealed class FastMountSettings
 
     public static string FilePath => Path.Combine(AppContext.BaseDirectory, "config.json");
 
-    public static FastMountSettings Load()
-    {
+    public static FastMountSettings Load()    {
         try
         {
             if (!File.Exists(FilePath))
@@ -71,7 +71,8 @@ internal sealed class FastMountSettings
             }
 
             var json = File.ReadAllText(FilePath);
-            var settings = JsonSerializer.Deserialize<FastMountSettings>(json) ?? new FastMountSettings();
+            var settings = JsonSerializer.Deserialize(json, FastMountSettingsJsonContext.Default.FastMountSettings) ??
+                           new FastMountSettings();
             settings.MigrateTabPoints(json);
             settings.MigrateDelay(json);
             return settings;
@@ -162,7 +163,16 @@ internal sealed class FastMountSettings
 
     public void Save()
     {
-        var options = new JsonSerializerOptions { WriteIndented = true };
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(this, options));
+        File.WriteAllText(FilePath, JsonSerializer.Serialize(this, FastMountSettingsJsonContext.Default.FastMountSettings));
     }
+}
+
+/// <summary>
+/// Source-generated сериализатор: корректно работает с триммингом сборки
+/// (метаданные генерируются на компиляции, reflection не используется).
+/// </summary>
+[JsonSourceGenerationOptions(WriteIndented = true)]
+[JsonSerializable(typeof(FastMountSettings))]
+internal sealed partial class FastMountSettingsJsonContext : JsonSerializerContext
+{
 }

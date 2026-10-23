@@ -13,15 +13,32 @@ namespace DsoHelper.UI;
 /// </summary>
 public partial class SlotPickerWindow : Window
 {
-    private const double DefaultMarkerSize = 64;
+    /// <summary>Маркер для ячейки инвентаря (слот плаща).</summary>
+    public const double SlotMarkerSize = 64;
+
+    /// <summary>Маркер для заголовков вкладок — они заметно меньше ячейки.</summary>
+    public const double TabMarkerSize = 36;
 
     private readonly DispatcherTimer _follow;
+    private readonly double _markerSize;
 
     public event EventHandler<PixelPoint>? SlotPicked;
 
-    public SlotPickerWindow()
+    public SlotPickerWindow() : this(SlotMarkerSize)
+    {
+    }
+
+    public SlotPickerWindow(double markerSize)
     {
         InitializeComponent();
+
+        _markerSize = markerSize;
+        Width = markerSize;
+        Height = markerSize;
+        if (HintText is { } hintText)
+        {
+            hintText.FontSize = Math.Max(14, markerSize / 3);
+        }
 
         _follow = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(15) };
         _follow.Tick += (_, _) => FollowCursor();
@@ -52,8 +69,8 @@ public partial class SlotPickerWindow : Window
             return;
         }
 
-        var halfWidth = (int)Math.Round(GetMarkerWidth() * RenderScaling / 2);
-        var halfHeight = (int)Math.Round(GetMarkerHeight() * RenderScaling / 2);
+        var halfWidth = (int)Math.Round(_markerSize * RenderScaling / 2);
+        var halfHeight = (int)Math.Round(_markerSize * RenderScaling / 2);
         var next = new PixelPoint(cursor.X - halfWidth, cursor.Y - halfHeight);
 
         if (Position != next)
@@ -110,8 +127,4 @@ public partial class SlotPickerWindow : Window
             e.Handled = true;
         }
     }
-
-    private double GetMarkerWidth() => Bounds.Width > 0 ? Bounds.Width : DefaultMarkerSize;
-
-    private double GetMarkerHeight() => Bounds.Height > 0 ? Bounds.Height : DefaultMarkerSize;
 }

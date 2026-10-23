@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Корни триммера: модель конфига сериализуется через reflection System.Text.Json. -->
+<linker>
+  <assembly fullname="DsoHelper">
+    <type fullname="DsoHelper.FastMount.FastMountSettings" preserve="all" />
+    <type fullname="DsoHelper.Infrastructure.HotkeyDefinition" preserve="all" />
+    <type fullname="DsoHelper.Infrastructure.KeyInfo" preserve="all" />
+  </assembly>
+</linker>

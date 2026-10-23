@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -16,6 +17,10 @@ namespace DsoHelper;
 
 public partial class MainWindow : Window
 {
+    /// <summary>Диапазон и шаг задержки макроса, мс.</summary>
+    private const int DelayMaxMs = 1000;
+    private const int DelayStepMs = 15;
+
     // Mirrors UI/Palette.axaml (Drakensang helper palette).
     private static readonly IBrush IdleBrush = new SolidColorBrush(Color.Parse("#8C93A2"));
     private static readonly IBrush BusyBrush = new SolidColorBrush(Color.Parse("#E0A93B"));
@@ -32,6 +37,7 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _runCts;
     private bool _running;
     private bool _picking;
+    private bool _delaySyncing;
 
     public MainWindow()
     {
@@ -75,7 +81,7 @@ public partial class MainWindow : Window
         InventoryKeyBox.TextChanged += (_, _) => ScheduleSave();
         MountKeyBox.TextChanged += (_, _) => ScheduleSave();
 
-        DelayBox.ValueChanged += (_, _) => ScheduleSave();
+        WireDelayControls();
 
         SwitchTabCheck.IsCheckedChanged += (_, _) =>
         {
@@ -91,6 +97,45 @@ public partial class MainWindow : Window
         };
     }
 
+    /// <summary>Ползунок задержки и поле ручного ввода: шаг 15 мс, диапазон 0..1000.</summary>
+    private void WireDelayControls()
+    {
+        DelaySlider.ValueChanged += DelaySliderValueChanged;
+        DelayValueBox.LostFocus += (_, _) => CommitDelayText();
+        DelayValueBox.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                CommitDelayText();
+            }
+        };
+    }
+
+    private void DelaySliderValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        var clamped = Math.Clamp((int)Math.Round(e.NewValue), 0, DelayMaxMs);
+
+        if (!_delaySyncing)
+        {
+            // Приводим шаг к DelayStepMs (ползунок).
+            clamped = Math.Min((int)Math.Round(clamped / (double)DelayStepMs) * DelayStepMs, DelayMaxMs);
+
+            if (Math.Abs(clamped - DelaySlider.Value) > 0.5)
+            {
+                DelaySlider.Value = clamped;
+                return;
+            }
+        }
+
+        if (!DelayValueBox.IsFocused && DelayValueBox.Text != clamped.ToString())
+        {
+            DelayValueBox.Text = clamped.ToString();
+        }
+
+        ScheduleSave();
+    }
+
     private void LoadSettingsIntoUi()
     {
         HotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.Hotkey, out var hotkey, out _)
@@ -99,7 +144,9 @@ public partial class MainWindow : Window
         InventoryKeyBox.Text = CanonicalKey(_settings.InventoryKey, "I");
         MountKeyBox.Text = CanonicalKey(_settings.MountKey, "M");
 
-        DelayBox.Value = _settings.DelayMs;
+        var delay = Math.Clamp(_settings.DelayMs, 0, DelayMaxMs);
+        DelaySlider.Value = delay;
+        DelayValueBox.Text = delay.ToString();
 
         SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
 
@@ -118,16 +165,29 @@ public partial class MainWindow : Window
         _settings.InventoryKey = CanonicalKey(InventoryKeyBox.Text, _settings.InventoryKey);
         _settings.MountKey = CanonicalKey(MountKeyBox.Text, _settings.MountKey);
 
-        _settings.DelayMs = ToInt(DelayBox);
+        _settings.DelayMs = (int)DelaySlider.Value;
         _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
     }
-
-    private static int ToInt(NumericUpDown box) =>
-        box.Value is { } value ? (int)value : 0;
-
     private static string CanonicalKey(string? text, string fallback) =>
         KeyCatalog.TryParseKey(text, out var key) && !key.IsModifier ? key.Display : fallback;
+
+    private void CommitDelayText()
+    {
+        if (!int.TryParse(DelayValueBox.Text?.Trim(), out var value) || value < 0)
+        {
+            value = _settings.DelayMs;
+        }
+
+        value = Math.Clamp(value, 0, DelayMaxMs);
+
+        _delaySyncing = true;
+        DelaySlider.Value = value;
+        _delaySyncing = false;
+
+        DelayValueBox.Text = value.ToString();
+        ScheduleSave();
+    }
 
     private void ApplyHotkey(bool showError)
     {
@@ -282,11 +342,6 @@ public partial class MainWindow : Window
         ScheduleSave();
     }
 
-    private async void OnRunClick(object? sender, RoutedEventArgs e)
-    {
-        await RunFastMountAsync(interactive: true);
-    }
-
     private async Task RunFastMountAsync(bool interactive)
     {
         if (_running || _picking)
@@ -302,7 +357,6 @@ public partial class MainWindow : Window
         }
 
         _running = true;
-        RunButton.IsEnabled = false;
         _runCts = new CancellationTokenSource();
 
         try
@@ -344,72 +398,29 @@ public partial class MainWindow : Window
             _runCts.Dispose();
             _runCts = null;
             _running = false;
-            RunButton.IsEnabled = true;
         }
     }
 
-    private void OnPickSlotClick(object? sender, RoutedEventArgs e)
-    {
-        if (_running)
-        {
-            return;
-        }
-
-        if (_slotPicker is not null)
-        {
-            _slotPicker.Activate();
-            return;
-        }
-
-        if (!NativeMethods.GetCursorPos(out var cursor))
-        {
-            SetStatus("Не удалось определить позицию курсора.", StatusKind.Error);
-            return;
-        }
-
-        var scaling = Screens.ScreenFromPoint(new PixelPoint(cursor.X, cursor.Y))?.Scaling ?? 1.0;
-        var half = (int)Math.Round(32 * scaling);
-
-        _picking = true;
-        PickSlotButton.IsEnabled = false;
-        RunButton.IsEnabled = false;
-
-        var picked = false;
-        var picker = new SlotPickerWindow();
-        picker.SlotPicked += (_, point) =>
-        {
-            picked = true;
-            SlotResolver.Capture(_settings, point.X, point.Y);
-            UpdateSlotUi();
-            SaveSettings();
-            SetStatus(
-                _settings.SlotRightRatio is not null
-                    ? "Слот выбран — позиция подстроится под окно игры"
-                    : "Слот выбран (игра не найдена, сохранены координаты экрана)",
-                StatusKind.Success);
-        };
-        picker.Closed += (_, _) =>
-        {
-            _slotPicker = null;
-            _picking = false;
-            PickSlotButton.IsEnabled = true;
-            RunButton.IsEnabled = true;
-
-            Show();
-            Activate();
-
-            if (!picked)
+    private void OnPickSlotClick(object? sender, RoutedEventArgs e) =>
+        ShowSlotPicker(
+            () => _slotPicker,
+            picker => _slotPicker = picker,
+            enabled => PickSlotButton.IsEnabled = enabled,
+            precondition: null,
+            markerSize: SlotPickerWindow.SlotMarkerSize,
+            point =>
             {
-                SetStatus("Выбор слота отменён", StatusKind.Idle);
-            }
-        };
-
-        picker.Position = new PixelPoint(cursor.X - half, cursor.Y - half);
-        _slotPicker = picker;
-        Hide();
-        picker.Show();
-        SetStatus("Наведите квадрат на слот и кликните левой кнопкой (Esc — отмена)", StatusKind.Busy);
-    }
+                SlotResolver.Capture(_settings, point.X, point.Y);
+                UpdateSlotUi();
+                SaveSettings();
+                SetStatus(
+                    _settings.SlotRightRatio is not null
+                        ? "Слот выбран — позиция подстроится под окно игры"
+                        : "Слот выбран (игра не найдена, сохранены координаты экрана)",
+                    StatusKind.Success);
+            },
+            cancelStatus: "Выбор слота отменён",
+            busyStatus: "Наведите квадрат на слот и кликните левой кнопкой (Esc — отмена)");
 
     private void UpdateSlotUi()
     {
@@ -433,23 +444,95 @@ public partial class MainWindow : Window
 
     private void OnPickTabStepClick(object? sender, RoutedEventArgs e) => ShowTabPicker(step: true);
 
-    private void ShowTabPicker(bool step)
+    private void ShowTabPicker(bool step) =>
+        ShowSlotPicker(
+            () => step ? _tabStepPicker : _tabPicker,
+            picker =>
+            {
+                if (step)
+                {
+                    _tabStepPicker = picker;
+                }
+                else
+                {
+                    _tabPicker = picker;
+                }
+            },
+            enabled =>
+            {
+                PickTabButton.IsEnabled = enabled;
+                PickTabStepButton.IsEnabled = enabled;
+            },
+            precondition: step
+                ? () => TabResolver.HasBase(_settings)
+                    ? null
+                    : "Сначала укажите позицию 1-й вкладки."
+                : null,
+            markerSize: SlotPickerWindow.TabMarkerSize,
+            point =>
+            {
+                if (step)
+                {
+                    if (TabResolver.CaptureStep(_settings, point.X, point.Y))
+                    {
+                        SetStatus(
+                            $"Шаг вкладок: {TabResolver.StepPixelsX(_settings)} × {TabResolver.StepPixelsY(_settings)} px",
+                            StatusKind.Success);
+                        UpdateTabUi();
+                        SaveSettings();
+                    }
+                    else
+                    {
+                        SetStatus("Сначала укажите позицию 1-й вкладки.", StatusKind.Error);
+                    }
+                }
+                else
+                {
+                    TabResolver.CaptureBase(_settings, point.X, point.Y);
+                    SetStatus(
+                        _settings.TabRightRatio is not null
+                            ? "Позиция 1-й вкладки сохранена"
+                            : "Позиция 1-й вкладки сохранена (игра не найдена, сохранены координаты экрана)",
+                        StatusKind.Success);
+                    UpdateTabUi();
+                    SaveSettings();
+                }
+            },
+            cancelStatus: "Выбор отменён",
+            busyStatus: step
+                ? "Наведите квадрат на 2-ю вкладку и кликните (Esc — отмена)"
+                : "Наведите квадрат на 1-ю вкладку и кликните (Esc — отмена)");
+
+    /// <summary>
+    /// Общий поток выбора точки на экране: guard от запуска/повторного picker-а,
+    /// предусловие, позиция курсора, следящий квадрат, restore главного окна.
+    /// </summary>
+    private void ShowSlotPicker(
+        Func<SlotPickerWindow?> existingPicker,
+        Action<SlotPickerWindow?> storePicker,
+        Action<bool> setPickButtons,
+        Func<string?>? precondition,
+        double markerSize,
+        Action<PixelPoint> onPicked,
+        string cancelStatus,
+        string busyStatus)
     {
         if (_running)
         {
             return;
         }
 
-        var existing = step ? _tabStepPicker : _tabPicker;
+        var existing = existingPicker();
         if (existing is not null)
         {
             existing.Activate();
             return;
         }
 
-        if (step && !TabResolver.HasBase(_settings))
+        var preError = precondition?.Invoke();
+        if (preError is not null)
         {
-            SetStatus("Сначала укажите позицию 1-й вкладки.", StatusKind.Error);
+            SetStatus(preError, StatusKind.Error);
             return;
         }
 
@@ -459,88 +542,38 @@ public partial class MainWindow : Window
             return;
         }
 
-        var scaling = Screens.ScreenFromPoint(new PixelPoint(cursor.X, cursor.Y))?.Scaling ?? 1.0;
-        var half = (int)Math.Round(32 * scaling);
+        var half = (int)Math.Round(markerSize * (Screens.ScreenFromPoint(new PixelPoint(cursor.X, cursor.Y))?.Scaling ?? 1.0) / 2);
 
         _picking = true;
-        PickTabButton.IsEnabled = false;
-        PickTabStepButton.IsEnabled = false;
-        RunButton.IsEnabled = false;
+        setPickButtons(false);
 
         var picked = false;
-        var picker = new SlotPickerWindow();
+        var picker = new SlotPickerWindow(markerSize);
         picker.SlotPicked += (_, point) =>
         {
             picked = true;
-
-            if (step)
-            {
-                if (TabResolver.CaptureStep(_settings, point.X, point.Y))
-                {
-                    SetStatus(
-                        $"Шаг вкладок: {TabResolver.StepPixelsX(_settings)} × {TabResolver.StepPixelsY(_settings)} px",
-                        StatusKind.Success);
-                }
-                else
-                {
-                    SetStatus("Сначала укажите позицию 1-й вкладки.", StatusKind.Error);
-                }
-            }
-            else
-            {
-                TabResolver.CaptureBase(_settings, point.X, point.Y);
-                SetStatus(
-                    _settings.TabRightRatio is not null
-                        ? "Позиция 1-й вкладки сохранена"
-                        : "Позиция 1-й вкладки сохранена (игра не найдена, сохранены координаты экрана)",
-                    StatusKind.Success);
-            }
-
-            UpdateTabUi();
-            SaveSettings();
+            onPicked(point);
         };
         picker.Closed += (_, _) =>
         {
-            if (step)
-            {
-                _tabStepPicker = null;
-            }
-            else
-            {
-                _tabPicker = null;
-            }
-
+            storePicker(null);
             _picking = false;
-            PickTabButton.IsEnabled = true;
-            PickTabStepButton.IsEnabled = true;
-            RunButton.IsEnabled = true;
+            setPickButtons(true);
 
             Show();
             Activate();
 
             if (!picked)
             {
-                SetStatus("Выбор отменён", StatusKind.Idle);
+                SetStatus(cancelStatus, StatusKind.Idle);
             }
         };
 
         picker.Position = new PixelPoint(cursor.X - half, cursor.Y - half);
-        if (step)
-        {
-            _tabStepPicker = picker;
-        }
-        else
-        {
-            _tabPicker = picker;
-        }
-
+        storePicker(picker);
         Hide();
         picker.Show();
-        SetStatus(
-            step
-                ? "Наведите квадрат на 2-ю вкладку и кликните (Esc — отмена)"
-                : "Наведите квадрат на 1-ю вкладку и кликните (Esc — отмена)",
-            StatusKind.Busy);
+        SetStatus(busyStatus, StatusKind.Busy);
     }
 
     private void OnTabSelectClick(object? sender, RoutedEventArgs e)
