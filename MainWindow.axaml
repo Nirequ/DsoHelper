@@ -441,6 +441,62 @@
         <Grid x:Name="MainContentGrid" RowDefinitions="Auto,*,Auto" Margin="30,25,30,22" RowSpacing="16">
             <!-- Header -->
             <StackPanel Grid.Row="0" Spacing="17">
+                <!-- Уведомление о доступном обновлении (сверху, появляется после проверки на старте) -->
+                <Border x:Name="UpdateBanner"
+                        Classes="cardFrame"
+                        IsVisible="False"
+                        Margin="0,0,0,2">
+                    <Border Classes="cardInner">
+                        <StackPanel Margin="14,12,14,12" Spacing="9">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                <StackPanel Grid.Column="0" Spacing="3" VerticalAlignment="Center">
+                                    <TextBlock x:Name="UpdateBannerTitle"
+                                               Classes="label"
+                                               Foreground="{StaticResource AncientGoldBrush}"
+                                               Text="Доступно обновление" />
+                                    <TextBlock x:Name="UpdateBannerText"
+                                               Classes="hint"
+                                               TextWrapping="Wrap"
+                                               Text="Новая версия готова к загрузке." />
+                                </StackPanel>
+
+                                <Button x:Name="UpdateBannerButton"
+                                        Grid.Column="1"
+                                        Classes="outline"
+                                        Content="Обновить"
+                                        VerticalAlignment="Center"
+                                        Click="OnBannerUpdateClick" />
+
+                                <Button x:Name="UpdateBannerCloseButton"
+                                        Grid.Column="2"
+                                        Classes="window"
+                                        VerticalAlignment="Center"
+                                        Click="OnBannerCloseClick"
+                                        ToolTip.Tip="Скрыть уведомление">
+                                    <Path Data="M1,1 L11,11 M11,1 L1,11"
+                                          Stroke="{StaticResource AncientGoldBrush}"
+                                          StrokeThickness="1.5"
+                                          Width="12" Height="12"
+                                          Stretch="None"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                                </Button>
+                            </Grid>
+
+                            <ProgressBar x:Name="UpdateBannerProgressBar"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Value="0"
+                                         Height="6"
+                                         CornerRadius="2"
+                                         Background="{StaticResource ObsidianBlackBrush}"
+                                         BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
+                                         BorderThickness="1"
+                                         Foreground="{StaticResource AncientGoldBrush}"
+                                         IsVisible="False" />
+                        </StackPanel>
+                    </Border>
+                </Border>
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="17"
                       Background="Transparent"
                       PointerPressed="OnTitleBarPointerPressed">
@@ -1431,7 +1487,7 @@
                                                                TextWrapping="Wrap"
                                                                VerticalAlignment="Center"
                                                                Foreground="{StaticResource TextSecondaryBrush}"
-                                                               Text="Проверяется автоматически при каждом запуске приложения." />
+                                                               Text="При запуске программа только проверяет наличие новой версии и показывает уведомление сверху окна. Скачивание и установка — только по вашему подтверждению." />
                                                     <TextBlock x:Name="UpdatePercentText"
                                                                Grid.Column="2"
                                                                FontFamily="{StaticResource DisplayFont}"
@@ -1458,7 +1514,7 @@
 
                                         <TextBlock Classes="hint"
                                                    TextWrapping="Wrap"
-                                                   Text="При выходе новой версии программа скачает свежий .exe файл из GitHub Releases, заменит текущую сборку и автоматически перезапустится с сохранением всех ваших настроек." />
+                                                   Text="При выходе новой версии программа скачает свежий .exe файл из GitHub Releases, заменит текущую сборку и перезапустится с сохранением всех ваших настроек. Автоматической установки нет: обновление ставится только по подтверждению пользователя." />
                                     </StackPanel>
                                 </Grid>
                             </Border>

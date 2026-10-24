@@ -81,23 +81,31 @@ internal static class GitHubUpdater
     }
 
     /// <summary>
-    /// Автопроверка на старте приложения: молча проверяет и, если на GitHub версия
-    /// новее, сразу скачивает и устанавливает её. Любая ошибка молча игнорируется.
+    /// Фоновая проверка на старте приложения: молча смотрит на GitHub и просто
+    /// возвращает результат. Ничего не скачивает и не устанавливает — решение
+    /// об обновлении принимает пользователь. Любая ошибка даёт null.
     /// </summary>
-    public static async Task CheckAndUpdateAsync()
+    public static async Task<UpdateCheckResult?> CheckVersionSilentlyAsync()
     {
         try
         {
             var check = await TryCheck().ConfigureAwait(false);
-            if (check.Outcome == CheckOutcome.Available)
+            return check.Outcome switch
             {
-                await TryInstall(check.DownloadUrl!, check.DisplayTag).ConfigureAwait(false);
-            }
+                CheckOutcome.Available => new(
+                    CheckOutcome.Available,
+                    $"Доступна версия v{check.DisplayTag}.",
+                    check.Latest,
+                    check.DisplayTag,
+                    check.DownloadUrl),
+                _ => null
+            };
         }
         catch (Exception)
         {
-            // Нет интернета / GitHub недоступен / нет прав: работаем дальше.
+            // Нет интернета / GitHub недоступен: работаем дальше, без уведомления.
             CleanupDownloadArtifacts();
+            return null;
         }
     }
 

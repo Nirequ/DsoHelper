@@ -88,7 +88,105 @@ public partial class MainWindow : Window
             {
                 WindowAppearance.UseDarkTitleBar(handle.Handle);
             }
+
+            // Проверка наличия новой версии в фоне: только уведомление,
+            // ничего не скачивается и не устанавливается без согласия.
+            _ = CheckUpdateBannerAsync();
         };
+    }
+
+    /// <summary>
+    /// Тихо спрашивает GitHub о новой версии и, если она есть, показывает
+    /// уведомление сверху окна. Ошибки сети игнорируются.
+    /// </summary>
+    private async Task CheckUpdateBannerAsync()
+    {
+        var check = await GitHubUpdater.CheckVersionSilentlyAsync().ConfigureAwait(true);
+        if (check is null || check.Outcome != CheckOutcome.Available)
+        {
+            return;
+        }
+
+        _pendingUpdateTag = check.DisplayTag;
+        _pendingUpdateUrl = check.DownloadUrl;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            UpdateBannerTitle.Text = $"Доступна версия v{check.DisplayTag}";
+            UpdateBannerText.Text = "Нажмите «Обновить», чтобы скачать сборку и перезапустить программу.";
+            UpdateBannerButton.IsEnabled = true;
+            UpdateBannerButton.Content = "Обновить";
+            UpdateBannerProgressBar.IsVisible = false;
+            UpdateBanner.IsVisible = true;
+        });
+    }
+
+    /// <summary>Скачивание и установка обновления из верхнего уведомления.</summary>
+    private async void OnBannerUpdateClick(object? sender, RoutedEventArgs e)
+    {
+        if (_pendingUpdateUrl is null || _checkingUpdates)
+        {
+            return;
+        }
+
+        _checkingUpdates = true;
+        UpdateBannerButton.IsEnabled = false;
+        UpdateBannerButton.Content = "Скачиваю…";
+        UpdateBannerText.Text = $"Загружаю v{_pendingUpdateTag}…";
+        UpdateBannerProgressBar.IsVisible = true;
+        UpdateBannerProgressBar.Value = 0;
+
+        try
+        {
+            var result = await Task.Run(() =>
+                GitHubUpdater.PerformUpdateAsync(
+                    _pendingUpdateUrl,
+                    _pendingUpdateTag,
+                    message => Dispatcher.UIThread.Post(() =>
+                    {
+                        UpdateBannerText.Text = message;
+                    }),
+                    percent => Dispatcher.UIThread.Post(() =>
+                    {
+                        var clamped = Math.Clamp(percent, 0, 100);
+                        UpdateBannerProgressBar.IsIndeterminate = false;
+                        UpdateBannerProgressBar.Value = clamped;
+                        UpdateBannerText.Text = $"Скачиваю v{_pendingUpdateTag}… {clamped}%";
+                    })));
+
+            if (result.Outcome == UpdateOutcome.Updated)
+            {
+                // Приложение перезапустится само внутри PerformUpdateAsync.
+                UpdateBannerText.Text = "Установлено, перезапускаю программу…";
+                return;
+            }
+
+            _pendingUpdateTag = string.Empty;
+            _pendingUpdateUrl = null;
+            UpdateBannerButton.Content = "Обновить";
+            UpdateBannerButton.IsEnabled = true;
+            UpdateBannerProgressBar.IsVisible = false;
+            UpdateBannerText.Text = result.Message;
+        }
+        catch (Exception ex)
+        {
+            UpdateBannerButton.Content = "Обновить";
+            UpdateBannerButton.IsEnabled = true;
+            UpdateBannerProgressBar.IsVisible = false;
+            UpdateBannerText.Text = "Обновление не удалось: " + GitHubUpdater.DescribeError(ex);
+        }
+        finally
+        {
+            _checkingUpdates = false;
+        }
+    }
+
+    /// <summary>Прячет верхнее уведомление об обновлении.</summary>
+    private void OnBannerCloseClick(object? sender, RoutedEventArgs e)
+    {
+        UpdateBanner.IsVisible = false;
+        _pendingUpdateTag = string.Empty;
+        _pendingUpdateUrl = null;
     }
 
     private void WireEvents()

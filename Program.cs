@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using System;
-using System.Threading.Tasks;
 using DsoHelper.Infrastructure;
 
 namespace DsoHelper;
@@ -16,9 +15,8 @@ class Program
         // След прошлой замены (если обновление сорвалось на середине) убираем сразу.
         GitHubUpdater.CleanupPreviousUpdate();
 
-        // Проверка обновлений в фоне: до 10 секунд ожидания не блокируют UI,
-        // при удачном обновлении процесс сам перезапустится.
-        _ = Task.Run(() => GitHubUpdater.CheckAndUpdateAsync());
+        // Автообновление отключено: наличие новой версии проверяется в фоне
+        // при старте и показывается только уведомлением сверху главного окна.
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
