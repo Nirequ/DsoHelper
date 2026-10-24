@@ -1256,99 +1256,242 @@
             </Border>
         </Grid>
 
-        <!-- Экран настроек (по образцу с фото) -->
+        <!-- Экран настроек и обновлений -->
         <Grid x:Name="SettingsPanel"
               RowDefinitions="Auto,*,Auto"
               Margin="30,25,30,22"
               RowSpacing="16"
               IsVisible="False">
-            <!-- Верхняя панель: кнопка "<- назад" слева и кнопки управления окном справа -->
-            <Grid Grid.Row="0"
-                  ColumnDefinitions="Auto,*,Auto"
-                  Background="Transparent"
-                  PointerPressed="OnTitleBarPointerPressed">
-                <Button x:Name="SettingsBackButton"
-                        Classes="outline"
-                        Padding="12,6"
-                        VerticalAlignment="Center"
-                        Click="OnSettingsBackClick">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Path Data="M14,6 L2,6 M2,6 L7,1 M2,6 L7,11"
-                              Stroke="{StaticResource AncientGoldBrush}"
-                              StrokeThickness="1.6"
-                              Width="14" Height="12"
-                              Stretch="None"
-                              VerticalAlignment="Center" />
-                        <TextBlock Text="назад" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-
-                <StackPanel Grid.Column="2"
-                            Orientation="Horizontal"
-                            Spacing="6"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top">
-                    <Button Classes="window"
-                            Click="OnMinimizeClick"
-                            ToolTip.Tip="Свернуть в трей">
-                        <Path Data="M0,6 L12,6"
-                              Stroke="{StaticResource AncientGoldBrush}"
-                              StrokeThickness="1.5"
-                              Width="12" Height="12"
-                              Stretch="None"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
-                    </Button>
-                    <Button Classes="window close"
-                            Click="OnCloseClick"
-                            ToolTip.Tip="Закрыть">
-                        <Path Data="M1,1 L11,11 M11,1 L1,11"
-                              Stroke="{StaticResource AncientGoldBrush}"
-                              StrokeThickness="1.5"
-                              Width="12" Height="12"
-                              Stretch="None"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center" />
-                    </Button>
-                </StackPanel>
-            </Grid>
-
-            <!-- Центр: строка "Проверить обновления" + кнопка "Проверить сейчас" -->
-            <StackPanel Grid.Row="1" Spacing="14" Margin="0,24,0,0">
-                <Border Classes="cardFrame">
-                    <Border Classes="cardInner" Padding="22,20">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                                <TextBlock Classes="label"
-                                           Text="Проверить обновления"
-                                           VerticalAlignment="Center" />
-                                <Button x:Name="CheckUpdatesButton"
-                                        Grid.Column="1"
-                                        Classes="outline"
-                                        Content="Проверить сейчас"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Left"
-                                        Click="OnCheckUpdatesClick" />
-                            </Grid>
-
-                            <TextBlock x:Name="UpdateStatusText"
-                                       Classes="hint"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       Text="Проверяется при каждом запуске приложения." />
+            <!-- Шапка настроек -->
+            <StackPanel Grid.Row="0" Spacing="17">
+                <Grid ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="14"
+                      Background="Transparent"
+                      PointerPressed="OnTitleBarPointerPressed">
+                    <Button x:Name="SettingsBackButton"
+                            Classes="outline"
+                            Padding="13,8"
+                            VerticalAlignment="Center"
+                            Click="OnSettingsBackClick"
+                            ToolTip.Tip="Вернуться на главный экран">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Data="M14,6 L2,6 M2,6 L7,1 M2,6 L7,11"
+                                  Stroke="{StaticResource AncientGoldBrush}"
+                                  StrokeThickness="1.6"
+                                  Width="14" Height="12"
+                                  Stretch="None"
+                                  VerticalAlignment="Center" />
+                            <TextBlock Text="НАЗАД"
+                                       FontFamily="{StaticResource DisplayFont}"
+                                       FontSize="11"
+                                       LetterSpacing="1.2"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
-                    </Border>
-                </Border>
+                    </Button>
+
+                    <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center" Margin="4,0,0,0">
+                        <TextBlock Classes="h1" Text="НАСТРОЙКИ" FontSize="20" />
+                        <TextBlock Classes="subtitle" Text="Обновления и информация о сборке" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Spacing="6"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top">
+                        <Button Classes="window"
+                                Click="OnMinimizeClick"
+                                ToolTip.Tip="Свернуть в трей">
+                            <Path Data="M0,6 L12,6"
+                                  Stroke="{StaticResource AncientGoldBrush}"
+                                  StrokeThickness="1.5"
+                                  Width="12" Height="12"
+                                  Stretch="None"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Button>
+                        <Button Classes="window close"
+                                Click="OnCloseClick"
+                                ToolTip.Tip="Закрыть">
+                            <Path Data="M1,1 L11,11 M11,1 L1,11"
+                                  Stroke="{StaticResource AncientGoldBrush}"
+                                  StrokeThickness="1.5"
+                                  Width="12" Height="12"
+                                  Stretch="None"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Декоративный разделитель как на главном экране -->
+                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="11">
+                    <Border Height="1"
+                            Background="{StaticResource GoldRuleLeftBrush}"
+                            VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Path Data="M0,4 L7,0 L14,4 L7,8 Z"
+                              Width="14" Height="8" Stretch="Fill"
+                              Fill="{StaticResource AncientGoldBrush}"
+                              Opacity="0.45" />
+                        <Path Data="M6,0 L12,6 L6,12 L0,6 Z"
+                              Width="12" Height="12" Stretch="Fill"
+                              Fill="{StaticResource AncientGoldBrush}" />
+                        <Path Data="M0,4 L7,0 L14,4 L7,8 Z"
+                              Width="14" Height="8" Stretch="Fill"
+                              Fill="{StaticResource AncientGoldBrush}"
+                              Opacity="0.45" />
+                    </StackPanel>
+                    <Border Grid.Column="2"
+                            Height="1"
+                            Background="{StaticResource GoldRuleRightBrush}"
+                            VerticalAlignment="Center" />
+                </Grid>
             </StackPanel>
 
-            <!-- Низ слева: Версия: 0.0.0 -->
-            <TextBlock x:Name="SettingsVersionText"
-                       Grid.Row="2"
-                       Classes="label"
-                       Foreground="{StaticResource TextSecondaryBrush}"
-                       HorizontalAlignment="Left"
-                       VerticalAlignment="Bottom"
-                       Text="Версия: 0.0.0" />
+            <!-- Контент настроек -->
+            <ScrollViewer Grid.Row="1"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Hidden">
+                <StackPanel Spacing="19" Margin="0,6,0,0">
+                    <!-- Карточка I. Центр обновлений -->
+                    <Grid>
+                        <Border Classes="cardFrame" Margin="0,16,0,0">
+                            <Border Classes="cardInner">
+                                <Grid>
+                                    <!-- Угловые засечки -->
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                    <StackPanel Margin="22,28,22,20" Spacing="15">
+                                        <!-- Главная строка: иконка, описание и кнопка "Проверить сейчас" -->
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                            <Border Width="42" Height="42"
+                                                    CornerRadius="21"
+                                                    Background="{StaticResource ObsidianBlackBrush}"
+                                                    BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
+                                                    BorderThickness="1"
+                                                    VerticalAlignment="Center">
+                                                <Path Data="M12,2 L12,13 M12,13 L8,9 M12,13 L16,9 M4,15 L4,18 C4,19.1 4.9,20 6,20 L18,20 C19.1,20 20,19.1 20,18 L20,15"
+                                                      Stroke="{StaticResource AncientGoldBrush}"
+                                                      StrokeThickness="1.7"
+                                                      Width="20" Height="20"
+                                                      Stretch="None"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                                <TextBlock Classes="label"
+                                                           FontSize="14"
+                                                           Text="Проверить обновления" />
+                                                <TextBlock Classes="hint"
+                                                           Text="Поиск новых релизов на GitHub" />
+                                            </StackPanel>
+
+                                            <Button x:Name="CheckUpdatesButton"
+                                                    Grid.Column="2"
+                                                    Classes="outline"
+                                                    Content="Проверить сейчас"
+                                                    Padding="16,9"
+                                                    VerticalAlignment="Center"
+                                                    Click="OnCheckUpdatesClick" />
+                                        </Grid>
+
+                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                        <!-- Индикатор статуса обновления -->
+                                        <Border Background="{StaticResource ObsidianDeepBrush}"
+                                                BorderBrush="{StaticResource BorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="3"
+                                                Padding="13,10">
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="11">
+                                                <Grid Width="14" Height="14" VerticalAlignment="Center">
+                                                    <Path Data="M7,0 L14,7 L7,14 L0,7 Z"
+                                                          Width="14" Height="14" Stretch="Fill"
+                                                          Fill="{Binding Foreground, ElementName=UpdateStatusText}"
+                                                          Opacity="0.2" />
+                                                    <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                                          Width="7" Height="7" Stretch="Fill"
+                                                          Fill="{Binding Foreground, ElementName=UpdateStatusText}"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center" />
+                                                </Grid>
+                                                <TextBlock x:Name="UpdateStatusText"
+                                                           Grid.Column="1"
+                                                           Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Text="Проверяется автоматически при каждом запуске приложения." />
+                                            </Grid>
+                                        </Border>
+
+                                        <TextBlock Classes="hint"
+                                                   TextWrapping="Wrap"
+                                                   Text="При выходе новой версии программа скачает свежий .exe файл из GitHub Releases, заменит текущую сборку и автоматически перезапустится с сохранением всех ваших настроек." />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <Border Classes="chapterTab gold"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="18,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                <TextBlock Classes="chapterTitle" Text="I" Foreground="{StaticResource AncientGoldBrush}" />
+                                <TextBlock Classes="chapterTitle" Text="ЦЕНТР ОБНОВЛЕНИЙ" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Нижняя плашка: Версия слева + бейдж автообновления справа -->
+            <Border Grid.Row="2" Classes="statusFrame">
+                <Border Classes="statusInner">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11">
+                        <Grid Width="16" Height="16" VerticalAlignment="Center">
+                            <Path Data="M8,0 L16,8 L8,16 L0,8 Z"
+                                  Width="16" Height="16" Stretch="Fill"
+                                  Fill="{StaticResource AncientGoldBrush}"
+                                  Opacity="0.18" />
+                            <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                  Width="8" Height="8" Stretch="Fill"
+                                  Fill="{StaticResource AncientGoldBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                        </Grid>
+
+                        <TextBlock x:Name="SettingsVersionText"
+                                   Grid.Column="1"
+                                   Text="Версия: 0.0.0"
+                                   FontFamily="{StaticResource BodyFont}"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+
+                        <Border Grid.Column="2" Classes="chip" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                      Width="7" Height="7" Stretch="Fill"
+                                      Fill="{StaticResource EssenceCyanBrush}"
+                                      VerticalAlignment="Center" />
+                                <TextBlock Text="GITHUB RELEASES"
+                                           FontFamily="{StaticResource DisplayFont}"
+                                           FontSize="9"
+                                           LetterSpacing="1.1"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Border>
         </Grid>
     </Grid>
 </Window>

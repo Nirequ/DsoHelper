@@ -126,13 +126,14 @@ internal static class GitHubUpdater
     /// <summary>
     /// Подтвержденная установка: скачивает указанный exe, подменяет запущенный
     /// файл и запускает новый процесс. Позвал — значит обновляемся.
+    /// <paramref name="downloadProgress"/> получает процент скачивания (0..100).
     /// </summary>
     public static async Task<UpdateResult> PerformUpdateAsync(
-        string downloadUrl, string displayTag, Action<string>? report = null)
+        string downloadUrl, string displayTag, Action<string>? report = null, Action<double>? downloadProgress = null)
     {
         try
         {
-            await TryInstall(downloadUrl, displayTag, report).ConfigureAwait(false);
+            await TryInstall(downloadUrl, displayTag, report, downloadProgress).ConfigureAwait(false);
             return new(UpdateOutcome.Updated, $"Обновлено до v{displayTag}.");
         }
         catch (Exception exception)
@@ -213,7 +214,8 @@ internal static class GitHubUpdater
     }
 
     /// <summary>Скачивание + замена + запуск нового процесса.</summary>
-    private static async Task TryInstall(string downloadUrl, string displayTag, Action<string>? report = null)
+    private static async Task TryInstall(
+        string downloadUrl, string displayTag, Action<string>? report = null, Action<double>? downloadProgress = null)
     {
         var exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
@@ -230,7 +232,7 @@ internal static class GitHubUpdater
 
         using (var client = CreateDownloadClient())
         {
-            await DownloadToFileAsync(client, downloadUrl, stagingTmp).ConfigureAwait(false);
+            await DownloadToFileAsync(client, downloadUrl, stagingTmp, downloadProgress).ConfigureAwait(false);
         }
 
         if (File.Exists(stagingNew))
@@ -381,7 +383,7 @@ internal static class GitHubUpdater
     }
 
     private static async Task DownloadToFileAsync(
-        HttpClient client, string url, string targetFile)
+        HttpClient client, string url, string targetFile, Action<double>? progress = null)
     {
         using (var timeout = new CancellationTokenSource(DownloadTimeout))
         {
@@ -396,7 +398,32 @@ internal static class GitHubUpdater
                     .ConfigureAwait(false);
 
                 await using var file = File.Create(targetFile);
-                await stream.CopyToAsync(file, timeout.Token).ConfigureAwait(false);
+
+                // Читаем кусками и докладываем прогресс: полоска в настройках
+                // обновляется по каждому целому проценту (без спама в UI).
+                var buffer = new byte[81920];
+                var total = response.Content.Headers.ContentLength ?? -1;
+                long downloaded = 0;
+                var lastPercent = -1;
+
+                int bytesRead;
+                while ((bytesRead = await stream
+                           .ReadAsync(buffer.AsMemory(0, buffer.Length), timeout.Token)
+                           .ConfigureAwait(false)) > 0)
+                {
+                    await file.WriteAsync(buffer.AsMemory(0, bytesRead), timeout.Token).ConfigureAwait(false);
+
+                    if (progress is not null && total > 0)
+                    {
+                        downloaded += bytesRead;
+                        var percent = (int)(downloaded * 100 / Math.Max(total, 1));
+                        if (percent > lastPercent && percent <= 100)
+                        {
+                            lastPercent = percent;
+                            progress(percent);
+                        }
+                    }
+                }
             }
         }
     }

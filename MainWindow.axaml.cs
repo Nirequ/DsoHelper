@@ -1454,7 +1454,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            CheckUpdatesButton.Content = "Проверить обновления";
+            CheckUpdatesButton.Content = "Проверить сейчас";
             UpdateStatusText.Text = check.Message;
             UpdateStatusText.Foreground = check.Outcome == CheckOutcome.UpToDate
                 ? SuccessBrush
@@ -1476,7 +1476,7 @@ public partial class MainWindow : Window
     {
         _pendingUpdateTag = string.Empty;
         _pendingUpdateUrl = null;
-        CheckUpdatesButton.Content = "Проверить обновления";
+        CheckUpdatesButton.Content = "Проверить сейчас";
         CheckUpdatesButton.Classes.Set("selected", false);
     }
 
