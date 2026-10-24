@@ -236,7 +236,6 @@ public partial class MainWindow : Window
             };
         }
 
-        Wire(SellCommonCheck, value => _settings.SellCommon = value);
         Wire(SellImprovedCheck, value => _settings.SellImproved = value);
         Wire(SellMagicCheck, value => _settings.SellMagic = value);
         Wire(SellExtraordinaryCheck, value => _settings.SellExtraordinary = value);
@@ -306,7 +305,6 @@ public partial class MainWindow : Window
 
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
 
-        SellCommonCheck.IsChecked = _settings.SellCommon;
         SellImprovedCheck.IsChecked = _settings.SellImproved;
         SellMagicCheck.IsChecked = _settings.SellMagic;
         SellExtraordinaryCheck.IsChecked = _settings.SellExtraordinary;
@@ -946,7 +944,6 @@ public partial class MainWindow : Window
 
         return slot.Rarity switch
         {
-            InventoryRarity.Common => _settings.SellCommon,
             InventoryRarity.Improved => _settings.SellImproved,
             InventoryRarity.Magic => _settings.SellMagic,
             InventoryRarity.Extraordinary => _settings.SellExtraordinary,
@@ -983,7 +980,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!_settings.SellCommon && !_settings.SellImproved && !_settings.SellMagic &&
+        if (!_settings.SellImproved && !_settings.SellMagic &&
             !_settings.SellExtraordinary && !_settings.SellLegendary && !_settings.SellUnique &&
             !_settings.SellMythic)
         {

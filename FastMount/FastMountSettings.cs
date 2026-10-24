@@ -85,8 +85,8 @@ internal sealed class FastMountSettings
     /// <summary>Глобальный хоткей автопродажи, например "F9".</summary>
     public string SellHotkey { get; set; } = "F9";
 
-    /// <summary>Продаются только неопознанные («?») предметы — ниже их качества.</summary>
-    public bool SellCommon { get; set; } = true;
+    /// <summary>Продаются только неопознанные («?») предметы — ниже их качества. Обычное качество не продаётся никогда.</summary>
+    public bool SellCommon { get; set; }
 
     public bool SellImproved { get; set; } = true;
 
