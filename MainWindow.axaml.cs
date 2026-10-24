@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -47,6 +48,7 @@ public partial class MainWindow : Window
     private bool _checking;
     private bool _hovering;
     private bool _selling;
+    private bool _checkingUpdates;
     private bool _delaySyncing;
 
     /// <summary>Пауза на каждой занятой ячейке при обходе курсором, мс.</summary>
@@ -76,6 +78,8 @@ public partial class MainWindow : Window
         ApplyHotkey(showError: false);
         ApplySellHotkey(showError: false);
         SetStatus("Готово к работе", StatusKind.Idle);
+
+        SettingsPopup.PlacementTarget = SettingsButton;
 
         Closing += OnClosing;
         Opened += (_, _) =>
@@ -1367,6 +1371,60 @@ public partial class MainWindow : Window
         WindowState = WindowState.Minimized;
 
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
+
+    private void OnSettingsClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsVersionText.Text = "Версия: " + GitHubUpdater.BuildVersionDisplay(
+            Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0));
+        UpdateStatusText.Text = _checkingUpdates
+            ? "Проверяю обновления…"
+            : "Проверяется при каждом запуске приложения.";
+        SettingsPopup.IsOpen = !SettingsPopup.IsOpen;
+    }
+    private async void OnCheckUpdatesClick(object? sender, RoutedEventArgs e)
+    {
+        if (_checkingUpdates)
+        {
+            return;
+        }
+
+        _checkingUpdates = true;
+        CheckUpdatesButton.IsEnabled = false;
+        UpdateStatusText.Text = "Проверяю обновления…";
+        UpdateStatusText.Foreground = BusyBrush;
+
+        try
+        {
+            var result = await Task.Run(() => GitHubUpdater.CheckAndUpdateAsync(message =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    UpdateStatusText.Text = message;
+                    UpdateStatusText.Foreground = BusyBrush;
+                });
+            }));
+
+            if (result.Outcome == UpdateOutcome.Updated)
+            {
+                return;
+            }
+
+            UpdateStatusText.Text = result.Message;
+            UpdateStatusText.Foreground = result.Outcome == UpdateOutcome.UpToDate
+                ? SuccessBrush
+                : ErrorBrush;
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusText.Text = "Проверка не удалась: " + ex.Message;
+            UpdateStatusText.Foreground = ErrorBrush;
+        }
+        finally
+        {
+            _checkingUpdates = false;
+            CheckUpdatesButton.IsEnabled = true;
+        }
+    }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {

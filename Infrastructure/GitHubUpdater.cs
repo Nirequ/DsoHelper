@@ -10,6 +10,22 @@ using System.Threading.Tasks;
 
 namespace DsoHelper.Infrastructure;
 
+/// <summary>Итог ручной проверки обновлений.</summary>
+internal enum UpdateOutcome
+{
+    /// <summary>На GitHub нет версии новее установленной.</summary>
+    UpToDate,
+
+    /// <summary>Обновление скачано, подменено, запущен новый процесс.</summary>
+    Updated,
+
+    /// <summary>Что-то не вышло (сеть, GitHub, диск) — актуально только для ручной проверки.</summary>
+    Error
+}
+
+/// <summary>Сообщение для статусной строки в окне настроек.</summary>
+internal readonly record struct UpdateResult(UpdateOutcome Outcome, string Message);
+
 /// <summary>
 /// Самообновление single-file приложения через GitHub Releases.
 /// Схема: скачали новый exe рядом как «{exe}.new» → переименовали работающий exe в
@@ -26,6 +42,7 @@ internal static class GitHubUpdater
         "https://api.github.com/repos/" + Owner + "/" + Repo + "/releases/latest";
 
     private const string UserAgent = "DsoHelper-Updater";
+
     private static readonly TimeSpan ApiTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan DownloadTimeout = TimeSpan.FromMinutes(2);
 
@@ -51,23 +68,24 @@ internal static class GitHubUpdater
 
     /// <summary>
     /// Проверяет последний release и при более новой версии обновляет себя.
-    /// Любая ошибка (нет интернета, GitHub недоступен, нет прав на файлы)
-    /// глушится: приложение продолжает обычную работу со старой версией.
+    /// Без <paramref name="report"/> (старт приложения) работает молча;
+    /// ручная проверка получает статус в <paramref name="report"/> и результат.
+    /// Любая ошибка не выбрасывается наружу: возвращается <see cref="UpdateOutcome.Error"/>.
     /// </summary>
-    public static async Task CheckAndUpdateAsync()
+    public static async Task<UpdateResult> CheckAndUpdateAsync(Action<string>? report = null)
     {
         try
         {
             var exe = Environment.ProcessPath;
             if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
             {
-                return;
+                return new(UpdateOutcome.Error, "Не удалось определить путь до exe.");
             }
 
             var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
             if (currentVersion is null)
             {
-                return;
+                return new(UpdateOutcome.Error, "Не удалось определить версию приложения.");
             }
 
             // 1. Метаданные последнего release.
@@ -76,7 +94,8 @@ internal static class GitHubUpdater
                 using var response = await api.GetAsync(ApiLatestUrl).ConfigureAwait(false);
                 if (!response.IsSuccessStatusCode)
                 {
-                    return;
+                    return new(UpdateOutcome.Error,
+                        $"GitHub ответил {(int)response.StatusCode} — проверьте позже.");
                 }
 
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -84,18 +103,30 @@ internal static class GitHubUpdater
                 var root = document.RootElement;
 
                 // 2. tag_name → Version (без префикса v) — новее ли release.
-                var latest = ParseTagVersion(root);
-                if (latest is null || latest <= currentVersion)
+                var (latest, tagDisplay) = ParseTagVersion(root);
+                if (latest is null ||
+                    string.IsNullOrEmpty(tagDisplay))
                 {
-                    return;
+                    return new(UpdateOutcome.Error, "GitHub не вернул корректную версию тега.");
+                }
+
+                report?.Invoke($"Последний release: v{tagDisplay}…");
+
+                if (latest <= currentVersion)
+                {
+                    return new(UpdateOutcome.UpToDate,
+                        $"У вас последняя версия: {BuildVersionDisplay(currentVersion)} (на GitHub v{tagDisplay}).");
                 }
 
                 // 3. В assets ищем первый exe — это и есть новая сборка.
                 var downloadUrl = FindExecutableAsset(root);
                 if (string.IsNullOrEmpty(downloadUrl))
                 {
-                    return;
+                    return new(UpdateOutcome.Error,
+                        $"В release v{tagDisplay} нет exe-файла.");
                 }
+
+                report?.Invoke($"Найдена версия v{tagDisplay} — скачиваю…");
 
                 // 4. Скачиваем «.new» рядом. Сначала в .tmp, чтобы осиротевший
                 //    файл половинного размера не выглядел готовым к установке.
@@ -103,7 +134,7 @@ internal static class GitHubUpdater
                 var stagingTmp = exe + ".new.tmp";
                 await DownloadToFileAsync(api, downloadUrl, stagingTmp).ConfigureAwait(false);
 
-                // 5. Обмен в три хода, при любой неудаче откатываем .
+                // 5. Обмен в три хода, при неудаче откатываем.
                 if (File.Exists(stagingNew))
                 {
                     File.Delete(stagingNew);
@@ -134,9 +165,10 @@ internal static class GitHubUpdater
                     UseShellExecute = true
                 });
                 Environment.Exit(0);
+                return new(UpdateOutcome.Updated, $"Обновлено до v{tagDisplay}.");  // не исполнится: Exit внутри.
             }
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             // Недокачанный «.new» не должен оставаться рядом с exe.
             try
@@ -152,6 +184,8 @@ internal static class GitHubUpdater
             {
                 // Игнорируем, приложение продолжает работу.
             }
+
+            return new(UpdateOutcome.Error, "Обновление не удалось: " + exception.Message);
         }
     }
 
@@ -162,17 +196,30 @@ internal static class GitHubUpdater
         return client;
     }
 
-    private static Version? ParseTagVersion(JsonElement root)
+    private static (Version? Version, string Display) ParseTagVersion(JsonElement root)
     {
         if (!root.TryGetProperty("tag_name", out var tag) || tag.ValueKind != JsonValueKind.String)
         {
-            return null;
+            return (null, string.Empty);
         }
 
         var raw = tag.GetString() ?? string.Empty;
         var text = raw.TrimStart('v', 'V');
 
-        return System.Version.TryParse(text, out var version) ? version : null;
+        return System.Version.TryParse(text, out var version)
+            ? (version, text)
+            : (null, string.Empty);
+    }
+
+    /// <summary>1.2.0.0 → "1.2.0": хвостовые нули в статусной строке не нужны.</summary>
+    internal static string BuildVersionDisplay(Version version)
+    {
+        if (version.Revision > 0)
+        {
+            return version.ToString(4);
+        }
+
+        return version.Build > 0 ? version.ToString(3) : version.ToString(2);
     }
 
     private static string? FindExecutableAsset(JsonElement root)
