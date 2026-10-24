@@ -195,7 +195,7 @@ internal static class GitHubUpdater
         {
             return new(
                 CheckOutcome.UpToDate,
-                $"У вас последняя версия: {BuildVersionDisplay(currentVersion)} (на GitHub v{tagDisplay}).",
+                $"У вас последняя версия: {BuildVersionDisplay(currentVersion)}.",
                 latest, tagDisplay, null);
         }
 
