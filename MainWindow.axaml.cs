@@ -1449,8 +1449,7 @@ public partial class MainWindow : Window
                 _pendingUpdateUrl = check.DownloadUrl;
                 CheckUpdatesButton.Content = $"Обновить до v{check.DisplayTag}";
                 CheckUpdatesButton.Classes.Set("selected", true);
-                UpdateStatusText.Text =
-                    "Доступна новая версия. Кнопка начала скачивание, приложение перезапустится само. Настройки не пострадают.";
+                UpdateStatusText.Text = "Доступна новая версия.";
                 UpdateStatusText.Foreground = BusyBrush;
                 return;
             }
