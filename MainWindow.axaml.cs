@@ -81,8 +81,6 @@ public partial class MainWindow : Window
         ApplySellHotkey(showError: false);
         SetStatus("Готово к работе", StatusKind.Idle);
 
-        SettingsPopup.PlacementTarget = SettingsButton;
-
         Closing += OnClosing;
         Opened += (_, _) =>
         {
@@ -1383,8 +1381,16 @@ public partial class MainWindow : Window
             : _pendingUpdateUrl is not null
                 ? $"Доступна v{_pendingUpdateTag} — кнопка подтвердит скачивание и перезапуск."
                 : "Проверяется при каждом запуске приложения.";
-        SettingsPopup.IsOpen = !SettingsPopup.IsOpen;
+        MainContentGrid.IsVisible = false;
+        SettingsPanel.IsVisible = true;
     }
+
+    private void OnSettingsBackClick(object? sender, RoutedEventArgs e)
+    {
+        SettingsPanel.IsVisible = false;
+        MainContentGrid.IsVisible = true;
+    }
+
     private async void OnCheckUpdatesClick(object? sender, RoutedEventArgs e)
     {
         if (_checkingUpdates)

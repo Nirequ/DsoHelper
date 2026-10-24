@@ -438,7 +438,7 @@
               Margin="12"
               IsHitTestVisible="False" />
 
-        <Grid RowDefinitions="Auto,*,Auto" Margin="30,25,30,22" RowSpacing="16">
+        <Grid x:Name="MainContentGrid" RowDefinitions="Auto,*,Auto" Margin="30,25,30,22" RowSpacing="16">
             <!-- Header -->
             <StackPanel Grid.Row="0" Spacing="17">
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="17"
@@ -520,43 +520,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Настройки: выплывает из шестерёнки в заголовке -->
-                <Popup x:Name="SettingsPopup"
-                       Placement="Bottom"
-                       HorizontalOffset="-210"
-                       VerticalOffset="6"
-                       IsLightDismissEnabled="True">
-                    <Border Background="{StaticResource ElevatedSurfaceBrush}"
-                            BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="18,14,18,14">
-                        <StackPanel Spacing="10" MinWidth="240">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                <TextBlock Classes="subheading" Text="НАСТРОЙКИ" />
-                                <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
-                            </Grid>
-
-                            <TextBlock x:Name="SettingsVersionText"
-                                       Classes="hint"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       Text="Версия: —" />
-
-                            <Button x:Name="CheckUpdatesButton"
-                                    Classes="outline"
-                                    Content="Проверить обновления"
-                                    HorizontalAlignment="Left"
-                                    Click="OnCheckUpdatesClick" />
-
-                            <TextBlock x:Name="UpdateStatusText"
-                                       Classes="hint"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       Text="Проверяется при каждом запуске приложения." />
-                        </StackPanel>
-                    </Border>
-                </Popup>
-
                 <!-- Ornate divider -->
                 <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="11">
                     <Border Height="1"
@@ -583,7 +546,7 @@
             </StackPanel>
 
             <!-- Chapters: three tabs -->
-            <TabControl Grid.Row="1" Background="Transparent">
+            <TabControl x:Name="MainTabControl" Grid.Row="1" Background="Transparent">
                 <TabItem Classes="nav" Header="ИНВЕНТАРЬ">
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                   VerticalScrollBarVisibility="Hidden">
@@ -1291,6 +1254,101 @@
                     </Grid>
                 </Border>
             </Border>
+        </Grid>
+
+        <!-- Экран настроек (по образцу с фото) -->
+        <Grid x:Name="SettingsPanel"
+              RowDefinitions="Auto,*,Auto"
+              Margin="30,25,30,22"
+              RowSpacing="16"
+              IsVisible="False">
+            <!-- Верхняя панель: кнопка "<- назад" слева и кнопки управления окном справа -->
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="Auto,*,Auto"
+                  Background="Transparent"
+                  PointerPressed="OnTitleBarPointerPressed">
+                <Button x:Name="SettingsBackButton"
+                        Classes="outline"
+                        Padding="12,6"
+                        VerticalAlignment="Center"
+                        Click="OnSettingsBackClick">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Path Data="M14,6 L2,6 M2,6 L7,1 M2,6 L7,11"
+                              Stroke="{StaticResource AncientGoldBrush}"
+                              StrokeThickness="1.6"
+                              Width="14" Height="12"
+                              Stretch="None"
+                              VerticalAlignment="Center" />
+                        <TextBlock Text="назад" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            Spacing="6"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top">
+                    <Button Classes="window"
+                            Click="OnMinimizeClick"
+                            ToolTip.Tip="Свернуть в трей">
+                        <Path Data="M0,6 L12,6"
+                              Stroke="{StaticResource AncientGoldBrush}"
+                              StrokeThickness="1.5"
+                              Width="12" Height="12"
+                              Stretch="None"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Button>
+                    <Button Classes="window close"
+                            Click="OnCloseClick"
+                            ToolTip.Tip="Закрыть">
+                        <Path Data="M1,1 L11,11 M11,1 L1,11"
+                              Stroke="{StaticResource AncientGoldBrush}"
+                              StrokeThickness="1.5"
+                              Width="12" Height="12"
+                              Stretch="None"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Центр: строка "Проверить обновления" + кнопка "Проверить сейчас" -->
+            <StackPanel Grid.Row="1" Spacing="14" Margin="0,24,0,0">
+                <Border Classes="cardFrame">
+                    <Border Classes="cardInner" Padding="22,20">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                                <TextBlock Classes="label"
+                                           Text="Проверить обновления"
+                                           VerticalAlignment="Center" />
+                                <Button x:Name="CheckUpdatesButton"
+                                        Grid.Column="1"
+                                        Classes="outline"
+                                        Content="Проверить сейчас"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Left"
+                                        Click="OnCheckUpdatesClick" />
+                            </Grid>
+
+                            <TextBlock x:Name="UpdateStatusText"
+                                       Classes="hint"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Text="Проверяется при каждом запуске приложения." />
+                        </StackPanel>
+                    </Border>
+                </Border>
+            </StackPanel>
+
+            <!-- Низ слева: Версия: 0.0.0 -->
+            <TextBlock x:Name="SettingsVersionText"
+                       Grid.Row="2"
+                       Classes="label"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Bottom"
+                       Text="Версия: 0.0.0" />
         </Grid>
     </Grid>
 </Window>
