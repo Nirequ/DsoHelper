@@ -10,20 +10,34 @@ using System.Threading.Tasks;
 
 namespace DsoHelper.Infrastructure;
 
-/// <summary>Итог ручной проверки обновлений.</summary>
-internal enum UpdateOutcome
+/// <summary>Итог задуманной проверки: есть ли новая версия.</summary>
+internal enum CheckOutcome
 {
     /// <summary>На GitHub нет версии новее установленной.</summary>
     UpToDate,
 
-    /// <summary>Обновление скачано, подменено, запущен новый процесс.</summary>
-    Updated,
+    /// <summary>Новая версия найдена, список данных готов к скачиванию.</summary>
+    Available,
 
-    /// <summary>Что-то не вышло (сеть, GitHub, диск) — актуально только для ручной проверки.</summary>
+    /// <summary>Что-то не вышло (сеть, GitHub) — актуально только для ручной проверки.</summary>
     Error
 }
 
-/// <summary>Сообщение для статусной строки в окне настроек.</summary>
+/// <summary>Итог выполнения обновления.</summary>
+internal enum UpdateOutcome
+{
+    /// <summary>Обновление скачано, подменено, запущен новый процесс.</summary>
+    Updated,
+
+    /// <summary>Ошибка очередего шага, актуально только для ручной проверки.</summary>
+    Error
+}
+
+/// <summary>Результат ручной «проверить обновления».</summary>
+internal sealed record UpdateCheckResult(
+    CheckOutcome Outcome, string Message, Version? Latest, string DisplayTag, string? DownloadUrl);
+
+/// <summary>Результат шага выполнения (скачать → подменить → перезапустить).</summary>
 internal readonly record struct UpdateResult(UpdateOutcome Outcome, string Message);
 
 /// <summary>
@@ -67,125 +81,225 @@ internal static class GitHubUpdater
     }
 
     /// <summary>
-    /// Проверяет последний release и при более новой версии обновляет себя.
-    /// Без <paramref name="report"/> (старт приложения) работает молча;
-    /// ручная проверка получает статус в <paramref name="report"/> и результат.
-    /// Любая ошибка не выбрасывается наружу: возвращается <see cref="UpdateOutcome.Error"/>.
+    /// Автопроверка на старте приложения: молча проверяет и, если на GitHub версия
+    /// новее, сразу скачивает и устанавливает её. Любая ошибка молча игнорируется.
     /// </summary>
-    public static async Task<UpdateResult> CheckAndUpdateAsync(Action<string>? report = null)
+    public static async Task CheckAndUpdateAsync()
+    {
+        try
+        {
+            var check = await TryCheck().ConfigureAwait(false);
+            if (check.Outcome == CheckOutcome.Available)
+            {
+                await TryInstall(check.DownloadUrl!, check.DisplayTag).ConfigureAwait(false);
+            }
+        }
+        catch (Exception)
+        {
+            // Нет интернета / GitHub недоступен / нет прав: работаем дальше.
+            CleanupDownloadArtifacts();
+        }
+    }
+
+    /// <summary>
+    /// Ручная проверка (шестерёнка): только смотрит на GitHub, ничего не скачивает.
+    /// Возвращает предложение обновиться, статус и описание ошибки.
+    /// </summary>
+    public static async Task<UpdateCheckResult> CheckForUpdateAsync(Action<string>? report = null)
+    {
+        var check = await TryCheck(report).ConfigureAwait(false);
+        return check.Outcome switch
+        {
+            CheckOutcome.UpToDate => new(
+                CheckOutcome.UpToDate, check.Message, null, string.Empty, null),
+            CheckOutcome.Error => new(
+                CheckOutcome.Error, check.Message, null, string.Empty, null),
+            _ => new(
+                CheckOutcome.Available,
+                $"Доступна версия v{check.DisplayTag}.",
+                check.Latest,
+                check.DisplayTag,
+                check.DownloadUrl)
+        };
+    }
+
+    /// <summary>
+    /// Подтвержденная установка: скачивает указанный exe, подменяет запущенный
+    /// файл и запускает новый процесс. Позвал — значит обновляемся.
+    /// </summary>
+    public static async Task<UpdateResult> PerformUpdateAsync(
+        string downloadUrl, string displayTag, Action<string>? report = null)
+    {
+        try
+        {
+            await TryInstall(downloadUrl, displayTag, report).ConfigureAwait(false);
+            return new(UpdateOutcome.Updated, $"Обновлено до v{displayTag}.");
+        }
+        catch (Exception exception)
+        {
+            var exe = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(exe))
+            {
+                return new(UpdateOutcome.Error, "Обновление не удалось: " + exception.Message);
+            }
+
+            await TryRollbackContentAsync(exe, exception).ConfigureAwait(false);
+            return new(UpdateOutcome.Error, "Обновление не удалось: " + exception.Message);
+        }
+    }
+
+    private record struct QuickCheckResult(
+        CheckOutcome Outcome, string Message, Version? Latest, string DisplayTag, string? DownloadUrl);
+
+    /// <summary>Просмотр одного release: метаданные + URL exe-файла.</summary>
+    private static async Task<QuickCheckResult> TryCheck(Action<string>? report = null)
+    {
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
+        {
+            return new(CheckOutcome.Error, "Не удалось определить путь до exe.", null, string.Empty, null);
+        }
+
+        var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        if (currentVersion is null)
+        {
+            return new(CheckOutcome.Error, "Не удалось определить версию приложения.", null, string.Empty, null);
+        }
+
+        using var api = CreateApiClient();
+        using var response = await api.GetAsync(ApiLatestUrl).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            return new(
+                CheckOutcome.Error,
+                $"GitHub ответил {(int)response.StatusCode} — проверьте позже.",
+                null, string.Empty, null);
+        }
+
+        report?.Invoke("Проверяю обновления…");
+
+        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+
+        // tag_name → Version (без префикса v) — новее ли release.
+        var (latest, tagDisplay) = ParseTagVersion(root);
+        if (latest is null || string.IsNullOrEmpty(tagDisplay))
+        {
+            return new(CheckOutcome.Error, "GitHub не вернул корректный тег версии.", null, string.Empty, null);
+        }
+
+        report?.Invoke($"Последний release: v{tagDisplay}…");
+
+        if (latest <= currentVersion)
+        {
+            return new(
+                CheckOutcome.UpToDate,
+                $"У вас последняя версия: {BuildVersionDisplay(currentVersion)} (на GitHub v{tagDisplay}).",
+                latest, tagDisplay, null);
+        }
+
+        // В assets ищем первый exe — это и есть новая сборка.
+        var downloadUrl = FindExecutableAsset(root);
+        if (string.IsNullOrEmpty(downloadUrl))
+        {
+            return new(
+                CheckOutcome.Error,
+                $"В release v{tagDisplay} нет exe-файла.",
+                latest, tagDisplay, null);
+        }
+
+        return new(CheckOutcome.Available, string.Empty, latest, tagDisplay, downloadUrl);
+    }
+
+    /// <summary>Скачивание + замена + запуск нового процесса.</summary>
+    private static async Task TryInstall(string downloadUrl, string displayTag, Action<string>? report = null)
+    {
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
+        {
+            throw new InvalidOperationException("Нет доступа к запущенному exe.");
+        }
+
+        report?.Invoke($"Найдена версия v{displayTag} — скачиваю…");
+
+        // Скачиваем сначала в .tmp, чтобы осиротевший файл половинного размера
+        // не выглядел готовым к установке.
+        var stagingNew = exe + ".new";
+        var stagingTmp = exe + ".new.tmp";
+
+        using (var client = CreateApiClient())
+        {
+            await DownloadToFileAsync(client, downloadUrl, stagingTmp).ConfigureAwait(false);
+        }
+
+        if (File.Exists(stagingNew))
+        {
+            File.Delete(stagingNew);
+        }
+
+        File.Move(stagingTmp, stagingNew);
+
+        // Переносим работающий exe в .old и подставляем на его место новую версию.
+        var backup = exe + ".old";
+        TryDelete(backup);
+        File.Move(exe, backup);
+
+        try
+        {
+            File.Move(stagingNew, exe);
+        }
+        catch
+        {
+            // Новый файл не занял место старого — возвращаем всё как было.
+            TryMove(backup, exe);
+            TryDelete(stagingNew);
+            throw;
+        }
+
+        report?.Invoke("Запускаю обновлённую версию…");
+
+        // Запускаем новую версию и завершаем текущий процесс.
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = exe,
+            UseShellExecute = true
+        });
+        Environment.Exit(0);
+    }
+
+    private static Task TryRollbackContentAsync(string exe, Exception exception)
+    {
+        // Недокачанный «.new» не должен оставаться рядом с exe.
+        try
+        {
+            TryDelete(exe + ".new.tmp");
+            TryDelete(exe + ".new");
+        }
+        catch (Exception)
+        {
+            // Игнорируем: следующий старт подберётся.
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static void CleanupDownloadArtifacts()
     {
         try
         {
             var exe = Environment.ProcessPath;
-            if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
+            if (string.IsNullOrEmpty(exe))
             {
-                return new(UpdateOutcome.Error, "Не удалось определить путь до exe.");
+                return;
             }
 
-            var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            if (currentVersion is null)
-            {
-                return new(UpdateOutcome.Error, "Не удалось определить версию приложения.");
-            }
-
-            // 1. Метаданные последнего release.
-            using (var api = CreateApiClient())
-            {
-                using var response = await api.GetAsync(ApiLatestUrl).ConfigureAwait(false);
-                if (!response.IsSuccessStatusCode)
-                {
-                    return new(UpdateOutcome.Error,
-                        $"GitHub ответил {(int)response.StatusCode} — проверьте позже.");
-                }
-
-                var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                using var document = JsonDocument.Parse(json);
-                var root = document.RootElement;
-
-                // 2. tag_name → Version (без префикса v) — новее ли release.
-                var (latest, tagDisplay) = ParseTagVersion(root);
-                if (latest is null ||
-                    string.IsNullOrEmpty(tagDisplay))
-                {
-                    return new(UpdateOutcome.Error, "GitHub не вернул корректную версию тега.");
-                }
-
-                report?.Invoke($"Последний release: v{tagDisplay}…");
-
-                if (latest <= currentVersion)
-                {
-                    return new(UpdateOutcome.UpToDate,
-                        $"У вас последняя версия: {BuildVersionDisplay(currentVersion)} (на GitHub v{tagDisplay}).");
-                }
-
-                // 3. В assets ищем первый exe — это и есть новая сборка.
-                var downloadUrl = FindExecutableAsset(root);
-                if (string.IsNullOrEmpty(downloadUrl))
-                {
-                    return new(UpdateOutcome.Error,
-                        $"В release v{tagDisplay} нет exe-файла.");
-                }
-
-                report?.Invoke($"Найдена версия v{tagDisplay} — скачиваю…");
-
-                // 4. Скачиваем «.new» рядом. Сначала в .tmp, чтобы осиротевший
-                //    файл половинного размера не выглядел готовым к установке.
-                var stagingNew = exe + ".new";
-                var stagingTmp = exe + ".new.tmp";
-                await DownloadToFileAsync(api, downloadUrl, stagingTmp).ConfigureAwait(false);
-
-                // 5. Обмен в три хода, при неудаче откатываем.
-                if (File.Exists(stagingNew))
-                {
-                    File.Delete(stagingNew);
-                }
-
-                File.Move(stagingTmp, stagingNew);
-
-                var backup = exe + ".old";
-                TryDelete(backup);
-                File.Move(exe, backup);
-
-                try
-                {
-                    File.Move(stagingNew, exe);
-                }
-                catch
-                {
-                    // Новый файл не занял место старого — возвращаем всё как было.
-                    TryMove(backup, exe);
-                    TryDelete(stagingNew);
-                    throw;
-                }
-
-                // 6. Запускаем новую версию и завершаем текущий процесс.
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = exe,
-                    UseShellExecute = true
-                });
-                Environment.Exit(0);
-                return new(UpdateOutcome.Updated, $"Обновлено до v{tagDisplay}.");  // не исполнится: Exit внутри.
-            }
+            TryDelete(exe + ".new.tmp");
+            TryDelete(exe + ".new");
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            // Недокачанный «.new» не должен оставаться рядом с exe.
-            try
-            {
-                var exe = Environment.ProcessPath;
-                if (!string.IsNullOrEmpty(exe))
-                {
-                    TryDelete(exe + ".new.tmp");
-                    TryDelete(exe + ".new");
-                }
-            }
-            catch (Exception)
-            {
-                // Игнорируем, приложение продолжает работу.
-            }
-
-            return new(UpdateOutcome.Error, "Обновление не удалось: " + exception.Message);
+            // Игнорируем.
         }
     }
 

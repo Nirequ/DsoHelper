@@ -49,6 +49,8 @@ public partial class MainWindow : Window
     private bool _hovering;
     private bool _selling;
     private bool _checkingUpdates;
+    private string _pendingUpdateTag = string.Empty;
+    private string? _pendingUpdateUrl;
     private bool _delaySyncing;
 
     /// <summary>Пауза на каждой занятой ячейке при обходе курсором, мс.</summary>
@@ -1378,7 +1380,9 @@ public partial class MainWindow : Window
             Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0));
         UpdateStatusText.Text = _checkingUpdates
             ? "Проверяю обновления…"
-            : "Проверяется при каждом запуске приложения.";
+            : _pendingUpdateUrl is not null
+                ? $"Доступна v{_pendingUpdateTag} — кнопка подтвердит скачивание и перезапуск."
+                : "Проверяется при каждом запуске приложения.";
         SettingsPopup.IsOpen = !SettingsPopup.IsOpen;
     }
     private async void OnCheckUpdatesClick(object? sender, RoutedEventArgs e)
@@ -1390,12 +1394,41 @@ public partial class MainWindow : Window
 
         _checkingUpdates = true;
         CheckUpdatesButton.IsEnabled = false;
-        UpdateStatusText.Text = "Проверяю обновления…";
-        UpdateStatusText.Foreground = BusyBrush;
 
         try
         {
-            var result = await Task.Run(() => GitHubUpdater.CheckAndUpdateAsync(message =>
+            // Второй клик по кнопке — это подтверждение: качаем и ставим.
+            if (_pendingUpdateUrl is not null)
+            {
+                UpdateStatusText.Text = $"Скачиваю v{_pendingUpdateTag}…";
+                UpdateStatusText.Foreground = BusyBrush;
+
+                var result = await Task.Run(() =>
+                    GitHubUpdater.PerformUpdateAsync(_pendingUpdateUrl, _pendingUpdateTag, message =>
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            UpdateStatusText.Text = message;
+                            UpdateStatusText.Foreground = BusyBrush;
+                        });
+                    }));
+
+                if (result.Outcome == UpdateOutcome.Updated)
+                {
+                    return;
+                }
+
+                ResetPendingUpdate();
+                UpdateStatusText.Text = result.Message;
+                UpdateStatusText.Foreground = ErrorBrush;
+                return;
+            }
+
+            // Первый клик — только проверка.
+            UpdateStatusText.Text = "Проверяю обновления…";
+            UpdateStatusText.Foreground = BusyBrush;
+
+            var check = await Task.Run(() => GitHubUpdater.CheckForUpdateAsync(message =>
             {
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -1404,13 +1437,21 @@ public partial class MainWindow : Window
                 });
             }));
 
-            if (result.Outcome == UpdateOutcome.Updated)
+            if (check.Outcome == CheckOutcome.Available)
             {
+                _pendingUpdateTag = check.DisplayTag;
+                _pendingUpdateUrl = check.DownloadUrl;
+                CheckUpdatesButton.Content = $"Обновить до v{check.DisplayTag}";
+                CheckUpdatesButton.Classes.Set("selected", true);
+                UpdateStatusText.Text =
+                    "Доступна новая версия. Кнопка начала скачивание, приложение перезапустится само. Настройки не пострадают.";
+                UpdateStatusText.Foreground = BusyBrush;
                 return;
             }
 
-            UpdateStatusText.Text = result.Message;
-            UpdateStatusText.Foreground = result.Outcome == UpdateOutcome.UpToDate
+            CheckUpdatesButton.Content = "Проверить обновления";
+            UpdateStatusText.Text = check.Message;
+            UpdateStatusText.Foreground = check.Outcome == CheckOutcome.UpToDate
                 ? SuccessBrush
                 : ErrorBrush;
         }
@@ -1424,6 +1465,14 @@ public partial class MainWindow : Window
             _checkingUpdates = false;
             CheckUpdatesButton.IsEnabled = true;
         }
+    }
+
+    private void ResetPendingUpdate()
+    {
+        _pendingUpdateTag = string.Empty;
+        _pendingUpdateUrl = null;
+        CheckUpdatesButton.Content = "Проверить обновления";
+        CheckUpdatesButton.Classes.Set("selected", false);
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
