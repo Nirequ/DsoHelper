@@ -57,7 +57,7 @@ internal static class GitHubUpdater
 
     private const string UserAgent = "DsoHelper-Updater";
 
-    private static readonly TimeSpan ApiTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan ApiTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan DownloadTimeout = TimeSpan.FromMinutes(2);
 
     /// <summary>Чистит следы прошлой замены: {exe}.old и недокачанный {exe}.new.</summary>
@@ -144,7 +144,7 @@ internal static class GitHubUpdater
             }
 
             await TryRollbackContentAsync(exe, exception).ConfigureAwait(false);
-            return new(UpdateOutcome.Error, "Обновление не удалось: " + exception.Message);
+            return new(UpdateOutcome.Error, "Обновление не удалось: " + DescribeError(exception));
         }
     }
 
@@ -228,7 +228,7 @@ internal static class GitHubUpdater
         var stagingNew = exe + ".new";
         var stagingTmp = exe + ".new.tmp";
 
-        using (var client = CreateApiClient())
+        using (var client = CreateDownloadClient())
         {
             await DownloadToFileAsync(client, downloadUrl, stagingTmp).ConfigureAwait(false);
         }
@@ -303,9 +303,33 @@ internal static class GitHubUpdater
         }
     }
 
+    /// <summary>Человекочитаемый текст сетевых сбоев вместо сырых английских сообщений.</summary>
+    internal static string DescribeError(Exception exception) => exception switch
+    {
+        TaskCanceledException when exception.InnerException is TimeoutException =>
+            "GitHub не ответил за 30 секунд — проверьте интернет и попробуйте ещё раз.",
+        TaskCanceledException =>
+            "Запрос отменён — похоже, нет соединения с интернетом.",
+        HttpRequestException =>
+            "Не удалось соединиться с GitHub — проверьте интернет и попробуйте ещё раз.",
+        _ => exception.Message
+    };
+
     private static HttpClient CreateApiClient()
     {
         var client = new HttpClient { Timeout = ApiTimeout };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+        return client;
+    }
+
+    /// <summary>
+    /// Клиент для скачивания exe: таймаутом заведует CancellationToken
+    /// в DownloadToFileAsync, поэтому HttpClient.Timeout — бесконечный.
+    /// Важно: короткий 10-секундный клиент обрывал загрузку 21 МБ файла.
+    /// </summary>
+    private static HttpClient CreateDownloadClient()
+    {
+        var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
         client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
         return client;
     }

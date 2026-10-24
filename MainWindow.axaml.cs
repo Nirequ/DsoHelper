@@ -1463,7 +1463,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            UpdateStatusText.Text = "Проверка не удалась: " + ex.Message;
+            UpdateStatusText.Text = "Проверка не удалась: " + GitHubUpdater.DescribeError(ex);
             UpdateStatusText.Foreground = ErrorBrush;
         }
         finally
