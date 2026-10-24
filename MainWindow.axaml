@@ -1406,32 +1406,54 @@
 
                                         <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
 
-                                        <!-- Индикатор статуса обновления -->
+                                        <!-- Индикатор статуса обновления и ProgressBar -->
                                         <Border Background="{StaticResource ObsidianDeepBrush}"
                                                 BorderBrush="{StaticResource BorderBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="3"
                                                 Padding="13,10">
-                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="11">
-                                                <Grid Width="14" Height="14" VerticalAlignment="Center">
-                                                    <Path Data="M7,0 L14,7 L7,14 L0,7 Z"
-                                                          Width="14" Height="14" Stretch="Fill"
-                                                          Fill="{Binding Foreground, ElementName=UpdateStatusText}"
-                                                          Opacity="0.2" />
-                                                    <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
-                                                          Width="7" Height="7" Stretch="Fill"
-                                                          Fill="{Binding Foreground, ElementName=UpdateStatusText}"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center" />
+                                            <StackPanel Spacing="10">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11">
+                                                    <Grid Width="14" Height="14" VerticalAlignment="Center">
+                                                        <Path Data="M7,0 L14,7 L7,14 L0,7 Z"
+                                                              Width="14" Height="14" Stretch="Fill"
+                                                              Fill="{Binding Foreground, ElementName=UpdateStatusText}"
+                                                              Opacity="0.2" />
+                                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z"
+                                                              Width="7" Height="7" Stretch="Fill"
+                                                              Fill="{Binding Foreground, ElementName=UpdateStatusText}"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center" />
+                                                    </Grid>
+                                                    <TextBlock x:Name="UpdateStatusText"
+                                                               Grid.Column="1"
+                                                               Classes="hint"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               Text="Проверяется автоматически при каждом запуске приложения." />
+                                                    <TextBlock x:Name="UpdatePercentText"
+                                                               Grid.Column="2"
+                                                               FontFamily="{StaticResource DisplayFont}"
+                                                               FontSize="11.5"
+                                                               Foreground="{StaticResource AncientGoldBrush}"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="False"
+                                                               Text="0%" />
                                                 </Grid>
-                                                <TextBlock x:Name="UpdateStatusText"
-                                                           Grid.Column="1"
-                                                           Classes="hint"
-                                                           TextWrapping="Wrap"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{StaticResource TextSecondaryBrush}"
-                                                           Text="Проверяется автоматически при каждом запуске приложения." />
-                                            </Grid>
+
+                                                <ProgressBar x:Name="UpdateProgressBar"
+                                                             Minimum="0"
+                                                             Maximum="100"
+                                                             Value="0"
+                                                             Height="8"
+                                                             CornerRadius="2"
+                                                             Background="{StaticResource ObsidianBlackBrush}"
+                                                             BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
+                                                             BorderThickness="1"
+                                                             Foreground="{StaticResource AncientGoldBrush}"
+                                                             IsVisible="False" />
+                                            </StackPanel>
                                         </Border>
 
                                         <TextBlock Classes="hint"

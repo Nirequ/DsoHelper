@@ -259,7 +259,11 @@ internal static class GitHubUpdater
             throw;
         }
 
-        report?.Invoke("Запускаю обновлённую версию…");
+        downloadProgress?.Invoke(100);
+        report?.Invoke("Загрузка завершена (100%). Перезапуск приложения…");
+
+        // Даём UI отрисовать 100% на ProgressBar перед закрытием окна
+        await Task.Delay(750).ConfigureAwait(false);
 
         // Запускаем новую версию и завершаем текущий процесс.
         Process.Start(new ProcessStartInfo

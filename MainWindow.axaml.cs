@@ -1403,21 +1403,47 @@ public partial class MainWindow : Window
 
         try
         {
-            // Второй клик по кнопке — это подтверждение: качаем и ставим.
+            // Второй клик по кнопке — это подтверждение: качаем и ставим с отображением ProgressBar.
             if (_pendingUpdateUrl is not null)
             {
                 UpdateStatusText.Text = $"Скачиваю v{_pendingUpdateTag}…";
                 UpdateStatusText.Foreground = BusyBrush;
 
+                UpdateProgressBar.IsIndeterminate = false;
+                UpdateProgressBar.Value = 0;
+                UpdateProgressBar.IsVisible = true;
+                UpdatePercentText.Text = "0%";
+                UpdatePercentText.IsVisible = true;
+
                 var result = await Task.Run(() =>
-                    GitHubUpdater.PerformUpdateAsync(_pendingUpdateUrl, _pendingUpdateTag, message =>
-                    {
-                        Dispatcher.UIThread.Post(() =>
+                    GitHubUpdater.PerformUpdateAsync(
+                        _pendingUpdateUrl,
+                        _pendingUpdateTag,
+                        message =>
                         {
-                            UpdateStatusText.Text = message;
-                            UpdateStatusText.Foreground = BusyBrush;
-                        });
-                    }));
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                UpdateStatusText.Text = message;
+                                UpdateStatusText.Foreground = message.Contains("100%")
+                                    ? SuccessBrush
+                                    : BusyBrush;
+                            });
+                        },
+                        percent =>
+                        {
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                var clamped = Math.Clamp(percent, 0, 100);
+                                UpdateProgressBar.IsIndeterminate = false;
+                                UpdateProgressBar.Value = clamped;
+                                UpdatePercentText.Text = $"{(int)Math.Round(clamped)}%";
+                                if (clamped < 100)
+                                {
+                                    UpdateStatusText.Text = $"Скачиваю v{_pendingUpdateTag}… {(int)Math.Round(clamped)}%";
+                                    UpdateStatusText.Foreground = BusyBrush;
+                                }
+                            });
+                        }));
 
                 if (result.Outcome == UpdateOutcome.Updated)
                 {
@@ -1478,6 +1504,10 @@ public partial class MainWindow : Window
         _pendingUpdateUrl = null;
         CheckUpdatesButton.Content = "Проверить сейчас";
         CheckUpdatesButton.Classes.Set("selected", false);
+        UpdateProgressBar.IsIndeterminate = false;
+        UpdateProgressBar.Value = 0;
+        UpdateProgressBar.IsVisible = false;
+        UpdatePercentText.IsVisible = false;
     }
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
