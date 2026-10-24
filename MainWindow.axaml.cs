@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -31,13 +33,28 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _saveTimer;
 
     private GlobalHotkey? _hotkey;
+    private GlobalHotkey? _sellHotkey;
     private SlotPickerWindow? _slotPicker;
     private SlotPickerWindow? _tabPicker;
     private SlotPickerWindow? _tabStepPicker;
+    private SlotPickerWindow? _invSlot1Picker;
+    private SlotPickerWindow? _invSlot28Picker;
     private CancellationTokenSource? _runCts;
+    private CancellationTokenSource? _hoverCts;
+    private CancellationTokenSource? _sellCts;
     private bool _running;
     private bool _picking;
+    private bool _checking;
+    private bool _hovering;
+    private bool _selling;
     private bool _delaySyncing;
+
+    /// <summary>Пауза на каждой занятой ячейке при обходе курсором, мс.</summary>
+    private const int HoverPerSlotMs = 550;
+
+    /// <summary>Допустимый диапазон и шаг задержек автопродажи, мс.</summary>
+    private const int SellDelayMaxMs = 1000;
+    private const int SellDelayStepMs = 15;
 
     public MainWindow()
     {
@@ -57,6 +74,7 @@ public partial class MainWindow : Window
 
         Topmost = _settings.AlwaysOnTop;
         ApplyHotkey(showError: false);
+        ApplySellHotkey(showError: false);
         SetStatus("Готово к работе", StatusKind.Idle);
 
         Closing += OnClosing;
@@ -81,7 +99,14 @@ public partial class MainWindow : Window
         InventoryKeyBox.TextChanged += (_, _) => ScheduleSave();
         MountKeyBox.TextChanged += (_, _) => ScheduleSave();
 
+        SellHotkeyBox.LostFocus += (_, _) => CommitSellHotkey();
+        SellHotkeyBox.TextChanged += (_, _) => ScheduleSave();
+
+        WireQualityChecks();
+
         WireDelayControls();
+        WireDelayPair(SellSwitchSlider, SellSwitchValueBox, 200, v => _settings.SellSwitchDelayMs = v);
+        WireDelayPair(SellItemSlider, SellItemValueBox, 150, v => _settings.SellItemDelayMs = v);
 
         SwitchTabCheck.IsCheckedChanged += (_, _) =>
         {
@@ -95,6 +120,27 @@ public partial class MainWindow : Window
             Topmost = AlwaysOnTopCheck.IsChecked == true;
             ScheduleSave();
         };
+    }
+
+    /// <summary>Чекбоксы качеств автопродажи: каждое поле настройки привязано к своему боксу.</summary>
+    private void WireQualityChecks()
+    {
+        void Wire(CheckBox box, Action<bool> set)
+        {
+            box.IsCheckedChanged += (_, _) =>
+            {
+                set(box.IsChecked == true);
+                ScheduleSave();
+            };
+        }
+
+        Wire(SellCommonCheck, value => _settings.SellCommon = value);
+        Wire(SellImprovedCheck, value => _settings.SellImproved = value);
+        Wire(SellMagicCheck, value => _settings.SellMagic = value);
+        Wire(SellExtraordinaryCheck, value => _settings.SellExtraordinary = value);
+        Wire(SellLegendaryCheck, value => _settings.SellLegendary = value);
+        Wire(SellUniqueCheck, value => _settings.SellUnique = value);
+        Wire(SellMythicCheck, value => _settings.SellMythic = value);
     }
 
     /// <summary>Ползунок задержки и поле ручного ввода: шаг 15 мс, диапазон 0..1000.</summary>
@@ -141,6 +187,9 @@ public partial class MainWindow : Window
         HotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.Hotkey, out var hotkey, out _)
             ? hotkey.Display
             : _settings.Hotkey;
+        SellHotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.SellHotkey, out var sellHotkey, out _)
+            ? sellHotkey.Display
+            : _settings.SellHotkey;
         InventoryKeyBox.Text = CanonicalKey(_settings.InventoryKey, "I");
         MountKeyBox.Text = CanonicalKey(_settings.MountKey, "M");
 
@@ -148,11 +197,25 @@ public partial class MainWindow : Window
         DelaySlider.Value = delay;
         DelayValueBox.Text = delay.ToString();
 
+        SellSwitchSlider.Value = Math.Clamp(_settings.SellSwitchDelayMs, 0, SellDelayMaxMs);
+        SellItemSlider.Value = Math.Clamp(_settings.SellItemDelayMs, 0, SellDelayMaxMs);
+
         SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
 
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
+
+        SellCommonCheck.IsChecked = _settings.SellCommon;
+        SellImprovedCheck.IsChecked = _settings.SellImproved;
+        SellMagicCheck.IsChecked = _settings.SellMagic;
+        SellExtraordinaryCheck.IsChecked = _settings.SellExtraordinary;
+        SellLegendaryCheck.IsChecked = _settings.SellLegendary;
+        SellUniqueCheck.IsChecked = _settings.SellUnique;
+        SellMythicCheck.IsChecked = _settings.SellMythic;
+
         UpdateSlotUi();
         UpdateTabUi();
+        UpdateInvUi();
+        UpdateSellTabsUi();
     }
 
     private void ReadSettingsFromUi()
@@ -261,6 +324,10 @@ public partial class MainWindow : Window
         {
             HandleHotkeyKey(e);
         }
+        else if (ReferenceEquals(box, SellHotkeyBox))
+        {
+            HandleSellHotkeyKey(e);
+        }
         else if (ReferenceEquals(box, InventoryKeyBox) || ReferenceEquals(box, MountKeyBox))
         {
             HandleGameKey(box, e);
@@ -335,6 +402,110 @@ public partial class MainWindow : Window
         ApplyHotkey(showError: true);
     }
 
+    private void ApplySellHotkey(bool showError)
+    {
+        _sellHotkey?.Dispose();
+        _sellHotkey = null;
+
+        var text = SellHotkeyBox.Text?.Trim() ?? string.Empty;
+        if (!HotkeyParser.TryParseHotkey(text, out var definition, out var error))
+        {
+            SellHotkeyStatusText.Text = "некорректный хоткей";
+            SellHotkeyStatusText.Foreground = ErrorBrush;
+            if (showError)
+            {
+                SetStatus(error, StatusKind.Error);
+            }
+
+            return;
+        }
+
+        try
+        {
+            var hotkey = new GlobalHotkey(definition.Modifiers, definition.VirtualKey);
+            hotkey.Pressed += OnSellHotkeyPressed;
+            _sellHotkey = hotkey;
+
+            SellHotkeyBox.Text = definition.Display;
+            SellHotkeyStatusText.Text = $"активен · {definition.Display}";
+            SellHotkeyStatusText.Foreground = SuccessBrush;
+            _settings.SellHotkey = definition.Display;
+            ScheduleSave();
+
+            if (showError)
+            {
+                SetStatus($"Хоткей автопродажи {definition.Display} активен", StatusKind.Idle);
+            }
+        }
+        catch (Exception ex)
+        {
+            SellHotkeyStatusText.Text = "недоступен";
+            SellHotkeyStatusText.Foreground = ErrorBrush;
+            if (showError)
+            {
+                SetStatus(ex.Message, StatusKind.Error);
+            }
+        }
+    }
+
+    private void OnSellHotkeyPressed()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!GameWindow.IsForeground())
+            {
+                return;
+            }
+
+            _ = RunAutoSellAsync();
+        });
+    }
+
+    private void HandleSellHotkeyKey(KeyEventArgs e)
+    {
+        if (e.Key == Key.Tab)
+        {
+            return;
+        }
+
+        e.Handled = true;
+
+        if (e.Key == Key.Escape)
+        {
+            SellHotkeyBox.Text = _settings.SellHotkey;
+            return;
+        }
+
+        if (!KeyCatalog.TryDescribe(e.Key, out var key))
+        {
+            return;
+        }
+
+        if (key.IsModifier)
+        {
+            var preview = KeyCatalog.DescribeModifiers(e.KeyModifiers);
+            if (!string.IsNullOrEmpty(preview))
+            {
+                SellHotkeyBox.Text = preview;
+            }
+
+            return;
+        }
+
+        SellHotkeyBox.Text = KeyCatalog.ComposeHotkey(e.KeyModifiers, key.Display);
+        ApplySellHotkey(showError: true);
+    }
+
+    private void CommitSellHotkey()
+    {
+        if (!HotkeyParser.TryParseHotkey(SellHotkeyBox.Text, out _, out _))
+        {
+            SellHotkeyBox.Text = _settings.SellHotkey;
+        }
+
+        ApplySellHotkey(showError: true);
+    }
+
     private void RevertKeyIfInvalid(TextBox box, string fallback)
     {
         var canonical = CanonicalKey(box.Text, fallback);
@@ -344,7 +515,7 @@ public partial class MainWindow : Window
 
     private async Task RunFastMountAsync(bool interactive)
     {
-        if (_running || _picking)
+        if (_running || _picking || _checking || _hovering || _selling)
         {
             return;
         }
@@ -422,6 +593,450 @@ public partial class MainWindow : Window
             cancelStatus: "Выбор слота отменён",
             busyStatus: "Наведите квадрат на слот и кликните левой кнопкой (Esc — отмена)");
 
+    private void OnPickInvSlot1Click(object? sender, RoutedEventArgs e) =>
+        ShowSlotPicker(
+            () => _invSlot1Picker,
+            picker => _invSlot1Picker = picker,
+            enabled => PickInvSlot1Button.IsEnabled = enabled,
+            precondition: null,
+            markerSize: SlotPickerWindow.SlotMarkerSize,
+            point =>
+            {
+                InventoryGridResolver.CaptureSlot1(_settings, point.X, point.Y);
+                UpdateInvUi();
+                SaveSettings();
+                SetStatus("Центр слота #1 сохранён", StatusKind.Success);
+            },
+            cancelStatus: "Выбор слота #1 отменён",
+            busyStatus: "Наведите квадрат на ЦЕНТР левой верхней ячейки инвентаря и кликните (Esc — отмена)");
+
+    private void OnPickInvSlot28Click(object? sender, RoutedEventArgs e) =>
+        ShowSlotPicker(
+            () => _invSlot28Picker,
+            picker => _invSlot28Picker = picker,
+            enabled => PickInvSlot28Button.IsEnabled = enabled,
+            precondition: null,
+            markerSize: SlotPickerWindow.SlotMarkerSize,
+            point =>
+            {
+                InventoryGridResolver.CaptureSlot28(_settings, point.X, point.Y);
+                UpdateInvUi();
+                SaveSettings();
+                SetStatus("Центр слота #28 сохранён", StatusKind.Success);
+            },
+            cancelStatus: "Выбор слота #28 отменён",
+            busyStatus: "Наведите квадрат на ЦЕНТР правой нижней ячейки инвентаря и кликните (Esc — отмена)");
+
+    private void UpdateInvUi()
+    {
+        var has1 = InventoryGridResolver.HasSlot1(_settings);
+        var has28 = InventoryGridResolver.HasSlot28(_settings);
+
+        if (!has1 && !has28)
+        {
+            InvStatusText.Text = "Сетка не откалибрована";
+            InvStatusText.Foreground = ErrorBrush;
+            InvSummaryText.Text = "Укажите центр левой верхней ячейки (слот #1) и правой нижней (слот #28).";
+            return;
+        }
+
+        if (!has1)
+        {
+            InvStatusText.Text = "Слот #28 указан";
+            InvStatusText.Foreground = IdleBrush;
+            InvSummaryText.Text = "Осталось указать слот #1 — левой верхней ячейки.";
+            return;
+        }
+
+        if (!has28)
+        {
+            InvStatusText.Text = "Слот #1 указан";
+            InvStatusText.Foreground = IdleBrush;
+            InvSummaryText.Text = "Осталось указать слот #28 — правой нижней ячейки.";
+            return;
+        }
+
+        if (InventoryGridResolver.TryResolve(_settings, out var slots, out _))
+        {
+            InvStatusText.Text = "Сетка готова";
+            InvStatusText.Foreground = SuccessBrush;
+            InvSummaryText.Text = $"Ячеек: {InventoryGridResolver.SlotCount}, прямоугольник ~{slots[0].W} × {slots[0].H} px. Откройте вкладку инвентаря и запустите проверку.";
+        }
+        else
+        {
+            InvStatusText.Text = "Игровое окно не найдено";
+            InvStatusText.Foreground = IdleBrush;
+            InvSummaryText.Text = "Точки сохранены как экранные координаты — проверка требует открытого окна игры.";
+        }
+    }
+
+    /// <summary>Захватывает клиент игры и классифицирует сетку.</summary>
+    private async Task<(List<InventorySlotResult>? Results, string Error)> CaptureAndClassifyAsync(List<InventorySlotRect> slots)
+    {
+        if (!GameWindow.TryGetClientBounds(out var client))
+        {
+            return (null, "Окно игры не найдено — откройте Drakensang.");
+        }
+
+        var shot = await Task.Run(() =>
+        {
+            if (!ScreenCapture.TryCapture(
+                    client.Left, client.Top, client.Width, client.Height,
+                    out var frame, out var captureError))
+            {
+                return (Frame: (byte[]?)null, Error: captureError, Results: (List<InventorySlotResult>?)null);
+            }
+
+            var results = InventoryChecker.CheckByGrid(
+                frame!, client.Width, client.Height, slots, client.Left, client.Top);
+            return (Frame: (byte[]?)frame, Error: string.Empty, Results: (List<InventorySlotResult>?)results);
+        });
+
+        if (shot.Error.Length > 0 || shot.Results is null)
+        {
+            return (null, shot.Error);
+        }
+
+        return (shot.Results, string.Empty);
+    }
+
+    private async Task RunInventoryCheckAsync()
+    {
+        if (_running || _picking || _checking || _hovering || _selling)
+        {
+            return;
+        }
+
+        if (!InventoryGridResolver.TryResolve(_settings, out var slots, out var gridError))
+        {
+            SetStatus(gridError, StatusKind.Error);
+            return;
+        }
+
+        _checking = true;
+        CheckInventoryButton.IsEnabled = false;
+
+        try
+        {
+            SetStatus("Снимаю экран и анализирую 28 ячеек…", StatusKind.Busy);
+
+            var (results, error) = await CaptureAndClassifyAsync(slots);
+            if (results is null)
+            {
+                SetStatus(error, StatusKind.Error);
+                return;
+            }
+
+            var summary = InventoryChecker.Summarize(results);
+            InvSummaryText.Text = summary;
+
+            var empty = results.Count(r => r.IsEmpty);
+            SetStatus(
+                $"Инвентарь проверен: свободно {empty} из {results.Count} ячеек.",
+                empty == 0 ? StatusKind.Error : StatusKind.Success);
+        }
+        catch (Exception ex)
+        {
+            SetStatus("Ошибка проверки инвентаря: " + ex.Message, StatusKind.Error);
+        }
+        finally
+        {
+            _checking = false;
+            CheckInventoryButton.IsEnabled = true;
+        }
+    }
+
+    /// <summary>
+    /// Обход курсором занятых ячеек: сначала быстрый скан сетки, затем курсор
+    /// тянется по предметам с паузой на каждом (тултипы успевают показаться).
+    /// В конце курсор возвращается на исходную позицию.
+    /// </summary>
+    private async Task RunHoverInventoryAsync()
+    {
+        if (_running || _picking || _checking || _hovering || _selling)
+        {
+            return;
+        }
+
+        if (!InventoryGridResolver.TryResolve(_settings, out var slots, out var gridError))
+        {
+            SetStatus(gridError, StatusKind.Error);
+            return;
+        }
+
+        _hovering = true;
+        _hoverCts = new CancellationTokenSource();
+        HoverInventoryButton.IsEnabled = false;
+        var token = _hoverCts.Token;
+
+        var hasOriginalCursor = NativeMethods.GetCursorPos(out var originalCursor);
+
+        try
+        {
+            if (GameWindow.TryActivate())
+            {
+                SetStatus("Окно игры активировано…", StatusKind.Busy);
+                await Task.Delay(350, token);
+            }
+
+            SetStatus("Сканирую сетку, чтобы найти предметы…", StatusKind.Busy);
+            var (results, captureError) = await CaptureAndClassifyAsync(slots);
+            if (results is null)
+            {
+                SetStatus(captureError, StatusKind.Error);
+                return;
+            }
+
+            var items = results.Where(r => !r.IsEmpty).ToList();
+            if (items.Count == 0)
+            {
+                SetStatus("Занятых ячеек нет — обходить нечего.", StatusKind.Idle);
+                return;
+            }
+
+            var index = 0;
+            foreach (var item in items)
+            {
+                token.ThrowIfCancellationRequested();
+                NativeMethods.SetCursorPos(item.CenterX, item.CenterY);
+                index++;
+                SetStatus($"Тултип: слот #{item.Index} ({index}/{items.Count})…", StatusKind.Busy);
+                await Task.Delay(HoverPerSlotMs, token);
+            }
+
+            SetStatus($"Курсор обошёл {items.Count} из {results.Count} ячеек и возвращён.", StatusKind.Success);
+        }
+        catch (OperationCanceledException)
+        {
+            SetStatus("Обход предметов прерван", StatusKind.Idle);
+        }
+        catch (Exception ex)
+        {
+            SetStatus("Ошибка обхода: " + ex.Message, StatusKind.Error);
+        }
+        finally
+        {
+            if (hasOriginalCursor)
+            {
+                NativeMethods.SetCursorPos(originalCursor.X, originalCursor.Y);
+            }
+
+            _hoverCts?.Dispose();
+            _hoverCts = null;
+            _hovering = false;
+            HoverInventoryButton.IsEnabled = true;
+        }
+    }
+
+    private void OnHoverInventoryClick(object? sender, RoutedEventArgs e) =>
+        _ = RunHoverInventoryAsync();
+
+    /// <summary>
+    /// Проходит ли ячейка под фильтр автопродажи: только неопознанные («?»)
+    /// предметы, и лишь те, чьё качество (по цвету знака «?») отмечено.
+    /// </summary>
+    private bool MatchesAutoSellFilter(InventorySlotResult slot)
+    {
+        if (!slot.Unidentified)
+        {
+            return false;
+        }
+
+        return slot.Rarity switch
+        {
+            InventoryRarity.Common => _settings.SellCommon,
+            InventoryRarity.Improved => _settings.SellImproved,
+            InventoryRarity.Magic => _settings.SellMagic,
+            InventoryRarity.Extraordinary => _settings.SellExtraordinary,
+            InventoryRarity.Legendary => _settings.SellLegendary,
+            InventoryRarity.Unique => _settings.SellUnique,
+            InventoryRarity.Mythic => _settings.SellMythic,
+            _ => false
+        };
+    }
+
+    /// <summary>
+    /// Автопродажа: для каждой выбранной вкладки — клик по её заголовку, скан
+    /// сетки 7×4 и ПКМ по каждой ячейке, попавшей под фильтр (по умолчанию —
+    /// только неопознанные «?»). Один проход по вкладкам. Курсор возвращается
+    /// на исходную позицию.
+    /// </summary>
+    private async Task RunAutoSellAsync()
+    {
+        if (_running || _picking || _checking || _hovering || _selling)
+        {
+            return;
+        }
+
+        if (!InventoryGridResolver.TryResolve(_settings, out var slots, out var gridError))
+        {
+            SetStatus(gridError, StatusKind.Error);
+            return;
+        }
+
+        var tabs = ParseSellTabs(_settings.SellTabs);
+        if (tabs.Count == 0)
+        {
+            SetStatus("Не выбрана ни одна вкладка для обхода автопродажей.", StatusKind.Error);
+            return;
+        }
+
+        if (!_settings.SellCommon && !_settings.SellImproved && !_settings.SellMagic &&
+            !_settings.SellExtraordinary && !_settings.SellLegendary && !_settings.SellUnique &&
+            !_settings.SellMythic)
+        {
+            SetStatus("Не отмечено ни одного качества — отметьте, какие «?» продавать.", StatusKind.Error);
+            return;
+        }
+
+        foreach (var tab in tabs)
+        {
+            if (!TabResolver.TryResolve(_settings, tab, out _, out _))
+            {
+                SetStatus(
+                    $"Вкладка {TabResolver.DisplayName(tab)}: не задана позиция вкладок. " +
+                    "Откалибруйте их во вкладке «ИНВЕНТАРЬ» («Указать вкладку 1» / «Указать вкладку 2»).",
+                    StatusKind.Error);
+                return;
+            }
+        }
+
+        _selling = true;
+        _sellCts = new CancellationTokenSource();
+        AutoSellButton.IsEnabled = false;
+        var token = _sellCts.Token;
+
+        var hasOriginalCursor = NativeMethods.GetCursorPos(out var originalCursor);
+
+        try
+        {
+            if (GameWindow.TryActivate())
+            {
+                SetStatus("Окно игры активировано…", StatusKind.Busy);
+                await Task.Delay(200, token);
+            }
+
+            var totalSold = 0;
+            var productiveTabs = 0;
+
+            foreach (var tab in tabs)
+            {
+                token.ThrowIfCancellationRequested();
+                var tabName = TabResolver.DisplayName(tab);
+
+                // 1-я вкладка при одном выборе — оставляем как есть (инвентарь уже открыт на ней).
+                if (tabs.Count > 1 || TabResolver.IndexOf(tab) > 1)
+                {
+                    TabResolver.TryResolve(_settings, tab, out var tabX, out var tabY);
+                    InputSimulator.LeftClick(tabX, tabY);
+                    SetStatus($"Вкладка {tabName}: открываю…", StatusKind.Busy);
+                    await Task.Delay(Math.Clamp(_settings.SellSwitchDelayMs, 0, SellDelayMaxMs), token);
+                }
+
+                SetStatus($"Вкладка {tabName}: сканирую сетку…", StatusKind.Busy);
+                var (results, captureError) = await CaptureAndClassifyAsync(slots);
+                if (results is null)
+                {
+                    SetStatus(captureError, StatusKind.Error);
+                    return;
+                }
+
+                var targets = results.Where(MatchesAutoSellFilter).ToList();
+                if (targets.Count == 0)
+                {
+                    continue;
+                }
+
+                var sold = 0;
+                foreach (var target in targets)
+                {
+                    token.ThrowIfCancellationRequested();
+                    InputSimulator.RightClick(target.CenterX, target.CenterY);
+                    sold++;
+                    SetStatus(
+                        $"Вкладка {tabName}: ПКМ слот #{target.Index} ({sold}/{targets.Count})…",
+                        StatusKind.Busy);
+                    await Task.Delay(Math.Clamp(_settings.SellItemDelayMs, 0, SellDelayMaxMs), token);
+                }
+
+                totalSold += sold;
+                productiveTabs++;
+            }
+
+            SetStatus(
+                $"Продано {totalSold} предмет(ов) в {productiveTabs} из {tabs.Count} вкладок, курсор возвращён.",
+                StatusKind.Success);
+        }
+        catch (OperationCanceledException)
+        {
+            SetStatus("Автопродажа прервана", StatusKind.Idle);
+        }
+        catch (Exception ex)
+        {
+            SetStatus("Ошибка автопродажи: " + ex.Message, StatusKind.Error);
+        }
+        finally
+        {
+            if (hasOriginalCursor)
+            {
+                NativeMethods.SetCursorPos(originalCursor.X, originalCursor.Y);
+            }
+
+            _sellCts?.Dispose();
+            _sellCts = null;
+            _selling = false;
+            AutoSellButton.IsEnabled = true;
+        }
+    }
+
+    private void OnAutoSellClick(object? sender, RoutedEventArgs e) =>
+        _ = RunAutoSellAsync();
+
+    /// <summary>Список вкладок автопродажи в порядке обхода.</summary>
+    private static List<string> ParseSellTabs(string raw) =>
+        raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(key => TabResolver.IndexOf(key) > 0)
+            .Distinct()
+            .OrderBy(TabResolver.IndexOf)
+            .ToList();
+
+    private static string JoinSellTabs(IEnumerable<string> tabs) =>
+        string.Join(",", tabs.OrderBy(TabResolver.IndexOf).Select(TabResolver.DisplayName));
+
+    private void UpdateSellTabsUi()
+    {
+        var selected = ParseSellTabs(_settings.SellTabs);
+
+        foreach (var child in SellTabsPanel.Children)
+        {
+            if (child is not Button button)
+            {
+                continue;
+            }
+
+            var isSelected = button.Tag is string key && selected.Contains(key);
+            button.Classes.Set("selected", isSelected);
+        }
+    }
+
+    private void OnSellTabToggleClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string key } || TabResolver.IndexOf(key) == 0)
+        {
+            return;
+        }
+
+        var tabs = ParseSellTabs(_settings.SellTabs);
+        if (!tabs.Remove(key))
+        {
+            tabs.Add(key);
+        }
+
+        _settings.SellTabs = JoinSellTabs(tabs);
+        UpdateSellTabsUi();
+        ScheduleSave();
+    }
+
     private void UpdateSlotUi()
     {
         if (!SlotResolver.HasSlot(_settings))
@@ -436,7 +1051,7 @@ public partial class MainWindow : Window
         SlotStatusText.Foreground = SuccessBrush;
 
         SlotCoordsText.Text = _settings.SlotRightRatio is not null
-            ? "Позиция привязана к окну игры и подстраивается под разрешение."
+            ? " "
             : $"Координаты экрана: {_settings.SlotX}, {_settings.SlotY}";
     }
 
@@ -504,6 +1119,71 @@ public partial class MainWindow : Window
                 : "Наведите квадрат на 1-ю вкладку и кликните (Esc — отмена)");
 
     /// <summary>
+    /// Пара «слайдер + компактное поле» для задержек автопродажи: шаг 15 мс,
+    /// диапазон 0..1000, ручной ввод по Enter/потере фокуса.
+    /// </summary>
+    private void WireDelayPair(Slider slider, TextBox box, int fallbackMs, Action<int> apply)
+    {
+        var syncing = false;
+
+        slider.ValueChanged += (_, e) =>
+        {
+            var clamped = Math.Clamp((int)Math.Round(e.NewValue), 0, SellDelayMaxMs);
+
+            if (!syncing)
+            {
+                var snapped = Math.Clamp(
+                    (int)Math.Round(clamped / (double)SellDelayStepMs) * SellDelayStepMs,
+                    0, SellDelayMaxMs);
+
+                if (snapped != clamped && Math.Abs(snapped - slider.Value) > 0.5)
+                {
+                    syncing = true;
+                    slider.Value = snapped;
+                    syncing = false;
+                    clamped = snapped;
+                }
+            }
+
+            if (!box.IsFocused && box.Text != clamped.ToString())
+            {
+                box.Text = clamped.ToString();
+            }
+
+            apply(clamped);
+            ScheduleSave();
+        };
+
+        void CommitText()
+        {
+            if (!int.TryParse(box.Text?.Trim(), out var value) || value < 0)
+            {
+                value = fallbackMs;
+            }
+
+            value = Math.Clamp(value, 0, SellDelayMaxMs);
+
+            syncing = true;
+            slider.Value = value;
+            syncing = false;
+
+            box.Text = value.ToString();
+            apply(value);
+            ScheduleSave();
+        }
+
+        box.LostFocus += (_, _) => CommitText();
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                CommitText();
+            }
+        };
+    }
+
+    /// <summary>
     /// Общий поток выбора точки на экране: guard от запуска/повторного picker-а,
     /// предусловие, позиция курсора, следящий квадрат, restore главного окна.
     /// </summary>
@@ -517,7 +1197,7 @@ public partial class MainWindow : Window
         string cancelStatus,
         string busyStatus)
     {
-        if (_running)
+        if (_running || _checking || _hovering || _selling)
         {
             return;
         }
@@ -588,6 +1268,9 @@ public partial class MainWindow : Window
         ScheduleSave();
     }
 
+    private void OnCheckInventoryClick(object? sender, RoutedEventArgs e) =>
+        _ = RunInventoryCheckAsync();
+
     private void UpdateTabUi()
     {
         foreach (var child in TabButtonsPanel.Children)
@@ -605,31 +1288,36 @@ public partial class MainWindow : Window
 
         if (!_settings.SwitchInventoryTab)
         {
-            TabStatusText.Text = "Выключено — макрос не будет переключать вкладку.";
+            TabSelectStatusText.Text = "Выключено — макрос не будет переключать вкладку.";
+            TabSelectStatusText.Foreground = IdleBrush;
+            TabStatusText.Text = "Калибровка вкладок не требуется.";
             TabStatusText.Foreground = IdleBrush;
             return;
         }
 
+        TabSelectStatusText.Text = $"Fast Mount переключается на вкладку {name}.";
+        TabSelectStatusText.Foreground = SuccessBrush;
+
         if (!TabResolver.HasBase(_settings))
         {
-            TabStatusText.Text = "Позиция 1-й вкладки не задана — нажмите «Указать вкладку 1».";
+            TabStatusText.Text = "Позиция 1-й вкладки не задана — кнопка «Указать вкладку 1» выше.";
             TabStatusText.Foreground = ErrorBrush;
             return;
         }
 
         if (TabResolver.IndexOf(_settings.TabKey) > 1 && !TabResolver.HasStep(_settings))
         {
-            TabStatusText.Text = $"Вкладка {name}: нужен шаг — нажмите «Указать вкладку 2».";
+            TabStatusText.Text = $"Для вкладки {name} не задан шаг — кнопка «Указать вкладку 2» выше, или выберите вкладку 1 в FAST MOUNT.";
             TabStatusText.Foreground = ErrorBrush;
             return;
         }
 
         var step = TabResolver.HasStep(_settings)
             ? $"шаг {TabResolver.StepPixelsX(_settings)} × {TabResolver.StepPixelsY(_settings)} px"
-            : "шаг не задан";
+            : "шаг не требуется";
 
         TabStatusText.Foreground = SuccessBrush;
-        TabStatusText.Text = $"Вкладка {name}: {step}.";
+        TabStatusText.Text = $"Позиция 1-й вкладки: {step}.";
     }
 
     private void ScheduleSave()
@@ -683,10 +1371,14 @@ public partial class MainWindow : Window
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         _runCts?.Cancel();
+        _hoverCts?.Cancel();
+        _sellCts?.Cancel();
         _saveTimer.Stop();
         SaveSettings();
         _hotkey?.Dispose();
         _hotkey = null;
+        _sellHotkey?.Dispose();
+        _sellHotkey = null;
     }
 
     private void SetStatus(string text, StatusKind kind)

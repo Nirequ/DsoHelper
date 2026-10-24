@@ -219,4 +219,68 @@ internal static class NativeMethods
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
         public string ImageFile;
     }
+
+    // Захват экрана (чекер инвентаря 7x4).
+    internal const uint SrCopy = 0x00CC0020;
+
+    internal const uint DibRgbColors = 0;
+
+    [DllImport("user32.dll")]
+    internal static extern IntPtr GetDC(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    internal static extern int ReleaseDC(IntPtr hWnd, IntPtr hdc);
+
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int width, int height);
+
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr SelectObject(IntPtr hdc, IntPtr obj);
+
+    [DllImport("gdi32.dll")]
+    internal static extern bool BitBlt(
+        IntPtr dest,
+        int destX,
+        int destY,
+        int width,
+        int height,
+        IntPtr source,
+        int sourceX,
+        int sourceY,
+        uint rop);
+
+    [DllImport("gdi32.dll")]
+    internal static extern int GetDIBits(
+        IntPtr hdc,
+        IntPtr hbmp,
+        uint startScan,
+        uint scanLines,
+        [Out] byte[] bits,
+        ref BitmapInfoHeader bmi,
+        uint usage);
+
+    [DllImport("gdi32.dll")]
+    internal static extern bool DeleteDC(IntPtr hdc);
+
+    [DllImport("gdi32.dll")]
+    internal static extern bool DeleteObject(IntPtr hObject);
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct BitmapInfoHeader
+    {
+        public uint Size;
+        public int Width;
+        public int Height;   // Отрицательная высота => строки сверху вниз.
+        public ushort Planes;
+        public ushort BitCount;
+        public uint Compression;
+        public uint SizeImage;
+        public int XPelsPerMeter;
+        public int YPelsPerMeter;
+        public uint ClrUsed;
+        public uint ClrImportant;
+    }
 }

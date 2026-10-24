@@ -60,6 +60,58 @@ internal sealed class FastMountSettings
 
     public bool AlwaysOnTop { get; set; }
 
+    // --- Чекер сетки инвентаря 7x4 ---
+
+    /// <summary>Клик-центр левой верхней ячейки (слот #1).</summary>
+    public int InvSlot1X { get; set; }
+
+    public int InvSlot1Y { get; set; }
+
+    public double? InvSlot1RightRatio { get; set; }
+
+    public double? InvSlot1TopRatio { get; set; }
+
+    /// <summary>Клик-центр правой нижней ячейки (слот #28).</summary>
+    public int InvSlot28X { get; set; }
+
+    public int InvSlot28Y { get; set; }
+
+    public double? InvSlot28RightRatio { get; set; }
+
+    public double? InvSlot28TopRatio { get; set; }
+
+    // --- Автопродажа ---
+
+    /// <summary>Глобальный хоткей автопродажи, например "F9".</summary>
+    public string SellHotkey { get; set; } = "F9";
+
+    /// <summary>Продаются только неопознанные («?») предметы — ниже их качества.</summary>
+    public bool SellCommon { get; set; } = true;
+
+    public bool SellImproved { get; set; } = true;
+
+    public bool SellMagic { get; set; } = true;
+
+    public bool SellExtraordinary { get; set; }
+
+    public bool SellLegendary { get; set; }
+
+    public bool SellUnique { get; set; }
+
+    public bool SellMythic { get; set; }
+
+    /// <summary>
+    /// Вкладки инвентаря, по которым проходит автопродажа: ключи через запятую,
+    /// например "1,2,3" (см. TabResolver.Keys).
+    /// </summary>
+    public string SellTabs { get; set; } = "1";
+
+    /// <summary>Пауза после клика по заголовку вкладки, перед сканом сетки, мс.</summary>
+    public int SellSwitchDelayMs { get; set; } = 200;
+
+    /// <summary>Пауза после ПКМ на каждом продаваемом предмете, мс.</summary>
+    public int SellItemDelayMs { get; set; } = 150;
+
     public static string FilePath => Path.Combine(AppContext.BaseDirectory, "config.json");
 
     public static FastMountSettings Load()    {

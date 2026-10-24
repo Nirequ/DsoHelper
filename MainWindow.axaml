@@ -367,6 +367,29 @@
         <Style Selector="CheckBox:disabled">
             <Setter Property="Opacity" Value="0.5" />
         </Style>
+
+        <!-- Качества неопознанных предметов: цвета как в DSO, не сливаются с состоянием. -->
+        <Style Selector="CheckBox.rarity-common, CheckBox.rarity-common:checked, CheckBox.rarity-common:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource RarityCommonBrush}" />
+        </Style>
+        <Style Selector="CheckBox.rarity-improved, CheckBox.rarity-improved:checked, CheckBox.rarity-improved:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource RarityImprovedBrush}" />
+        </Style>
+        <Style Selector="CheckBox.rarity-magic, CheckBox.rarity-magic:checked, CheckBox.rarity-magic:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource RarityMagicBrush}" />
+        </Style>
+        <Style Selector="CheckBox.rarity-extraordinary, CheckBox.rarity-extraordinary:checked, CheckBox.rarity-extraordinary:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource RarityExtraordinaryBrush}" />
+        </Style>
+        <Style Selector="CheckBox.rarity-legendary, CheckBox.rarity-legendary:checked, CheckBox.rarity-legendary:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource RarityLegendaryBrush}" />
+        </Style>
+        <Style Selector="CheckBox.rarity-unique, CheckBox.rarity-unique:checked, CheckBox.rarity-unique:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource RarityUniqueBrush}" />
+        </Style>
+        <Style Selector="CheckBox.rarity-mythic, CheckBox.rarity-mythic:checked, CheckBox.rarity-mythic:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource RarityMythicBrush}" />
+        </Style>
     </Window.Styles>
 
     <Grid>
@@ -511,207 +534,671 @@
                 </Grid>
             </StackPanel>
 
-            <!-- Chapters: two tabs -->
+            <!-- Chapters: three tabs -->
             <TabControl Grid.Row="1" Background="Transparent">
+                <TabItem Classes="nav" Header="ИНВЕНТАРЬ">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Hidden">
+                        <StackPanel Spacing="19" Margin="0,12,0,0">
+                            <!-- I. Grid calibration (slot #1 / #28) -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock x:Name="InvStatusText"
+                                                                   Classes="label"
+                                                                   Text="Сетка не откалибрована" />
+                                                        <TextBlock x:Name="InvSummaryText"
+                                                                   Classes="hint"
+                                                                   TextWrapping="Wrap"
+                                                                   Text="Шаг 1: укажите центр ячейки №1 (левая верхняя) и ячейки №28 (правая нижняя). Шаг 2: нажмите «Проверить инвентарь»." />
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{StaticResource AncientGoldLightBrush}"
+                                                           Text="⚠ Важно: калибруйте сетку и запускайте проверку только в полноэкранном режиме игры (без рамки). Сетка привязана к размеру окна. Если вы изменили разрешение или размер окна, откалибруйте заново, иначе результаты будут неверными." />
+
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Button x:Name="PickInvSlot1Button"
+                                                            Classes="outline"
+                                                            Content="Слот #1"
+                                                            Click="OnPickInvSlot1Click" />
+                                                    <Button x:Name="PickInvSlot28Button"
+                                                            Classes="outline"
+                                                            Content="Слот #28"
+                                                            Click="OnPickInvSlot28Click" />
+                                                </StackPanel>
+
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Как калибровать: 1) откройте инвентарь в игре; 2) нажмите «Слот #1» и кликните по центру левой верхней ячейки; 3) нажмите «Слот #28» и кликните по центру правой нижней ячейки. Положение остальных ячеек (сетка 7×4) программа рассчитает сама." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab gold"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="I" Foreground="{StaticResource AncientGoldBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="КАЛИБРОВКА СЕТКИ" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- II. Tab calibration (shared by Fast Mount and Auto-sell) -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                                    <TextBlock x:Name="TabStatusText"
+                                                               Classes="hint"
+                                                               TextWrapping="Wrap"
+                                                               Text="Позиция вкладок не откалибрована."
+                                                               VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                        <Button x:Name="PickTabButton"
+                                                                Classes="outline"
+                                                                Content="Указать вкладку 1"
+                                                                Click="OnPickTabClick" />
+                                                        <Button x:Name="PickTabStepButton"
+                                                                Classes="outline"
+                                                                Content="Указать вкладку 2"
+                                                                Click="OnPickTabStepClick" />
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Нужно для Fast Mount и автопродажи, чтобы программа умела переключать вкладки инвентаря. 1) Нажмите «Указать вкладку 1» и кликните по заголовку первой вкладки. 2) Нажмите «Указать вкладку 2» и кликните по заголовку второй. Расстояние между ними программа применит к остальным вкладкам. Какую вкладку использовать, выбирается на странице «FAST MOUNT»." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab gold"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="II" Foreground="{StaticResource AncientGoldBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="КАЛИБРОВКА ВКЛАДОК" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- III. Inventory check -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Button x:Name="CheckInventoryButton"
+                                                            Classes="outline"
+                                                            Content="Проверить инвентарь"
+                                                            Click="OnCheckInventoryClick"
+                                                            ToolTip.Tip="Делает снимок окна игры и определяет, что лежит в каждой из 28 ячеек: пусто, обычный, улучшенный, магический, экстраординарный, легендарный, уникальный, мифический или неопознанный («?»). Запускайте в полноэкранном режиме игры." />
+                                                    <Button x:Name="HoverInventoryButton"
+                                                            Classes="outline"
+                                                            Content="Наводить на предметы"
+                                                            Click="OnHoverInventoryClick"
+                                                            ToolTip.Tip="Курсор по очереди наводится на каждую занятую ячейку и ненадолго задерживается, чтобы успела появиться подсказка предмета. В конце курсор возвращается на прежнее место. Запускайте в полноэкранном режиме игры." />
+                                                </StackPanel>
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Перед запуском откройте инвентарь в игре. Итог проверки (сколько ячеек какого качества) появится в статусной строке внизу окна." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab gold"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="III" Foreground="{StaticResource AncientGoldBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="ПРОВЕРКА ИНВЕНТАРЯ 7×4" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
                 <TabItem Classes="nav" Header="FAST MOUNT">
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                   VerticalScrollBarVisibility="Hidden">
-                <StackPanel Spacing="19" Margin="0,12,0,0">
-                    <!-- I. Cape slot -->
-                    <Grid>
-                        <Border Classes="cardFrame" Margin="0,16,0,0">
-                            <Border Classes="cardInner">
-                                <Grid>
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                        <StackPanel Spacing="19" Margin="0,12,0,0">
+                            <!-- I. Cape slot -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
 
-                                    <StackPanel Margin="22,26,22,18" Spacing="13">
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                                            <StackPanel Spacing="4" VerticalAlignment="Center">
-                                                <TextBlock x:Name="SlotStatusText"
-                                                           Classes="label"
-                                                           Text="Слот не выбран" />
-                                                <TextBlock x:Name="SlotCoordsText"
-                                                           Classes="hint"
-                                                           Text="Нажмите «Выбрать слот» и кликните по ячейке: квадрат следует за курсором." />
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock x:Name="SlotStatusText"
+                                                                   Classes="label"
+                                                                   Text="Слот не выбран" />
+                                                        <TextBlock x:Name="SlotCoordsText"
+                                                                   Classes="hint"
+                                                                   Text="Нажмите «Выбрать слот» и кликните по ячейке, где лежит плащ: квадрат следует за курсором." />
+                                                    </StackPanel>
+                                                    <Button x:Name="PickSlotButton"
+                                                            Grid.Column="1"
+                                                            Classes="outline"
+                                                            Content="Выбрать слот"
+                                                            VerticalAlignment="Center"
+                                                            Click="OnPickSlotClick" />
+                                                </Grid>
                                             </StackPanel>
-                                            <Button x:Name="PickSlotButton"
-                                                    Grid.Column="1"
-                                                    Classes="outline"
-                                                    Content="Выбрать слот"
-                                                    VerticalAlignment="Center"
-                                                    Click="OnPickSlotClick" />
                                         </Grid>
+                                    </Border>
+                                </Border>
 
-                                        <StackPanel Spacing="10">
-                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                                <TextBlock Classes="subheading" Text="ВКЛАДКА ИНВЕНТАРЯ" />
-                                                <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
-                                            </Grid>
+                                <Border Classes="chapterTab arcane"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource MysticArcaneBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="I" Foreground="{StaticResource MysticArcaneBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="СЛОТ ПЛАЩА" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
 
-                                            <CheckBox x:Name="SwitchTabCheck"
-                                                      Content="Переключать вкладку"
-                                                      VerticalAlignment="Center" />
+                            <!-- II. Inventory tab to switch to -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
 
-                                            <StackPanel x:Name="TabButtonsPanel"
-                                                        Orientation="Horizontal"
-                                                        Spacing="6">
-                                                <Button Classes="tab" Tag="1" Content="1" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="2" Content="2" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="3" Content="3" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="4" Content="4" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="5" Content="5" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="6" Content="6" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="7" Content="7" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="8" Content="8" Click="OnTabSelectClick" />
-                                                <Button Classes="tab" Tag="prem" Content="prem" Click="OnTabSelectClick" />
-                                            </StackPanel>
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <CheckBox x:Name="SwitchTabCheck"
+                                                          Content="Переключать вкладку"
+                                                          VerticalAlignment="Center" />
 
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                                                <TextBlock x:Name="TabStatusText"
-                                                           Classes="hint"
-                                                           Text="Позиция не задана."
-                                                           VerticalAlignment="Center" />
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                                    <Button x:Name="PickTabButton"
-                                                            Classes="outline"
-                                                            Content="Указать вкладку 1"
-                                                            Click="OnPickTabClick" />
-                                                    <Button x:Name="PickTabStepButton"
-                                                            Classes="outline"
-                                                            Content="Указать вкладку 2"
-                                                            Click="OnPickTabStepClick" />
+                                                <StackPanel x:Name="TabButtonsPanel"
+                                                            Orientation="Horizontal"
+                                                            Spacing="6">
+                                                    <Button Classes="tab" Tag="1" Content="1" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="2" Content="2" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="3" Content="3" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="4" Content="4" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="5" Content="5" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="6" Content="6" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="7" Content="7" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="8" Content="8" Click="OnTabSelectClick" />
+                                                    <Button Classes="tab" Tag="prem" Content="prem" Click="OnTabSelectClick" />
                                                 </StackPanel>
-                                            </Grid>
-                                        </StackPanel>
 
-                                        <TextBlock Classes="hint"
-                                                   Text="Квадрат следует за мышью: кликните по заголовку 1-й вкладки, затем нажмите «Указать вкладку 2» и кликните по второй." />
+                                                <TextBlock x:Name="TabSelectStatusText"
+                                                           Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Выбранная вкладка — 1."
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Позиции вкладок задаются на странице «ИНВЕНТАРЬ», в блоке «II. Калибровка вкладок»." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab arcane"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource MysticArcaneBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="II" Foreground="{StaticResource MysticArcaneBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="ВКЛАДКА ИНВЕНТАРЯ" />
                                     </StackPanel>
-                                </Grid>
-                            </Border>
-                        </Border>
+                                </Border>
+                            </Grid>
 
-                        <Border Classes="chapterTab arcane"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Top"
-                                Margin="18,0,0,0">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource MysticArcaneBrush}" VerticalAlignment="Center" />
-                                <TextBlock Classes="chapterTitle" Text="I" Foreground="{StaticResource MysticArcaneBrush}" />
-                                <TextBlock Classes="chapterTitle" Text="СЛОТ ПЛАЩА" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
+                            <!-- III. Keys and delays -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
 
-                    <!-- II. Keys and delays -->
-                    <Grid>
-                        <Border Classes="cardFrame" Margin="0,16,0,0">
-                            <Border Classes="cardInner">
-                                <Grid>
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
-                                    <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                    <TextBlock Classes="subheading" Text="КЛАВИШИ" />
+                                                    <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                                </Grid>
 
-                                    <StackPanel Margin="22,26,22,18" Spacing="13">
-                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                            <TextBlock Classes="subheading" Text="КЛАВИШИ" />
-                                            <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
-                                        </Grid>
+                                                <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="14">
+                                                    <StackPanel Spacing="5">
+                                                        <TextBlock Classes="axis" Text="Инвентарь" />
+                                                        <TextBox x:Name="InventoryKeyBox"
+                                                                 Width="126" Height="38"
+                                                                 IsReadOnly="True"
+                                                                 AutomationProperties.AutomationId="InventoryKeyBox"
+                                                                 PlaceholderText="Нажмите клавишу" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Spacing="5">
+                                                        <TextBlock Classes="axis" Text="Кнопка маунта" />
+                                                        <TextBox x:Name="MountKeyBox"
+                                                                 Width="126" Height="38"
+                                                                 IsReadOnly="True"
+                                                                 AutomationProperties.AutomationId="MountKeyBox"
+                                                                 PlaceholderText="Нажмите клавишу" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2" Spacing="5">
+                                                        <TextBlock Classes="axis" Text="Хоткей" />
+                                                        <TextBox x:Name="HotkeyBox"
+                                                                 Width="150" Height="38"
+                                                                 IsReadOnly="True"
+                                                                 AutomationProperties.AutomationId="HotkeyBox"
+                                                                 PlaceholderText="Нажмите клавишу" />
+                                                        <TextBlock x:Name="HotkeyStatusText"
+                                                                   Classes="hint" />
+                                                    </StackPanel>
+                                                </Grid>
+                                                <TextBlock Classes="hint"
+                                                           Text="«Инвентарь» и «Кнопка маунта» — клавиши, назначенные в игре. «Хоткей» — клавиша, по которой запускается Fast Mount. Кликните по полю и нажмите нужную клавишу: название подставится само (например Space, F1, ←). Esc отменяет ввод." />
+                                                <TextBlock Classes="hint"
+                                                           Text="Хоткей работает только пока активно окно Drakensang." />
 
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="14">
-                                            <StackPanel Spacing="5">
-                                                <TextBlock Classes="axis" Text="Инвентарь" />
-                                                <TextBox x:Name="InventoryKeyBox"
-                                                         Width="126" Height="38"
-                                                         IsReadOnly="True"
-                                                         AutomationProperties.AutomationId="InventoryKeyBox"
-                                                         PlaceholderText="Нажмите клавишу" />
+                                                <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                    <TextBlock Classes="subheading" Text="ЗАДЕРЖКА, МС" />
+                                                    <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                                </Grid>
+
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel.Styles>
+                                                        <Style Selector="TextBox.compact">
+                                                            <Setter Property="Height" Value="26" />
+                                                            <Setter Property="Width" Value="68" />
+                                                            <Setter Property="MinHeight" Value="0" />
+                                                            <Setter Property="Padding" Value="6,2,8,2" />
+                                                            <Setter Property="FontSize" Value="12" />
+                                                            <Setter Property="TextAlignment" Value="Right" />
+                                                            <Setter Property="CornerRadius" Value="2" />
+                                                            <Setter Property="HorizontalAlignment" Value="Right" />
+                                                        </Style>
+                                                    </StackPanel.Styles>
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Classes="axis" Text="Пауза между действиями" />
+                                                        <TextBox x:Name="DelayValueBox"
+                                                                 Grid.Column="1"
+                                                                 Classes="compact"
+                                                                 Text="300"
+                                                                 AutomationProperties.AutomationId="DelayValueBox" />
+                                                    </Grid>
+                                                    <Slider x:Name="DelaySlider"
+                                                            Minimum="0"
+                                                            Maximum="1000"
+                                                            Value="300"
+                                                            SmallChange="15"
+                                                            LargeChange="60"
+                                                            Height="38"
+                                                            VerticalAlignment="Center" />
+                                                    <TextBlock Classes="hint"
+                                                               Text="Ползунок двигается с шагом 15 мс. Точное значение (0–1000) можно ввести вручную. Если игра не успевает реагировать, увеличьте паузу." />
+                                                </StackPanel>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" Spacing="5">
-                                                <TextBlock Classes="axis" Text="Кнопка маунта" />
-                                                <TextBox x:Name="MountKeyBox"
-                                                         Width="126" Height="38"
-                                                         IsReadOnly="True"
-                                                         AutomationProperties.AutomationId="MountKeyBox"
-                                                         PlaceholderText="Нажмите клавишу" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2" Spacing="5">
-                                                <TextBlock Classes="axis" Text="Хоткей" />
-                                                <TextBox x:Name="HotkeyBox"
-                                                         Width="150" Height="38"
-                                                         IsReadOnly="True"
-                                                         AutomationProperties.AutomationId="HotkeyBox"
-                                                         PlaceholderText="Нажмите клавишу" />
-                                                <TextBlock x:Name="HotkeyStatusText"
-                                                           Classes="hint" />
-                                            </StackPanel>
                                         </Grid>
-                                        <TextBlock Classes="hint"
-                                                   Text="Кликните по полю и нажмите нужную клавишу — название подставится само (например Space, F1, ←). Esc отменяет ввод." />
-                                        <TextBlock Classes="hint"
-                                                   Text="Хоткей срабатывает, когда окно Drakensang активно." />
+                                    </Border>
+                                </Border>
 
-                                        <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
-
-                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                            <TextBlock Classes="subheading" Text="ЗАДЕРЖКА, МС" />
-                                            <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
-                                        </Grid>
-
-                                        <StackPanel Spacing="5">
-                                            <StackPanel.Styles>
-                                                <Style Selector="TextBox.compact">
-                                                    <Setter Property="Height" Value="26" />
-                                                    <Setter Property="Width" Value="68" />
-                                                    <Setter Property="MinHeight" Value="0" />
-                                                    <Setter Property="Padding" Value="6,2,8,2" />
-                                                    <Setter Property="FontSize" Value="12" />
-                                                    <Setter Property="TextAlignment" Value="Right" />
-                                                    <Setter Property="CornerRadius" Value="2" />
-                                                    <Setter Property="HorizontalAlignment" Value="Right" />
-                                                </Style>
-                                            </StackPanel.Styles>
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Classes="axis" Text="Пауза между действиями" />
-                                                <TextBox x:Name="DelayValueBox"
-                                                         Grid.Column="1"
-                                                         Classes="compact"
-                                                         Text="300"
-                                                         AutomationProperties.AutomationId="DelayValueBox" />
-                                            </Grid>
-                                            <Slider x:Name="DelaySlider"
-                                                    Minimum="0"
-                                                    Maximum="1000"
-                                                    Value="300"
-                                                    SmallChange="15"
-                                                    LargeChange="60"
-                                                    Height="38"
-                                                    VerticalAlignment="Center" />
-                                            <TextBlock Classes="hint"
-                                                       Text="Шаг ползунка — 15 мс. Значение можно ввести вручную." />
-                                        </StackPanel>
+                                <Border Classes="chapterTab cyan"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource EssenceCyanBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="III" Foreground="{StaticResource EssenceCyanBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="КЛАВИШИ И ЗАДЕРЖКИ" />
                                     </StackPanel>
-                                </Grid>
-                            </Border>
-                        </Border>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-                        <Border Classes="chapterTab cyan"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Top"
-                                Margin="18,0,0,0">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource EssenceCyanBrush}" VerticalAlignment="Center" />
-                                <TextBlock Classes="chapterTitle" Text="II" Foreground="{StaticResource EssenceCyanBrush}" />
-                                <TextBlock Classes="chapterTitle" Text="КЛАВИШИ И ЗАДЕРЖКИ" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
+                <TabItem Classes="nav" Header="АВТОПРОДАЖА">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Hidden">
+                        <StackPanel Spacing="19" Margin="0,12,0,0">
+                            <!-- I. Launch and hotkey -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
 
-                </StackPanel>
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                                                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock x:Name="AutoSellStatusText"
+                                                                   Classes="label"
+                                                                   Text="Автопродажа ещё не запускалась" />
+                                                        <TextBlock x:Name="AutoSellSummaryText"
+                                                                   Classes="hint"
+                                                                   TextWrapping="Wrap"
+                                                                   Text="Проходит по сетке 7×4 и продаёт правой кнопкой мыши только неопознанные предметы («?») отмеченного ниже качества. Опознанные предметы не затрагиваются." />
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{StaticResource AncientGoldLightBrush}"
+                                                           Text="⚠ Сначала откройте окно торговца! Правый клик продаёт предмет только в открытом магазине, иначе игра наденет или применит предмет. Продажа идёт сразу, без подтверждения, поэтому проверьте отмеченные качества перед запуском." />
+
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                    <TextBlock Classes="subheading" Text="ЗАПУСК" />
+                                                    <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                                </Grid>
+
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Button x:Name="AutoSellButton"
+                                                            Classes="outline"
+                                                            Content="Запустить автопродажу"
+                                                            Click="OnAutoSellClick"
+                                                            ToolTip.Tip="Программа сканирует сетку и кликает правой кнопкой по каждой ячейке с неопознанным предметом отмеченного качества. В конце курсор возвращается на прежнее место. Нужен открытый магазин торговца." />
+                                                </StackPanel>
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Откройте инвентарь и магазин торговца, затем нажмите кнопку или хоткей. Пока идёт продажа, калибровка и другие действия недоступны." />
+
+                                                <Border Height="1" Background="{StaticResource CardInnerBorderBrush}" />
+
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                    <TextBlock Classes="subheading" Text="ХОТКЕЙ" />
+                                                    <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                                </Grid>
+
+                                                <StackPanel Spacing="5">
+                                                    <TextBox x:Name="SellHotkeyBox"
+                                                             Width="150" Height="38"
+                                                             IsReadOnly="True"
+                                                             PlaceholderText="Нажмите клавишу" />
+                                                    <TextBlock x:Name="SellHotkeyStatusText"
+                                                               Classes="hint" />
+                                                    <TextBlock Classes="hint"
+                                                               Text="Кликните по полю и нажмите клавишу (по умолчанию F9). Esc отменяет ввод. Хоткей работает только пока активно окно Drakensang." />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab gold"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="I" Foreground="{StaticResource AncientGoldBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="ЗАПУСК И ХОТКЕЙ" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- II. Quality filter -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <WrapPanel HorizontalAlignment="Left">
+                                                    <CheckBox x:Name="SellCommonCheck"
+                                                              Classes="rarity-common"
+                                                              Content="Обычный"
+                                                              Margin="0,2,18,2" />
+                                                    <CheckBox x:Name="SellImprovedCheck"
+                                                              Classes="rarity-improved"
+                                                              Content="Улучшенный"
+                                                              Margin="0,2,18,2" />
+                                                    <CheckBox x:Name="SellMagicCheck"
+                                                              Classes="rarity-magic"
+                                                              Content="Магический"
+                                                              Margin="0,2,18,2" />
+                                                    <CheckBox x:Name="SellExtraordinaryCheck"
+                                                              Classes="rarity-extraordinary"
+                                                              Content="Экстраординарный"
+                                                              Margin="0,2,18,2" />
+                                                    <CheckBox x:Name="SellLegendaryCheck"
+                                                              Classes="rarity-legendary"
+                                                              Content="Легендарный"
+                                                              Margin="0,2,18,2" />
+                                                    <CheckBox x:Name="SellUniqueCheck"
+                                                              Classes="rarity-unique"
+                                                              Content="Уникальный"
+                                                              Margin="0,2,18,2" />
+                                                    <CheckBox x:Name="SellMythicCheck"
+                                                              Classes="rarity-mythic"
+                                                              Content="Мифический"
+                                                              Margin="0,2,18,2" />
+                                                </WrapPanel>
+
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Продаются только неопознанные предметы («?») и только отмеченных качеств. Качество определяется по цвету знака вопроса. Опознанные предметы не продаются, даже если их качество отмечено. По умолчанию отмечены низкие качества: Обычный, Улучшенный, Магический." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab gold"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="II" Foreground="{StaticResource AncientGoldBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="КАЧЕСТВО НЕОПОЗНАННЫХ" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- III. Tabs to sweep -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <WrapPanel HorizontalAlignment="Left">
+                                                    <StackPanel x:Name="SellTabsPanel"
+                                                                Orientation="Horizontal"
+                                                                Spacing="6">
+                                                        <Button Classes="tab" Tag="1" Content="1" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="2" Content="2" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="3" Content="3" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="4" Content="4" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="5" Content="5" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="6" Content="6" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="7" Content="7" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="8" Content="8" Click="OnSellTabToggleClick" />
+                                                        <Button Classes="tab" Tag="prem" Content="prem" Click="OnSellTabToggleClick" />
+                                                    </StackPanel>
+                                                </WrapPanel>
+
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Для каждой отмеченной вкладки программа открывает её, просматривает 28 ячеек, продаёт подходящие предметы и переходит к следующей. Неотмеченные вкладки пропускаются. Для всех вкладок, кроме 1-й, нужна калибровка вкладок (страница «ИНВЕНТАРЬ», блок «II. Калибровка вкладок»). Магазин торговца должен быть открыт: он действует на все вкладки." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab gold"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="III" Foreground="{StaticResource AncientGoldBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="ВКЛАДКИ ДЛЯ ОБХОДА" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- IV. Delays -->
+                            <Grid>
+                                <Border Classes="cardFrame" Margin="0,16,0,0">
+                                    <Border Classes="cardInner">
+                                        <Grid>
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,1,0,0" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,1,1,0" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="1,0,0,1" Opacity="0.4" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                                            <Border Width="13" Height="13" BorderBrush="{StaticResource AncientGoldBrush}" BorderThickness="0,0,1,1" Opacity="0.4" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+
+                                            <StackPanel Margin="22,26,22,18" Spacing="13">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                    <TextBlock Classes="subheading" Text="ЗАДЕРЖКИ, МС" />
+                                                    <Border Grid.Column="1" Height="1" Background="{StaticResource BorderBrush}" Opacity="0.7" VerticalAlignment="Center" />
+                                                </Grid>
+
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel.Styles>
+                                                        <Style Selector="TextBox.compact">
+                                                            <Setter Property="Height" Value="26" />
+                                                            <Setter Property="Width" Value="68" />
+                                                            <Setter Property="MinHeight" Value="0" />
+                                                            <Setter Property="Padding" Value="6,2,8,2" />
+                                                            <Setter Property="FontSize" Value="12" />
+                                                            <Setter Property="TextAlignment" Value="Right" />
+                                                            <Setter Property="CornerRadius" Value="2" />
+                                                            <Setter Property="HorizontalAlignment" Value="Right" />
+                                                        </Style>
+                                                    </StackPanel.Styles>
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Classes="axis" Text="Пауза после вкладки" />
+                                                        <TextBox x:Name="SellSwitchValueBox"
+                                                                 Grid.Column="1"
+                                                                 Classes="compact"
+                                                                 Text="200"
+                                                                 AutomationProperties.AutomationId="SellSwitchValueBox" />
+                                                    </Grid>
+                                                    <Slider x:Name="SellSwitchSlider"
+                                                            Minimum="0"
+                                                            Maximum="1000"
+                                                            Value="200"
+                                                            SmallChange="15"
+                                                            LargeChange="60"
+                                                            Height="38"
+                                                            VerticalAlignment="Center" />
+                                                    <TextBlock Classes="hint"
+                                                               Text="После клика по заголовку вкладки, перед сканом сетки." />
+                                                </StackPanel>
+
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel.Styles>
+                                                        <Style Selector="TextBox.compact">
+                                                            <Setter Property="Height" Value="26" />
+                                                            <Setter Property="Width" Value="68" />
+                                                            <Setter Property="MinHeight" Value="0" />
+                                                            <Setter Property="Padding" Value="6,2,8,2" />
+                                                            <Setter Property="FontSize" Value="12" />
+                                                            <Setter Property="TextAlignment" Value="Right" />
+                                                            <Setter Property="CornerRadius" Value="2" />
+                                                            <Setter Property="HorizontalAlignment" Value="Right" />
+                                                        </Style>
+                                                    </StackPanel.Styles>
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Classes="axis" Text="Пауза после предмета" />
+                                                        <TextBox x:Name="SellItemValueBox"
+                                                                 Grid.Column="1"
+                                                                 Classes="compact"
+                                                                 Text="150"
+                                                                 AutomationProperties.AutomationId="SellItemValueBox" />
+                                                    </Grid>
+                                                    <Slider x:Name="SellItemSlider"
+                                                            Minimum="0"
+                                                            Maximum="1000"
+                                                            Value="150"
+                                                            SmallChange="15"
+                                                            LargeChange="60"
+                                                            Height="38"
+                                                            VerticalAlignment="Center" />
+                                                </StackPanel>
+
+                                                <TextBlock Classes="hint"
+                                                           TextWrapping="Wrap"
+                                                           Text="Шаг ползунка — 15 мс, значения можно ввести вручную. Ниже ~100 мс на предмет клики игры могут теряться." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+
+                                <Border Classes="chapterTab gold"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="18,0,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Data="M4,0 L8,4 L4,8 L0,4 Z" Width="8" Height="8" Stretch="Fill" Fill="{StaticResource AncientGoldBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Classes="chapterTitle" Text="IV" Foreground="{StaticResource AncientGoldBrush}" />
+                                        <TextBlock Classes="chapterTitle" Text="ЗАДЕРЖКИ" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
                     </ScrollViewer>
                 </TabItem>
             </TabControl>

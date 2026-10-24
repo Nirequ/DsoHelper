@@ -23,12 +23,14 @@
     <Color x:Key="TextSecondaryColor">#8C93A2</Color>
     <Color x:Key="TextDisabledColor">#525866</Color>
 
-    <!-- Item rarity colors (DSO canonical) -->
-    <Color x:Key="RarityBasicColor">#B0B3B8</Color>
-    <Color x:Key="RarityImprovedColor">#3B82F6</Color>
+    <!-- Item rarity colors (DSO canonical: общий/улучшенный/магический/экстраординарный/легендарный/уникальный/мифический) -->
+    <Color x:Key="RarityCommonColor">#E6E8EC</Color>
+    <Color x:Key="RarityImprovedColor">#4EC758</Color>
+    <Color x:Key="RarityMagicColor">#3B82F6</Color>
     <Color x:Key="RarityExtraordinaryColor">#A855F7</Color>
     <Color x:Key="RarityLegendaryColor">#F97316</Color>
     <Color x:Key="RarityUniqueColor">#EAB308</Color>
+    <Color x:Key="RarityMythicColor">#E5484D</Color>
 
     <!-- Brushes -->
     <SolidColorBrush x:Key="ObsidianBlackBrush" Color="{StaticResource ObsidianBlackColor}" />
@@ -45,11 +47,13 @@
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
     <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}" />
 
-    <SolidColorBrush x:Key="RarityBasicBrush" Color="{StaticResource RarityBasicColor}" />
+    <SolidColorBrush x:Key="RarityCommonBrush" Color="{StaticResource RarityCommonColor}" />
     <SolidColorBrush x:Key="RarityImprovedBrush" Color="{StaticResource RarityImprovedColor}" />
+    <SolidColorBrush x:Key="RarityMagicBrush" Color="{StaticResource RarityMagicColor}" />
     <SolidColorBrush x:Key="RarityExtraordinaryBrush" Color="{StaticResource RarityExtraordinaryColor}" />
     <SolidColorBrush x:Key="RarityLegendaryBrush" Color="{StaticResource RarityLegendaryColor}" />
     <SolidColorBrush x:Key="RarityUniqueBrush" Color="{StaticResource RarityUniqueColor}" />
+    <SolidColorBrush x:Key="RarityMythicBrush" Color="{StaticResource RarityMythicColor}" />
 
     <!-- Additional medieval framing tones -->
     <SolidColorBrush x:Key="ObsidianDeepBrush" Color="#0E0F12" />
@@ -83,11 +87,13 @@
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="RaritySpectrumBrush" StartPoint="0%,0%" EndPoint="100%,0%">
-        <GradientStop Color="#B0B3B8" Offset="0" />
-        <GradientStop Color="#3B82F6" Offset="0.25" />
+        <GradientStop Color="#E6E8EC" Offset="0" />
+        <GradientStop Color="#4EC758" Offset="0.17" />
+        <GradientStop Color="#3B82F6" Offset="0.34" />
         <GradientStop Color="#A855F7" Offset="0.5" />
-        <GradientStop Color="#F97316" Offset="0.75" />
-        <GradientStop Color="#EAB308" Offset="1" />
+        <GradientStop Color="#F97316" Offset="0.67" />
+        <GradientStop Color="#EAB308" Offset="0.84" />
+        <GradientStop Color="#E5484D" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="GoldRuleLeftBrush" StartPoint="0%,0%" EndPoint="100%,0%">

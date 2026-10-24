@@ -46,13 +46,13 @@ internal static class FastMountRunner
 
             if (!TabResolver.HasBase(settings))
             {
-                error = "Укажите позицию 1-й вкладки: нажмите «Указать вкладку 1» в разделе «Слот плаща».";
+                error = "Укажите позицию 1-й вкладки: нажмите «Указать вкладку 1» во вкладке «ИНВЕНТАРЬ».";
                 return false;
             }
 
             if (tabIndex > 1 && !TabResolver.HasStep(settings))
             {
-                error = "Задайте шаг вкладок: нажмите «Указать вкладку 2» в разделе «Слот плаща».";
+                error = "Задайте шаг вкладок: нажмите «Указать вкладку 2» во вкладке «ИНВЕНТАРЬ».";
                 return false;
             }
         }
