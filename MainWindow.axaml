@@ -508,23 +508,11 @@
                             BorderThickness="1"
                             BoxShadow="0 0 24 0 #55E0A93B"
                             VerticalAlignment="Center">
-                        <Viewbox Width="38" Height="38">
-                            <Canvas Width="64" Height="64">
-                                <Path Data="M32,2 L59,13 L54,43 C52,52 43,59 32,62 C21,59 12,52 10,43 L5,13 Z"
-                                      Fill="{StaticResource ElevatedSurfaceBrush}"
-                                      Stroke="{StaticResource AncientGoldBrush}"
-                                      StrokeThickness="1.2" />
-                                <Path Data="M22,17 L26,11 L27,18 Z M42,17 L38,11 L37,18 Z"
-                                      Fill="{StaticResource AncientGoldBrush}"
-                                      Opacity="0.72" />
-                                <Path Data="M19,31 C24,24 29,21 32,21 C35,21 40,24 45,31 C40,38 35,41 32,41 C29,41 24,38 19,31 Z"
-                                      Fill="{StaticResource ObsidianBlackBrush}"
-                                      Stroke="{StaticResource AncientGoldBrush}"
-                                      StrokeThickness="1.2" />
-                                <Path Data="M32,24 C35,28 35,34 32,38 C29,34 29,28 32,24 Z"
-                                      Fill="{StaticResource AncientGoldBrush}" />
-                            </Canvas>
-                        </Viewbox>
+                        <Image Source="avares://DsoHelper/Assets/logo.png"
+                               Width="42"
+                               Height="42"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapInterpolationMode="HighQuality" />
                     </Border>
 
                     <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
