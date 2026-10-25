@@ -30,12 +30,14 @@ if defined DIRTY echo [!] Uncommitted changes will be included in the commit.
 echo.
 echo [1/5] Setting version %VERSION% in DsoHelper.csproj ...
 
+rem Read/write as UTF-8 explicitly: Get-Content in PowerShell 5.1 falls back to the ANSI
+rem code page for BOM-less files and mangles non-ASCII comments in the csproj.
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$p='DsoHelper.csproj'; $c=Get-Content $p -Raw;" ^
+  "$p='DsoHelper.csproj'; $c=[IO.File]::ReadAllText($p);" ^
   "$c=$c -replace '<Version>[^<]+</Version>', '<Version>%VERSION%</Version>';" ^
   "$c=$c -replace '<AssemblyVersion>[^<]+</AssemblyVersion>', '<AssemblyVersion>%VERSION%</AssemblyVersion>';" ^
   "$c=$c -replace '<FileVersion>[^<]+</FileVersion>', '<FileVersion>%VERSION%</FileVersion>';" ^
-  "[IO.File]::WriteAllText($p, $c)"
+  "[IO.File]::WriteAllText($p, $c, (New-Object Text.UTF8Encoding $false))"
 
 if errorlevel 1 goto :fail
 
