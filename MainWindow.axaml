@@ -500,20 +500,12 @@
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="17"
                       Background="Transparent"
                       PointerPressed="OnTitleBarPointerPressed">
-                    <Border Width="52"
-                            Height="52"
-                            CornerRadius="26"
-                            Background="{StaticResource ObsidianBlackBrush}"
-                            BorderBrush="{StaticResource AncientGoldBorderFaintBrush}"
-                            BorderThickness="1"
-                            BoxShadow="0 0 24 0 #55E0A93B"
-                            VerticalAlignment="Center">
-                        <Image Source="avares://DsoHelper/Assets/logo.png"
-                               Width="42"
-                               Height="42"
-                               Stretch="Uniform"
-                               RenderOptions.BitmapInterpolationMode="HighQuality" />
-                    </Border>
+                    <Image Source="avares://DsoHelper/Assets/logo.png"
+                           Width="54"
+                           Height="54"
+                           Stretch="Uniform"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapInterpolationMode="HighQuality" />
 
                     <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
                         <TextBlock Classes="h1" Text="DSO HELPER" FontSize="24" />
