@@ -7,16 +7,16 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>DsoHelper</RootNamespace>
     <AssemblyName>DsoHelper</AssemblyName>
-    <Version>1.4.6</Version>
-    <AssemblyVersion>1.4.6</AssemblyVersion>
-    <FileVersion>1.4.6</FileVersion>
+    <Version>1.4.7</Version>
+    <AssemblyVersion>1.4.7</AssemblyVersion>
+    <FileVersion>1.4.7</FileVersion>
     <Description>Fast Mount helper for Drakensang Online</Description>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
-    <!-- Исходный PNG (1024 px) нужен только для пересборки иконки: в exe ему не место. -->
+    <!-- РСЃС…РѕРґРЅС‹Р№ PNG (1024 px) РЅСѓР¶РµРЅ С‚РѕР»СЊРєРѕ РґР»СЏ РїРµСЂРµСЃР±РѕСЂРєРё РёРєРѕРЅРєРё: РІ exe РµРјСѓ РЅРµ РјРµСЃС‚Рѕ. -->
     <AvaloniaResource Remove="Assets\app.png" />
   </ItemGroup>
 
