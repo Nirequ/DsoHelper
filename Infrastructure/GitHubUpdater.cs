@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +36,12 @@ internal enum UpdateOutcome
 
 /// <summary>Результат ручной «проверить обновления».</summary>
 internal sealed record UpdateCheckResult(
-    CheckOutcome Outcome, string Message, Version? Latest, string DisplayTag, string? DownloadUrl);
+    CheckOutcome Outcome,
+    string Message,
+    Version? Latest,
+    string DisplayTag,
+    string? DownloadUrl,
+    string? Sha256 = null);
 
 /// <summary>Результат шага выполнения (скачать → подменить → перезапустить).</summary>
 internal readonly record struct UpdateResult(UpdateOutcome Outcome, string Message);
@@ -46,6 +52,8 @@ internal readonly record struct UpdateResult(UpdateOutcome Outcome, string Messa
 /// «{exe}.old» (запущенный файл Windows переименовывать позволяет) → «.new» занял
 /// имя оригинала → запустили новый процесс и вышли. Прерванная замена убирается
 /// на следующем старте («.old» — удаляется, недокачанный «.new» — удаляется).
+/// Перед подменой SHA-256 скачанного файла сверяется с digest из GitHub API —
+/// так подменённый или битый файл не попадёт в установку.
 /// </summary>
 internal static class GitHubUpdater
 {
@@ -97,7 +105,8 @@ internal static class GitHubUpdater
                     $"Доступна версия v{check.DisplayTag}.",
                     check.Latest,
                     check.DisplayTag,
-                    check.DownloadUrl),
+                    check.DownloadUrl,
+                    check.Sha256),
                 _ => null
             };
         }
@@ -127,21 +136,27 @@ internal static class GitHubUpdater
                 $"Доступна версия v{check.DisplayTag}.",
                 check.Latest,
                 check.DisplayTag,
-                check.DownloadUrl)
+                check.DownloadUrl,
+                check.Sha256)
         };
     }
 
     /// <summary>
-    /// Подтвержденная установка: скачивает указанный exe, подменяет запущенный
+    /// Подтвержденная установка: скачивает указанный exe, сверяет его SHA-256 с
+    /// <paramref name="sha256"/> (digest из GitHub API, если есть), подменяет запущенный
     /// файл и запускает новый процесс. Позвал — значит обновляемся.
     /// <paramref name="downloadProgress"/> получает процент скачивания (0..100).
     /// </summary>
     public static async Task<UpdateResult> PerformUpdateAsync(
-        string downloadUrl, string displayTag, Action<string>? report = null, Action<double>? downloadProgress = null)
+        string downloadUrl,
+        string displayTag,
+        string? sha256 = null,
+        Action<string>? report = null,
+        Action<double>? downloadProgress = null)
     {
         try
         {
-            await TryInstall(downloadUrl, displayTag, report, downloadProgress).ConfigureAwait(false);
+            await TryInstall(downloadUrl, displayTag, sha256, report, downloadProgress).ConfigureAwait(false);
             return new(UpdateOutcome.Updated, $"Обновлено до v{displayTag}.");
         }
         catch (Exception exception)
@@ -158,7 +173,8 @@ internal static class GitHubUpdater
     }
 
     private record struct QuickCheckResult(
-        CheckOutcome Outcome, string Message, Version? Latest, string DisplayTag, string? DownloadUrl);
+        CheckOutcome Outcome, string Message, Version? Latest, string DisplayTag, string? DownloadUrl,
+        string? Sha256 = null);
 
     /// <summary>Просмотр одного release: метаданные + URL exe-файла.</summary>
     private static async Task<QuickCheckResult> TryCheck(Action<string>? report = null)
@@ -209,8 +225,8 @@ internal static class GitHubUpdater
         }
 
         // В assets ищем первый exe — это и есть новая сборка.
-        var downloadUrl = FindExecutableAsset(root);
-        if (string.IsNullOrEmpty(downloadUrl))
+        var asset = FindExecutableAsset(root);
+        if (asset is null)
         {
             return new(
                 CheckOutcome.Error,
@@ -218,12 +234,22 @@ internal static class GitHubUpdater
                 latest, tagDisplay, null);
         }
 
-        return new(CheckOutcome.Available, string.Empty, latest, tagDisplay, downloadUrl);
+        return new(
+            CheckOutcome.Available,
+            string.Empty,
+            latest,
+            tagDisplay,
+            asset.Value.Url,
+            asset.Value.Sha256);
     }
 
     /// <summary>Скачивание + замена + запуск нового процесса.</summary>
     private static async Task TryInstall(
-        string downloadUrl, string displayTag, Action<string>? report = null, Action<double>? downloadProgress = null)
+        string downloadUrl,
+        string displayTag,
+        string? sha256,
+        Action<string>? report = null,
+        Action<double>? downloadProgress = null)
     {
         var exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
@@ -242,6 +268,10 @@ internal static class GitHubUpdater
         {
             await DownloadToFileAsync(client, downloadUrl, stagingTmp, downloadProgress).ConfigureAwait(false);
         }
+
+        // Digest приходит из GitHub API вместе с ассетом: если файл подменили или он
+        // побился по дороге, до подмены exe дело не дойдёт.
+        await VerifySha256Async(stagingTmp, sha256).ConfigureAwait(false);
 
         if (File.Exists(stagingNew))
         {
@@ -374,7 +404,11 @@ internal static class GitHubUpdater
         return version.Build > 0 ? version.ToString(3) : version.ToString(2);
     }
 
-    private static string? FindExecutableAsset(JsonElement root)
+    /// <summary>Ассет релиза: ссылка на скачивание и ожидаемая контрольная сумма (может отсутствовать).</summary>
+    private readonly record struct ReleaseAsset(string Url, string? Sha256);
+
+    /// <summary>Первый exe в assets релиза: ссылка и digest (если GitHub его отдал).</summary>
+    private static ReleaseAsset? FindExecutableAsset(JsonElement root)
     {
         if (!root.TryGetProperty("assets", out var assets) ||
             assets.ValueKind != JsonValueKind.Array)
@@ -382,16 +416,49 @@ internal static class GitHubUpdater
             return null;
         }
 
-        return assets.EnumerateArray()
-            .Where(asset => asset.TryGetProperty("name", out var name) &&
-                            name.ValueKind == JsonValueKind.String &&
-                            (name.GetString() ?? string.Empty)
-                                .EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            .Select(asset => asset.TryGetProperty("browser_download_url", out var url) &&
-                             url.ValueKind == JsonValueKind.String
-                ? url.GetString()
-                : null)
-            .FirstOrDefault(url => !string.IsNullOrEmpty(url));
+        foreach (var asset in assets.EnumerateArray())
+        {
+            if (!asset.TryGetProperty("name", out var name) ||
+                name.ValueKind != JsonValueKind.String ||
+                !(name.GetString() ?? string.Empty).EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!asset.TryGetProperty("browser_download_url", out var url) ||
+                url.ValueKind != JsonValueKind.String ||
+                url.GetString() is not { Length: > 0 } downloadUrl)
+            {
+                continue;
+            }
+
+            return new ReleaseAsset(downloadUrl, ReadSha256Digest(asset));
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// У ассетов GitHub есть поле digest вида «sha256:{hex}». Старые релизы его не отдают —
+    /// тогда проверка контрольной суммы просто пропускается.
+    /// </summary>
+    private static string? ReadSha256Digest(JsonElement asset)
+    {
+        if (!asset.TryGetProperty("digest", out var digest) ||
+            digest.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        const string prefix = "sha256:";
+        var raw = (digest.GetString() ?? string.Empty).Trim();
+        if (!raw.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var hex = raw[prefix.Length..].Trim();
+        return hex.Length == 64 && hex.All(Uri.IsHexDigit) ? hex.ToLowerInvariant() : null;
     }
 
     private static async Task DownloadToFileAsync(
@@ -438,6 +505,29 @@ internal static class GitHubUpdater
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Сверяет скачанный файл с digest из GitHub API. Если digest нет (старый релиз),
+    /// проверка пропускается — остаётся только защита HTTPS.
+    /// </summary>
+    private static async Task VerifySha256Async(string path, string? expectedHex)
+    {
+        if (string.IsNullOrEmpty(expectedHex))
+        {
+            return;
+        }
+
+        await using var stream = File.OpenRead(path);
+        var actual = Convert.ToHexString(await SHA256.HashDataAsync(stream).ConfigureAwait(false));
+        if (string.Equals(actual, expectedHex, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Контрольная сумма скачанного файла не совпала с ожидаемой ({expectedHex[..8]}…). " +
+            "Обновление отменено — попробуйте позже.");
     }
 
     private static void TryDelete(string path)

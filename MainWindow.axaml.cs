@@ -51,6 +51,7 @@ public partial class MainWindow : Window
     private bool _checkingUpdates;
     private string _pendingUpdateTag = string.Empty;
     private string? _pendingUpdateUrl;
+    private string? _pendingUpdateSha;
     private bool _delaySyncing;
 
     /// <summary>Пауза на каждой занятой ячейке при обходе курсором, мс.</summary>
@@ -109,6 +110,7 @@ public partial class MainWindow : Window
 
         _pendingUpdateTag = check.DisplayTag;
         _pendingUpdateUrl = check.DownloadUrl;
+        _pendingUpdateSha = check.Sha256;
 
         Dispatcher.UIThread.Post(() =>
         {
@@ -142,6 +144,7 @@ public partial class MainWindow : Window
                 GitHubUpdater.PerformUpdateAsync(
                     _pendingUpdateUrl,
                     _pendingUpdateTag,
+                    _pendingUpdateSha,
                     message => Dispatcher.UIThread.Post(() =>
                     {
                         UpdateBannerText.Text = message;
@@ -163,6 +166,7 @@ public partial class MainWindow : Window
 
             _pendingUpdateTag = string.Empty;
             _pendingUpdateUrl = null;
+            _pendingUpdateSha = null;
             UpdateBannerButton.Content = "Обновить";
             UpdateBannerButton.IsEnabled = true;
             UpdateBannerProgressBar.IsVisible = false;
@@ -187,6 +191,7 @@ public partial class MainWindow : Window
         UpdateBanner.IsVisible = false;
         _pendingUpdateTag = string.Empty;
         _pendingUpdateUrl = null;
+        _pendingUpdateSha = null;
     }
 
     private void WireEvents()
@@ -1514,6 +1519,7 @@ public partial class MainWindow : Window
                     GitHubUpdater.PerformUpdateAsync(
                         _pendingUpdateUrl,
                         _pendingUpdateTag,
+                        _pendingUpdateSha,
                         message =>
                         {
                             Dispatcher.UIThread.Post(() =>
@@ -1568,6 +1574,7 @@ public partial class MainWindow : Window
             {
                 _pendingUpdateTag = check.DisplayTag;
                 _pendingUpdateUrl = check.DownloadUrl;
+                _pendingUpdateSha = check.Sha256;
                 CheckUpdatesButton.Content = $"Обновить до v{check.DisplayTag}";
                 CheckUpdatesButton.Classes.Set("selected", true);
                 UpdateStatusText.Text = "Доступна новая версия.";
@@ -1597,6 +1604,7 @@ public partial class MainWindow : Window
     {
         _pendingUpdateTag = string.Empty;
         _pendingUpdateUrl = null;
+        _pendingUpdateSha = null;
         CheckUpdatesButton.Content = "Проверить сейчас";
         CheckUpdatesButton.Classes.Set("selected", false);
         UpdateProgressBar.IsIndeterminate = false;
