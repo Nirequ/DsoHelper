@@ -1,4 +1,7 @@
 * text=auto
 
+# cmd.exe needs CRLF in batch files, otherwise goto/labels can misbehave.
+*.bat text eol=crlf
+
 *.ico binary
 *.png binary
