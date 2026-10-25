@@ -52,6 +52,15 @@ public partial class MainWindow : Window
     private string _pendingUpdateTag = string.Empty;
     private string? _pendingUpdateUrl;
     private string? _pendingUpdateSha;
+
+    /// <summary>Проверка при старте нашла, что установлена последняя версия.</summary>
+    private bool _startupUpToDate;
+
+    /// <summary>Готовая фраза для настроек: «У вас последняя версия: 1.4.7.».</summary>
+    private string _startupCheckMessage = string.Empty;
+
+    /// <summary>Тихая проверка при старте ещё выполняется.</summary>
+    private bool _startupCheckRunning;
     private bool _delaySyncing;
 
     /// <summary>Пауза на каждой занятой ячейке при обходе курсором, мс.</summary>
@@ -105,25 +114,51 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task CheckUpdateBannerAsync()
     {
-        var check = await GitHubUpdater.CheckVersionSilentlyAsync().ConfigureAwait(true);
-        if (check is null || check.Outcome != CheckOutcome.Available)
+        _startupCheckRunning = true;
+        try
         {
-            return;
+            var check = await GitHubUpdater.CheckVersionSilentlyAsync().ConfigureAwait(true);
+            if (check is null)
+            {
+                return;
+            }
+
+            if (check.Outcome == CheckOutcome.UpToDate)
+            {
+                // Баннер не нужен, но панель настроек покажет «последняя версия»,
+                // а не общую фразу про проверку при запуске.
+                _startupUpToDate = true;
+                _startupCheckMessage = check.Message;
+                return;
+            }
+
+            if (check.Outcome != CheckOutcome.Available)
+            {
+                return;
+            }
+
+            _pendingUpdateTag = check.DisplayTag;
+            _pendingUpdateUrl = check.DownloadUrl;
+            _pendingUpdateSha = check.Sha256;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                UpdateBannerTitle.Text = $"Доступна версия v{check.DisplayTag}";
+                UpdateBannerText.Text = "Нажмите «Обновить», чтобы скачать сборку и перезапустить программу.";
+                UpdateBannerButton.IsEnabled = true;
+                UpdateBannerButton.Content = "Обновить";
+                UpdateBannerProgressBar.IsVisible = false;
+                UpdateBanner.IsVisible = true;
+            });
         }
-
-        _pendingUpdateTag = check.DisplayTag;
-        _pendingUpdateUrl = check.DownloadUrl;
-        _pendingUpdateSha = check.Sha256;
-
-        Dispatcher.UIThread.Post(() =>
+        finally
         {
-            UpdateBannerTitle.Text = $"Доступна версия v{check.DisplayTag}";
-            UpdateBannerText.Text = "Нажмите «Обновить», чтобы скачать сборку и перезапустить программу.";
-            UpdateBannerButton.IsEnabled = true;
-            UpdateBannerButton.Content = "Обновить";
-            UpdateBannerProgressBar.IsVisible = false;
-            UpdateBanner.IsVisible = true;
-        });
+            _startupCheckRunning = false;
+
+            // Настройки могли открыть, пока проверка ещё шла: обновляем строку
+            // на месте, чтобы «Проверяю…» не висело до переоткрытия панели.
+            RefreshSettingsUpdateStatus();
+        }
     }
 
     /// <summary>Скачивание и установка обновления из верхнего уведомления.</summary>
@@ -1488,13 +1523,55 @@ public partial class MainWindow : Window
     {
         SettingsVersionText.Text = "Версия: " + GitHubUpdater.BuildVersionDisplay(
             Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0));
-        UpdateStatusText.Text = _checkingUpdates
-            ? "Проверяю обновления…"
-            : _pendingUpdateUrl is not null
-                ? $"Доступна v{_pendingUpdateTag} — кнопка подтвердит скачивание и перезапуск."
-                : "Проверяется при каждом запуске приложения.";
+        UpdateStatusText.Text = DescribeUpdateStatus();
+        UpdateStatusText.Foreground = UpdateStatusBrush();
         MainContentGrid.IsVisible = false;
         SettingsPanel.IsVisible = true;
+    }
+
+    /// <summary>Строка состояния в настройках: что известно об обновлении на этот момент.</summary>
+    private string DescribeUpdateStatus()
+    {
+        if (_checkingUpdates || _startupCheckRunning)
+        {
+            return "Проверяю обновления…";
+        }
+
+        if (_pendingUpdateUrl is not null)
+        {
+            return $"Доступна v{_pendingUpdateTag} — кнопка подтвердит скачивание и перезапуск.";
+        }
+
+        // Проверка при старте уже отработала и новой версии нет — так и пишем,
+        // вместо заглушки «проверяется при запуске».
+        if (_startupUpToDate && !string.IsNullOrEmpty(_startupCheckMessage))
+        {
+            return _startupCheckMessage;
+        }
+
+        return "Проверяется при каждом запуске приложения.";
+    }
+
+    private IBrush UpdateStatusBrush()
+    {
+        if (_checkingUpdates || _startupCheckRunning || _pendingUpdateUrl is not null)
+        {
+            return BusyBrush;
+        }
+
+        return _startupUpToDate ? SuccessBrush : IdleBrush;
+    }
+
+    /// <summary>Обновляет строку в настройках, если панель открыта прямо сейчас.</summary>
+    private void RefreshSettingsUpdateStatus()
+    {
+        if (!SettingsPanel.IsVisible || _checkingUpdates)
+        {
+            return;
+        }
+
+        UpdateStatusText.Text = DescribeUpdateStatus();
+        UpdateStatusText.Foreground = UpdateStatusBrush();
     }
 
     private void OnSettingsBackClick(object? sender, RoutedEventArgs e)

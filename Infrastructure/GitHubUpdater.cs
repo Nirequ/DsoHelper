@@ -91,7 +91,8 @@ internal static class GitHubUpdater
     /// <summary>
     /// Фоновая проверка на старте приложения: молча смотрит на GitHub и просто
     /// возвращает результат. Ничего не скачивает и не устанавливает — решение
-    /// об обновлении принимает пользователь. Любая ошибка даёт null.
+    /// об обновлении принимает пользователь. Возвращает и «версия последняя»,
+    /// чтобы окно настроек могло это показать; при ошибке — null.
     /// </summary>
     public static async Task<UpdateCheckResult?> CheckVersionSilentlyAsync()
     {
@@ -107,6 +108,12 @@ internal static class GitHubUpdater
                     check.DisplayTag,
                     check.DownloadUrl,
                     check.Sha256),
+                CheckOutcome.UpToDate => new(
+                    CheckOutcome.UpToDate,
+                    check.Message,
+                    check.Latest,
+                    check.DisplayTag,
+                    null),
                 _ => null
             };
         }
