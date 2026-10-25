@@ -953,6 +953,39 @@
                                                     <TextBlock Classes="hint"
                                                                Text="Ползунок двигается с шагом 15 мс. Точное значение (0–1000) можно ввести вручную. Если игра не успевает реагировать, увеличьте паузу." />
                                                 </StackPanel>
+
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel.Styles>
+                                                        <Style Selector="TextBox.compact">
+                                                            <Setter Property="Height" Value="26" />
+                                                            <Setter Property="Width" Value="68" />
+                                                            <Setter Property="MinHeight" Value="0" />
+                                                            <Setter Property="Padding" Value="6,2,8,2" />
+                                                            <Setter Property="FontSize" Value="12" />
+                                                            <Setter Property="TextAlignment" Value="Right" />
+                                                            <Setter Property="CornerRadius" Value="2" />
+                                                            <Setter Property="HorizontalAlignment" Value="Right" />
+                                                        </Style>
+                                                    </StackPanel.Styles>
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Classes="axis" Text="Пауза после вызова маунта" />
+                                                        <TextBox x:Name="MountDelayValueBox"
+                                                                 Grid.Column="1"
+                                                                 Classes="compact"
+                                                                 Text="700"
+                                                                 AutomationProperties.AutomationId="MountDelayValueBox" />
+                                                    </Grid>
+                                                    <Slider x:Name="MountDelaySlider"
+                                                            Minimum="0"
+                                                            Maximum="1500"
+                                                            Value="700"
+                                                            SmallChange="15"
+                                                            LargeChange="75"
+                                                            Height="38"
+                                                            VerticalAlignment="Center" />
+                                                    <TextBlock Classes="hint"
+                                                               Text="Пока идёт призыв, игра не принимает клики по инвентарю. Если старый плащ иногда остаётся в сумке — увеличьте эту паузу." />
+                                                </StackPanel>
                                             </StackPanel>
                                         </Grid>
                                     </Border>

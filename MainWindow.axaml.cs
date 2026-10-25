@@ -61,6 +61,9 @@ public partial class MainWindow : Window
     private const int SellDelayMaxMs = 1000;
     private const int SellDelayStepMs = 15;
 
+    /// <summary>Максимальная пауза после вызова маунта, мс.</summary>
+    private const int MountDelayMaxMs = 1500;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -212,6 +215,9 @@ public partial class MainWindow : Window
         WireQualityChecks();
 
         WireDelayControls();
+        WireDelayPair(
+            MountDelaySlider, MountDelayValueBox, 700,
+            v => _settings.MountDelayMs = v, MountDelayMaxMs);
         WireDelayPair(SellSwitchSlider, SellSwitchValueBox, 200, v => _settings.SellSwitchDelayMs = v);
         WireDelayPair(SellItemSlider, SellItemValueBox, 150, v => _settings.SellItemDelayMs = v);
 
@@ -305,6 +311,11 @@ public partial class MainWindow : Window
 
         SellSwitchSlider.Value = Math.Clamp(_settings.SellSwitchDelayMs, 0, SellDelayMaxMs);
         SellItemSlider.Value = Math.Clamp(_settings.SellItemDelayMs, 0, SellDelayMaxMs);
+        SellSwitchValueBox.Text = SellSwitchSlider.Value.ToString("0");
+        SellItemValueBox.Text = SellItemSlider.Value.ToString("0");
+
+        MountDelaySlider.Value = Math.Clamp(_settings.MountDelayMs, 0, MountDelayMaxMs);
+        MountDelayValueBox.Text = MountDelaySlider.Value.ToString("0");
 
         SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
 
@@ -1226,19 +1237,20 @@ public partial class MainWindow : Window
     /// Пара «слайдер + компактное поле» для задержек автопродажи: шаг 15 мс,
     /// диапазон 0..1000, ручной ввод по Enter/потере фокуса.
     /// </summary>
-    private void WireDelayPair(Slider slider, TextBox box, int fallbackMs, Action<int> apply)
+    private void WireDelayPair(
+        Slider slider, TextBox box, int fallbackMs, Action<int> apply, int maxMs = SellDelayMaxMs)
     {
         var syncing = false;
 
         slider.ValueChanged += (_, e) =>
         {
-            var clamped = Math.Clamp((int)Math.Round(e.NewValue), 0, SellDelayMaxMs);
+            var clamped = Math.Clamp((int)Math.Round(e.NewValue), 0, maxMs);
 
             if (!syncing)
             {
                 var snapped = Math.Clamp(
                     (int)Math.Round(clamped / (double)SellDelayStepMs) * SellDelayStepMs,
-                    0, SellDelayMaxMs);
+                    0, maxMs);
 
                 if (snapped != clamped && Math.Abs(snapped - slider.Value) > 0.5)
                 {
@@ -1265,7 +1277,7 @@ public partial class MainWindow : Window
                 value = fallbackMs;
             }
 
-            value = Math.Clamp(value, 0, SellDelayMaxMs);
+            value = Math.Clamp(value, 0, maxMs);
 
             syncing = true;
             slider.Value = value;

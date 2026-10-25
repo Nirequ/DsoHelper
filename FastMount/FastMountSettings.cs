@@ -56,7 +56,14 @@ internal sealed class FastMountSettings
     public double? TabStepTopRatio { get; set; }
 
     /// <summary>Пауза между действиями макроса, мс. Одна на весь сценарий.</summary>
-    public int DelayMs { get; set; } = 30;
+    public int DelayMs { get; set; } = 300;
+
+    /// <summary>
+    /// Пауза после нажатия клавиши маунта, мс. Клиент блокирует инвентарь, пока идёт
+    /// призыв: если кликнуть по плащу слишком рано, игра его не увидит и старый плащ
+    /// останется в сумке. 700 мс — значение из прежней версии с раздельными задержками.
+    /// </summary>
+    public int MountDelayMs { get; set; } = 700;
 
     public bool AlwaysOnTop { get; set; }
 
