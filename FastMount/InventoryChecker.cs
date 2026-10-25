@@ -66,7 +66,6 @@ internal static class InventoryChecker
         var innerH = h - padY * 2;
         var innerCount = innerW * innerH;
 
-        var satSum = 0.0;
         var valSum = 0.0;
         var gray = new byte[innerCount];
         var gi = 0;
@@ -80,24 +79,23 @@ internal static class InventoryChecker
                 var pg = frame[o + 1];
                 var pr = frame[o + 2];
 
-                // HSV в 8-битной конвенции OpenCV (H 0..179, S/V 0..255).
-                var max = Math.Max(pr, Math.Max(pg, pb));
-                var min = Math.Min(pr, Math.Min(pg, pb));
-                var delta = max - min;
-                satSum += max == 0 ? 0 : Math.Round(255.0 * delta / max);
-                valSum += max;
+                valSum += Math.Max(pr, Math.Max(pg, pb));
 
                 // COLOR_BGR2GRAY: 0.299R + 0.587G + 0.114B с округлением.
                 gray[gi++] = (byte)((299 * pr + 587 * pg + 114 * pb + 500) / 1000);
             }
         }
 
-        var satMean = satSum / innerCount;
         var valMean = valSum / innerCount;
         var valStd = StdDev(gray, gi);
         var edgeEnergy = SobelEdgeEnergy(gray, innerWidth: innerW, innerHeight: innerH);
 
-        var isEmpty = satMean < 38.0 && valStd < 16.0 && edgeEnergy < 32.0 && valMean < 80.0;
+        // Пустой слот в DSO — тёмный коричневатый фон без иконки. Насыщенность (HSV)
+        // для этого не годится: у коричневого фона она высокая (100+), поэтому раньше
+        // пустые ячейки уходили в «занято». Признак пустоты — ровная заливка без
+        // разброса яркости и без краёв: у пустых ячеек std ≈ 2.5 и edge ≈ 3.5,
+        // у самой «плоской» занятой — std ≈ 32 и edge ≈ 60.
+        var isEmpty = valStd < 15.0 && edgeEnergy < 30.0 && valMean < 100.0;
         if (isEmpty)
         {
             var conf = Math.Clamp(1.0 - valStd / 30.0, 0.60, 0.99);
