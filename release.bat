@@ -42,16 +42,23 @@ if errorlevel 1 goto :fail
 if not "%DRYRUN%"=="1" (
     echo [2/5] Commit, push and tag v%VERSION% ...
     git add -A
-    git commit -m "Bump version to %VERSION%; %TITLE%"
+    rem Re-running for an existing version may have nothing new to commit - that is fine.
+    git diff --cached --quiet
     if errorlevel 1 (
-        echo [ERROR] git commit failed - see messages above
-        goto :fail
+        git commit -m "Bump version to %VERSION%; %TITLE%"
+        if errorlevel 1 (
+            echo [ERROR] git commit failed - see messages above
+            goto :fail
+        )
+    ) else (
+        echo        Nothing new to commit - v%VERSION% is already in the tree.
     )
     git push origin main
     if errorlevel 1 goto :fail
     git tag -f v%VERSION%
     if errorlevel 1 goto :fail
-    git push origin v%VERSION%
+    rem --force: a re-run moves the tag to the new commit instead of being rejected.
+    git push --force origin v%VERSION%
     if errorlevel 1 goto :fail
 ) else (
     echo [2/5] DRY RUN - skipping commit/push/tag

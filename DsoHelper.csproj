@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <!-- Исходный PNG (1024 px) нужен только для пересборки иконки: в exe ему не место. -->
+    <AvaloniaResource Remove="Assets\app.png" />
   </ItemGroup>
 
   <ItemGroup>
