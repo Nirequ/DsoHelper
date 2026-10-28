@@ -146,9 +146,9 @@
                                                    VerticalAlignment="Center" />
                                     </Grid>
 
-                                    <!--  Сетка инвентаря 7 × 4 на всю ширину карточки: текстовой колонки
-                                          слева больше нет, под сеткой только кнопки калибровки
-                                          и предупреждение про полноэкранный режим.  -->
+                                    <!--  Сетка инвентаря 7 × 4 на всю ширину карточки: под сеткой — строка
+                                          с кнопками калибровки слотов слева и действиями проверки справа,
+                                          ниже — подсказка и предупреждение про полноэкранный режим.  -->
                                     <Border x:Name="InvGridBox" Height="224" Padding="16" CornerRadius="8"
                                             Background="{StaticResource SunkenSurfaceBrush}">
                                         <DockPanel>
@@ -169,24 +169,40 @@
                                         </DockPanel>
                                     </Border>
 
-                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                                        <Button x:Name="PickInvSlot1Button" Classes="outline" Padding="12,0"
-                                                Click="OnPickInvSlot1Click"
-                                                ToolTip.Tip="Откройте инвентарь и кликните по центру левой верхней ячейки (слот #1)">
+                                    <!--  Слоты калибровки — слева, кнопка проверки — справа: под сеткой, в одной строке.  -->
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+
+                                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                            <Button x:Name="PickInvSlot1Button" Classes="outline" Padding="12,0"
+                                                    Click="OnPickInvSlot1Click"
+                                                    ToolTip.Tip="Откройте инвентарь и кликните по центру левой верхней ячейки (слот #1)">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                                    <TextBlock Text="Слот #1" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="PickInvSlot28Button" Classes="outline" Padding="12,0"
+                                                    Click="OnPickInvSlot28Click"
+                                                    ToolTip.Tip="Кликните по центру правой нижней ячейки (слот #28) — остальные ячейки программа рассчитает сама">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                                    <TextBlock Text="Слот #28" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2" x:Name="CheckInventoryButton" Classes="primary" Click="OnCheckInventoryClick"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Делает снимок окна игры и определяет, что лежит в каждой из 28 ячеек: пусто, обычный, улучшенный, магический, особенный, легендарный, уникальный, мифический или неопознанный («?»). Запускайте в полноэкранном режиме игры.">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
-                                                <TextBlock Text="Слот #1" VerticalAlignment="Center" />
+                                                <materialIcons:MaterialIcon Kind="MagnifyScan" Classes="ic" Width="18" Height="18" Foreground="{StaticResource OnCrimsonTextBrush}" />
+                                                <TextBlock Text="Проверить инвентарь" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
-                                        <Button x:Name="PickInvSlot28Button" Classes="outline" Padding="12,0"
-                                                Click="OnPickInvSlot28Click"
-                                                ToolTip.Tip="Кликните по центру правой нижней ячейки (слот #28) — остальные ячейки программа рассчитает сама">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
-                                                <TextBlock Text="Слот #28" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Classes="small"
+                                               Text="Перед запуском откройте инвентарь в игре. Итог проверки — сколько ячеек каждого качества — появится в статусной строке внизу окна." />
 
                                     <Border Classes="note">
                                         <Grid ColumnDefinitions="Auto,*">
@@ -235,39 +251,6 @@
                                                Text="Нужно для Fast Mount и автопродажи, чтобы программа умела переключать вкладки инвентаря. Нажмите «Указать вкладку 1» и кликните по заголовку первой вкладки, затем «Указать вкладку 2» — по заголовку второй." />
                                     <TextBlock Classes="body"
                                                Text="Расстояние между ними программа применит к остальным вкладкам. Нужная вкладка выбирается на странице Fast Mount." />
-                                </StackPanel>
-                            </Border>
-
-                            <!-- 03 Проверка инвентаря -->
-                            <Border Classes="card">
-                                <StackPanel Spacing="18">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <materialIcons:MaterialIcon Kind="FormatListChecks" Classes="ic" Width="18" Height="18" />
-                                            <TextBlock Classes="cardTitle" Text="Проверка инвентаря 7 × 4" />
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Classes="meta" Text="03 / ДИАГНОСТИКА" />
-                                    </Grid>
-
-                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <Button x:Name="CheckInventoryButton" Classes="primary" Click="OnCheckInventoryClick"
-                                                ToolTip.Tip="Делает снимок окна игры и определяет, что лежит в каждой из 28 ячеек: пусто, обычный, улучшенный, магический, особенный, легендарный, уникальный, мифический или неопознанный («?»). Запускайте в полноэкранном режиме игры.">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <materialIcons:MaterialIcon Kind="MagnifyScan" Classes="ic" Width="18" Height="18" Foreground="{StaticResource OnCrimsonTextBrush}" />
-                                                <TextBlock Text="Проверить инвентарь" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
-                                        <Button x:Name="HoverInventoryButton" Classes="outline" Click="OnHoverInventoryClick"
-                                                ToolTip.Tip="Курсор по очереди наводится на каждую занятую ячейку и ненадолго задерживается, чтобы успела появиться подсказка предмета. В конце курсор возвращается на прежнее место. Запускайте в полноэкранном режиме игры.">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <materialIcons:MaterialIcon Kind="CursorDefaultOutline" Classes="ic" Width="18" Height="18" />
-                                                <TextBlock Text="Наводить на предметы" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-
-                                    <TextBlock Classes="body"
-                                               Text="Перед запуском откройте инвентарь в игре. Итог проверки — сколько ячеек каждого качества — появится в статусной строке внизу окна." />
                                 </StackPanel>
                             </Border>
                         </StackPanel>

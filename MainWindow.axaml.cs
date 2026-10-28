@@ -62,13 +62,11 @@ public partial class MainWindow : Window
     private SlotPickerWindow? _invSlot28Picker;
     private SlotPickerWindow? _meltButtonPicker;
     private CancellationTokenSource? _runCts;
-    private CancellationTokenSource? _hoverCts;
     private CancellationTokenSource? _sellCts;
     private CancellationTokenSource? _meltCts;
     private bool _running;
     private bool _picking;
     private bool _checking;
-    private bool _hovering;
     private bool _selling;
     private bool _melting;
     private bool _checkingUpdates;
@@ -85,9 +83,6 @@ public partial class MainWindow : Window
     /// <summary>Тихая проверка при старте ещё выполняется.</summary>
     private bool _startupCheckRunning;
     private bool _delaySyncing;
-
-    /// <summary>Пауза на каждой занятой ячейке при обходе курсором, мс.</summary>
-    private const int HoverPerSlotMs = 550;
 
     /// <summary>Допустимый диапазон и шаг задержек автопродажи, мс.</summary>
     private const int SellDelayMaxMs = 1000;
@@ -829,7 +824,7 @@ public partial class MainWindow : Window
 
     private async Task RunFastMountAsync(bool interactive)
     {
-        if (_running || _picking || _checking || _hovering || _selling || _melting)
+        if (_running || _picking || _checking || _selling || _melting)
         {
             return;
         }
@@ -1177,7 +1172,7 @@ public partial class MainWindow : Window
 
     private async Task RunInventoryCheckAsync()
     {
-        if (_running || _picking || _checking || _hovering || _selling || _melting)
+        if (_running || _picking || _checking || _selling || _melting)
         {
             return;
         }
@@ -1224,92 +1219,6 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Обход курсором занятых ячеек: сначала быстрый скан сетки, затем курсор
-    /// тянется по предметам с паузой на каждом (тултипы успевают показаться).
-    /// В конце курсор возвращается на исходную позицию.
-    /// </summary>
-    private async Task RunHoverInventoryAsync()
-    {
-        if (_running || _picking || _checking || _hovering || _selling || _melting)
-        {
-            return;
-        }
-
-        if (!InventoryGridResolver.TryResolve(_settings, out var slots, out var gridError))
-        {
-            SetStatus(gridError, StatusKind.Error);
-            return;
-        }
-
-        _hovering = true;
-        _hoverCts = new CancellationTokenSource();
-        HoverInventoryButton.IsEnabled = false;
-        var token = _hoverCts.Token;
-
-        var hasOriginalCursor = NativeMethods.GetCursorPos(out var originalCursor);
-
-        try
-        {
-            if (GameWindow.TryActivate())
-            {
-                SetStatus("Окно игры активировано…", StatusKind.Busy);
-                await Task.Delay(350, token);
-            }
-
-            SetStatus("Сканирую сетку, чтобы найти предметы…", StatusKind.Busy);
-            var (results, captureError) = await CaptureAndClassifyAsync(slots);
-            if (results is null)
-            {
-                SetStatus(captureError, StatusKind.Error);
-                return;
-            }
-
-            var items = results.Where(r => !r.IsEmpty).ToList();
-            ApplyInvSlotRarities(results);
-            if (items.Count == 0)
-            {
-                SetStatus("Занятых ячеек нет — обходить нечего.", StatusKind.Idle);
-                return;
-            }
-
-            var index = 0;
-            foreach (var item in items)
-            {
-                token.ThrowIfCancellationRequested();
-                NativeMethods.SetCursorPos(item.CenterX, item.CenterY);
-                index++;
-                SetStatus($"Тултип: слот #{item.Index} ({index}/{items.Count})…", StatusKind.Busy);
-                await Task.Delay(HoverPerSlotMs, token);
-            }
-
-            SetStatus($"Курсор обошёл {items.Count} из {results.Count} ячеек и возвращён.", StatusKind.Success);
-        }
-        catch (OperationCanceledException)
-        {
-            SetStatus("Обход предметов прерван", StatusKind.Idle);
-        }
-        catch (Exception ex)
-        {
-            SetStatus("Ошибка обхода: " + ex.Message, StatusKind.Error);
-        }
-        finally
-        {
-            if (hasOriginalCursor)
-            {
-                NativeMethods.SetCursorPos(originalCursor.X, originalCursor.Y);
-            }
-
-            _hoverCts?.Dispose();
-            _hoverCts = null;
-            _hovering = false;
-            HoverInventoryButton.IsEnabled = true;
-        }
-    }
-
-    private void OnHoverInventoryClick(object? sender, RoutedEventArgs e) =>
-        _ = RunHoverInventoryAsync();
-
-    /// <summary>
     /// Проходит ли ячейка под фильтр автопродажи: только неопознанные («?»)
     /// предметы, и лишь те, чьё качество (по цвету знака «?») отмечено.
     /// </summary>
@@ -1340,7 +1249,7 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task RunAutoSellAsync()
     {
-        if (_running || _picking || _checking || _hovering || _selling || _melting)
+        if (_running || _picking || _checking || _selling || _melting)
         {
             return;
         }
@@ -1472,7 +1381,7 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task RunAutoMeltAsync()
     {
-        if (_running || _picking || _checking || _hovering || _selling || _melting)
+        if (_running || _picking || _checking || _selling || _melting)
         {
             return;
         }
@@ -1777,7 +1686,7 @@ public partial class MainWindow : Window
         string cancelStatus,
         string busyStatus)
     {
-        if (_running || _checking || _hovering || _selling || _melting)
+        if (_running || _checking || _selling || _melting)
         {
             return;
         }
@@ -2165,7 +2074,6 @@ public partial class MainWindow : Window
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         _runCts?.Cancel();
-        _hoverCts?.Cancel();
         _sellCts?.Cancel();
         _meltCts?.Cancel();
         _saveTimer.Stop();
