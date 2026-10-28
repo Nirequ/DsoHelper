@@ -7,10 +7,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>DsoHelper</RootNamespace>
     <AssemblyName>DsoHelper</AssemblyName>
-    <Version>1.4.8</Version>
-    <AssemblyVersion>1.4.8</AssemblyVersion>
-    <FileVersion>1.4.8</FileVersion>
-    <Description>Fast Mount helper for Drakensang Online</Description>
+    <Version>1.6.0</Version>
+    <AssemblyVersion>1.6.0</AssemblyVersion>
+    <FileVersion>1.6.0</FileVersion>
+    <Description>Drakensang Online helper: fast mount, inventory check, auto-sell, auto-melt</Description>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -18,6 +18,9 @@
     <AvaloniaResource Include="Assets\**" />
     <!-- Исходный PNG (1024 px) нужен только для пересборки иконки: в exe ему не место. -->
     <AvaloniaResource Remove="Assets\app.png" />
+    <!-- Исходник логотипа в шапке (масштабируется в header-icon.png), в сборку не нужен:
+         Avalonia не умеет отрисовывать SVG без отдельной библиотеки. -->
+    <AvaloniaResource Remove="Assets\header-icon.svg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,5 +35,6 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
   </ItemGroup>
 </Project>

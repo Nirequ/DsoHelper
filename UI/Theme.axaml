@@ -1,0 +1,590 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:materialIcons="using:Material.Icons.Avalonia"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+
+    <!-- ============================== Templates ============================== -->
+
+    <!-- Flat bordered button shell shared by every button variant. -->
+    <ControlTemplate x:Key="ShellButtonTemplate" TargetType="Button">
+        <Border Name="PART_Shell"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="8"
+                Padding="{TemplateBinding Padding}"
+                Height="{TemplateBinding Height}"
+                MinWidth="{TemplateBinding MinWidth}">
+            <ContentPresenter Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Foreground="{TemplateBinding Foreground}"
+                              FontSize="{TemplateBinding FontSize}"
+                              FontWeight="{TemplateBinding FontWeight}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+        </Border>
+    </ControlTemplate>
+
+    <!-- 45x36 inventory tab tile. -->
+    <ControlTemplate x:Key="TabTileTemplate" TargetType="Button">
+        <Border Name="PART_Shell"
+                Width="45"
+                Height="36"
+                CornerRadius="6"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="1">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                              Foreground="{TemplateBinding Foreground}"
+                              FontSize="13"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+        </Border>
+    </ControlTemplate>
+
+    <!-- Window chrome icon button. -->
+    <ControlTemplate x:Key="WindowButtonTemplate" TargetType="Button">
+        <Border Name="PART_Shell"
+                Width="28"
+                Height="28"
+                CornerRadius="6"
+                Background="Transparent">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+        </Border>
+    </ControlTemplate>
+
+    </Styles.Resources>
+
+    <!-- ============================== Text ============================== -->
+
+    <Style Selector="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+    </Style>
+
+    <Style Selector="TextBlock.pageTitle">
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.pageDesc">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.cardTitle">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.meta">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.body">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="19.5" />
+    </Style>
+
+    <Style Selector="TextBlock.bodyStrong">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="19.5" />
+    </Style>
+
+    <Style Selector="TextBlock.small">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="18" />
+    </Style>
+
+    <Style Selector="TextBlock.smallMuted">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="18" />
+    </Style>
+
+    <Style Selector="TextBlock.caption">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.chipLabel">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.fieldLabel">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.settingLabel">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- ============================== Icons ============================== -->
+
+    <Style Selector="materialIcons|MaterialIcon.ic">
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+
+    <Style Selector="materialIcons|MaterialIcon.ic.muted">
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+    </Style>
+
+    <Style Selector="materialIcons|MaterialIcon.ic.plain">
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    </Style>
+
+    <!-- ============================== Surfaces ============================== -->
+
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{StaticResource CardSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="24" />
+    </Style>
+
+    <Style Selector="Border.sunken">
+        <Setter Property="Background" Value="{StaticResource SunkenSurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+
+    <Style Selector="Border.note">
+        <Setter Property="Background" Value="{StaticResource WarningSurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="14" />
+    </Style>
+
+    <Style Selector="Border.noteOk">
+        <Setter Property="Background" Value="{StaticResource SuccessSurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="14" />
+    </Style>
+
+    <Style Selector="Border.chip">
+        <Setter Property="Background" Value="{StaticResource ChipSurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="9,5" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+
+    <Style Selector="Border.divider">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{StaticResource BorderBrush}" />
+    </Style>
+
+    <!-- ============================== Buttons ============================== -->
+
+    <Style Selector="Button">
+        <Setter Property="Template" Value="{StaticResource ShellButtonTemplate}" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{StaticResource ChipSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button:pointerover /template/ Border#PART_Shell">
+        <Setter Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+    </Style>
+
+    <Style Selector="Button:pressed /template/ Border#PART_Shell">
+        <Setter Property="Background" Value="{StaticResource SurfacePressedBrush}" />
+    </Style>
+
+    <Style Selector="Button:disabled">
+        <Setter Property="Opacity" Value="0.42" />
+    </Style>
+
+    <!-- Primary action: Drakensang crimson with ivory lettering. -->
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{StaticResource CrimsonBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CrimsonBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource OnCrimsonTextBrush}" />
+    </Style>
+
+    <Style Selector="Button.primary:pointerover /template/ Border#PART_Shell">
+        <Setter Property="Background" Value="{StaticResource CrimsonHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CrimsonHoverBrush}" />
+    </Style>
+
+    <Style Selector="Button.primary:pressed /template/ Border#PART_Shell">
+        <Setter Property="Background" Value="{StaticResource CrimsonPressedBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CrimsonPressedBrush}" />
+    </Style>
+
+    <Style Selector="Button.outline">
+        <Setter Property="Background" Value="{StaticResource ChipSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style Selector="Button.window">
+        <Setter Property="Template" Value="{StaticResource WindowButtonTemplate}" />
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="Button.window:pointerover /template/ Border#PART_Shell">
+        <Setter Property="Background" Value="{StaticResource ChipSurfaceBrush}" />
+    </Style>
+
+    <Style Selector="Button.tabTile">
+        <Setter Property="Template" Value="{StaticResource TabTileTemplate}" />
+        <Setter Property="Background" Value="{StaticResource SunkenSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style Selector="Button.tabTile:pointerover /template/ Border#PART_Shell">
+        <Setter Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+    </Style>
+
+    <Style Selector="Button.tabTile.selected /template/ Border#PART_Shell">
+        <Setter Property="Background" Value="{StaticResource TabActiveSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GoldBorderBrush}" />
+    </Style>
+
+    <Style Selector="Button.tabTile.selected">
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- ============================== Navigation (TabControl) ============================== -->
+
+    <Style Selector="TabControl">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid RowDefinitions="58,*">
+                    <Border Grid.Row="0"
+                            Background="{StaticResource HeaderSurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0,1,0,1"
+                            Padding="28,0">
+                        <ItemsPresenter Name="PART_ItemsPresenter"
+                                        ItemsPanel="{TemplateBinding ItemsPanel}"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Left" />
+                    </Border>
+                    <ContentPresenter Grid.Row="1"
+                                      Name="PART_SelectedContentHost"
+                                      Content="{TemplateBinding SelectedContent}"
+                                      ContentTemplate="{TemplateBinding SelectedContentTemplate}" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="TabItem">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_NavPill"
+                        CornerRadius="8"
+                        Background="Transparent"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Header}"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Left" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="TabItem:selected /template/ Border#PART_NavPill">
+        <Setter Property="Background" Value="{StaticResource TabActiveSurfaceBrush}" />
+    </Style>
+
+    <Style Selector="TabItem:selected">
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <Style Selector="TabItem:pointerover /template/ Border#PART_NavPill">
+        <Setter Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+    </Style>
+
+    <Style Selector="TabItem:selected:pointerover /template/ Border#PART_NavPill">
+        <Setter Property="Background" Value="{StaticResource TabActiveSurfaceBrush}" />
+    </Style>
+
+    <!-- ============================== CheckBox ============================== -->
+
+    <!-- Pin toggle in the window header: icon + label, no box. -->
+    <Style Selector="CheckBox.pin">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="Transparent" Padding="0">
+                    <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                        <materialIcons:MaterialIcon Kind="PinOutline" Name="PART_PinIcon" Classes="ic" Width="15" Height="15" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock Text="{TemplateBinding Content}"
+                                   FontSize="12"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox.pin:pointerover /template/ materialIcons|MaterialIcon#PART_PinIcon">
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.pin:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.pin:checked /template/ materialIcons|MaterialIcon#PART_PinIcon">
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.pin:checked">
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <!-- Quality filter tile (rarity checkboxes). -->
+    <Style Selector="CheckBox.quality">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_Tile"
+                        Height="38"
+                        CornerRadius="8"
+                        Background="{StaticResource SunkenSurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        Padding="8,0">
+                    <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                        <Border Name="PART_Box"
+                                Width="17" Height="17"
+                                CornerRadius="5"
+                                BorderThickness="1.5"
+                                BorderBrush="{StaticResource TextMutedBrush}"
+                                Background="Transparent"
+                                VerticalAlignment="Center">
+                            <materialIcons:MaterialIcon Kind="Check" Name="PART_Tick" Width="11" Height="11" Foreground="{StaticResource GoldOnTextBrush}" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="{TemplateBinding Content}"
+                                   FontSize="13"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox.quality:pointerover /template/ Border#PART_Tile">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderHoverBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.quality:checked /template/ Border#PART_Tile">
+        <Setter Property="Background" Value="{StaticResource GoldTintBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GoldBorderBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.quality:checked /template/ Border#PART_Box">
+        <Setter Property="Background" Value="{StaticResource GoldBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.quality:checked /template/ materialIcons|MaterialIcon#PART_Tick">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+
+    <!-- On/off switch (inventory tab switching). -->
+    <Style Selector="CheckBox.toggle">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_Switch"
+                        Width="40" Height="22"
+                        CornerRadius="11"
+                        Background="{StaticResource BorderBrush}">
+                    <Border Name="PART_Knob"
+                            Width="16" Height="16"
+                            CornerRadius="8"
+                            Background="{StaticResource TextSecondaryBrush}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Margin="3,0,0,0" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox.toggle:pointerover /template/ Border#PART_Switch">
+        <Setter Property="Background" Value="{StaticResource BorderHoverBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.toggle:checked /template/ Border#PART_Switch">
+        <Setter Property="Background" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <Style Selector="CheckBox.toggle:checked /template/ Border#PART_Knob">
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="Margin" Value="0,0,3,0" />
+        <Setter Property="Background" Value="{StaticResource GoldOnTextBrush}" />
+    </Style>
+
+    <!-- ============================== TextBox ============================== -->
+
+    <Style Selector="TextBox.bare">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource GoldBrush}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource GoldBrush}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="TextBox.bare:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="TextBox.bare:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- Frame around key-capture and numeric fields. -->
+    <Style Selector="Border.field">
+        <Setter Property="Background" Value="{StaticResource SunkenSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="11,0" />
+        <Setter Property="Height" Value="40" />
+    </Style>
+
+    <Style Selector="Border.field:pointerover">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderHoverBrush}" />
+    </Style>
+
+    <Style Selector="Border.fieldNumeric">
+        <Setter Property="Background" Value="{StaticResource SunkenSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Width" Value="92" />
+    </Style>
+
+    <!-- ============================== Slider ============================== -->
+
+    <!-- Геометрию ползунка задаём ресурсами в App.axaml (SliderPreContentMargin,
+         SliderHorizontalHeight, SliderHorizontalThumb*, SliderTrackThemeHeight):
+         собственный Template в стиле проигрывает вложенным стилям ControlTheme,
+         поэтому штатный шаблон Fluent оставлен, но ужат до 20 px. -->
+    <Style Selector="Slider">
+        <Setter Property="Height" Value="20" />
+        <Setter Property="MinHeight" Value="20" />
+        <Setter Property="Background" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+    </Style>
+
+    <Style Selector="Slider /template/ Thumb">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Template">
+            <ControlTemplate TargetType="Thumb">
+                <Ellipse Width="12" Height="12"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Fill="{StaticResource GoldBrush}" />
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Slider:pointerover /template/ Thumb">
+        <Setter Property="Template">
+            <ControlTemplate TargetType="Thumb">
+                <Ellipse Width="12" Height="12"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         Fill="{StaticResource GoldLightBrush}" />
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- ============================== Scroll bars ============================== -->
+
+    <Style Selector="ScrollBar:vertical">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="MinWidth" Value="8" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Margin" Value="0,4,1,4" />
+    </Style>
+
+    <Style Selector="ScrollBar:vertical /template/ Thumb">
+        <Setter Property="Background" Value="#40807C72" />
+    </Style>
+
+    <Style Selector="ScrollBar:vertical /template/ Thumb:pointerover">
+        <Setter Property="Background" Value="#80807C72" />
+    </Style>
+
+    <!-- ============================== ProgressBar ============================== -->
+
+    <Style Selector="ProgressBar">
+        <Setter Property="Height" Value="4" />
+        <Setter Property="Background" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+        <Setter Property="CornerRadius" Value="2" />
+    </Style>
+
+</Styles>

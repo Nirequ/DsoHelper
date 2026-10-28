@@ -10,10 +10,10 @@ internal static class WindowAppearance
     private const int DwmwaCaptionColor = 35;
     private const int DwmwaTextColor = 36;
 
-    // Palette: #121316 obsidian, #E6E8EC text, #373C4A border.
-    private const int CaptionColor = 0x121316;
-    private const int TextColor = 0xE6E8EC;
-    private const int BorderColor = 0x373C4A;
+    // Palette: #1A1714 header, #F7F0DD text, #3B342E border.
+    private const int CaptionColor = 0x1A1714;
+    private const int TextColor = 0xF7F0DD;
+    private const int BorderColor = 0x3B342E;
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);

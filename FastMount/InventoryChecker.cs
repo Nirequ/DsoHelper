@@ -255,7 +255,11 @@ internal static class InventoryChecker
             return InventoryRarity.Improved;
         }
 
-        if (medH >= 129.0 && medH <= 168.0)
+        // Пурпурно-розовый (Extraordinary) тянется дальше 168: у «?» особенного
+        // предмета Hue ≈ 169..171 (RGB ≈ 150,40,80), и раньше этот «розовый хвост»
+        // проваливался в мифический «по умолчанию». Отрезаем его только там, где
+        // начинается чистый красный (Mythic) — Hue у 0/179.
+        if (medH >= 129.0 && medH <= 175.0)
         {
             return InventoryRarity.Extraordinary;
         }
@@ -265,6 +269,7 @@ internal static class InventoryChecker
             return InventoryRarity.Legendary;
         }
 
+        // Красный «?» (Mythic): Hue прижат к нулю или к 179.
         return InventoryRarity.Mythic;
     }
 
@@ -315,7 +320,6 @@ internal static class InventoryChecker
         var empty = 0;
         var occupied = 0;
         var unidentified = 0;
-        var counts = new Dictionary<InventoryRarity, int>();
 
         foreach (var slot in slots)
         {
@@ -330,35 +334,30 @@ internal static class InventoryChecker
             {
                 unidentified++;
             }
-
-            counts[slot.Rarity] = counts.GetValueOrDefault(slot.Rarity) + 1;
         }
-
-        var parts = counts
-            .OrderBy(kv => (int)kv.Key)
-            .Select(kv => $"{RarityLabel(kv.Key)} × {kv.Value}");
 
         var full = slots.Count > 0 && empty == 0;
 
+        // Редкости по слотам показывает сама сетка на вкладке «Инвентарь»,
+        // поэтому в строку результата проверки они больше не попадают.
         return "Слотов: " + slots.Count +
                " · свободно: " + empty +
                " · занято: " + occupied +
                " (из них «?»: " + unidentified + ")" +
-               " · инвентарь " + (full ? "ПОЛОН" : "есть место") +
-               (counts.Count > 0 ? "\nРедкости: " + string.Join(", ", parts) : string.Empty);
+               " · инвентарь " + (full ? "ПОЛОН" : "есть место");
     }
 
     public static string RarityLabel(InventoryRarity rarity) => rarity switch
     {
-        InventoryRarity.Empty => "empty",
-        InventoryRarity.Common => "common",
-        InventoryRarity.Improved => "improved",
-        InventoryRarity.Magic => "magic",
-        InventoryRarity.Extraordinary => "extraordinary",
-        InventoryRarity.Legendary => "legendary",
-        InventoryRarity.Unique => "unique",
-        InventoryRarity.Mythic => "mythic",
-        _ => "unknown"
+        InventoryRarity.Empty => "пусто",
+        InventoryRarity.Common => "обычный",
+        InventoryRarity.Improved => "улучшенный",
+        InventoryRarity.Magic => "магический",
+        InventoryRarity.Extraordinary => "особенный",
+        InventoryRarity.Legendary => "легендарный",
+        InventoryRarity.Unique => "уникальный",
+        InventoryRarity.Mythic => "мифический",
+        _ => "неизвестно"
     };
 
     // ------------------------------------------------------------------

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using DsoHelper.Infrastructure;
 
 namespace DsoHelper.FastMount;
@@ -25,6 +27,21 @@ internal static class TabResolver
         var index = Array.IndexOf(Keys, key);
         return index < 0 ? 0 : index + 1;
     }
+
+    /// <summary>
+    /// Разбирает строку выбора вкладок в упорядоченный список ключей: неизвестные
+    /// ключи отбрасываются, повторы схлопываются, порядок — как у вкладок в игре.
+    /// </summary>
+    public static List<string> ParseSelection(string raw) =>
+        raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(key => IndexOf(key) > 0)
+            .Distinct()
+            .OrderBy(IndexOf)
+            .ToList();
+
+    /// <summary>Собирает выбранные вкладки обратно в строку ключей через запятую (в игровом порядке).</summary>
+    public static string JoinSelection(IEnumerable<string> tabs) =>
+        string.Join(",", tabs.OrderBy(IndexOf).Select(DisplayName));
 
     public static bool HasBase(FastMountSettings settings) =>
         ClientPointResolver.IsSet(

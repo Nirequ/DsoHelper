@@ -119,6 +119,38 @@ internal sealed class FastMountSettings
     /// <summary>Пауза после ПКМ на каждом продаваемом предмете, мс.</summary>
     public int SellItemDelayMs { get; set; } = 150;
 
+    // --- Авторасплавка (переплавка предметов в плавильне) ---
+
+    /// <summary>Глобальный хоткей авторасплавки, например "F10".</summary>
+    public string MeltHotkey { get; set; } = "F10";
+
+    /// <summary>
+    /// Вкладки инвентаря, по которым проходит авторасплавка: ключи через запятую,
+    /// например "1,2,3" (см. TabResolver.Keys). Расплавляются только неопознанные
+    /// предметы («?»), поэтому фильтра по качествам у авторасплавки нет.
+    /// </summary>
+    public string MeltTabs { get; set; } = "1";
+
+    /// <summary>Пауза после клика по заголовку вкладки, перед сканом сетки, мс.</summary>
+    public int MeltSwitchDelayMs { get; set; } = 200;
+
+    /// <summary>Пауза после ПКМ на каждом отправляемом в печь предмете, мс.</summary>
+    public int MeltItemDelayMs { get; set; } = 150;
+
+    /// <summary>Пауза после нажатия «Переплавить», пока печь перерабатывает партию, мс.</summary>
+    public int MeltProcessDelayMs { get; set; } = 900;
+
+    /// <summary>Кнопка «Переплавить» в окне плавильни: экранные координаты.</summary>
+    public int MeltButtonX { get; set; }
+
+    public int MeltButtonY { get; set; }
+
+    /// <summary>Смещение кнопки от правого края клиента игры, в долях высоты клиента.</summary>
+    public double? MeltButtonRightRatio { get; set; }
+
+    /// <summary>Смещение кнопки от верхнего края клиента игры, в долях высоты клиента.</summary>
+    public double? MeltButtonTopRatio { get; set; }
+
     public static string FilePath => Path.Combine(AppContext.BaseDirectory, "config.json");
 
     public static FastMountSettings Load()    {

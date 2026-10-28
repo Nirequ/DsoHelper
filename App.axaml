@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="using:Material.Icons.Avalonia"
              x:Class="DsoHelper.App"
              RequestedThemeVariant="Dark">
 
@@ -8,6 +9,16 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://DsoHelper/UI/Palette.axaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Fluent резервирует 15 px над и под рельсом под тик-бары и рисует
+                 маркер 20 px: в компактной карточке такой ползунок обрезается.
+                 Обнуляем отступы и ужимаем рельс/маркер — шаблон остаётся штатный. -->
+            <GridLength x:Key="SliderPreContentMargin">0</GridLength>
+            <GridLength x:Key="SliderPostContentMargin">0</GridLength>
+            <x:Double x:Key="SliderHorizontalHeight">20</x:Double>
+            <x:Double x:Key="SliderHorizontalThumbWidth">12</x:Double>
+            <x:Double x:Key="SliderHorizontalThumbHeight">12</x:Double>
+            <x:Double x:Key="SliderTrackThemeHeight">4</x:Double>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -30,22 +41,21 @@
     <Application.Styles>
         <FluentTheme />
 
-        <Style Selector="Window">
-            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
-        </Style>
+        <StyleInclude Source="avares://DsoHelper/UI/Theme.axaml" />
 
-        <Style Selector="TextBlock">
-            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <materialIcons:MaterialIconStyles />
+
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         </Style>
 
         <Style Selector="ToolTip">
-            <Setter Property="Background" Value="{StaticResource ElevatedSurfaceBrush}" />
+            <Setter Property="Background" Value="{StaticResource ChipSurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
             <Setter Property="Padding" Value="9,6" />
-            <Setter Property="FontFamily" Value="{StaticResource BodyFont}" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
             <Setter Property="FontSize" Value="12" />
         </Style>
     </Application.Styles>

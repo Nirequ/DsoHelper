@@ -2,51 +2,101 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
-        Dark fantasy palette for DSO Helper.
-        Source: drakensang_helper_color_palette.md
+        Design tokens for DSO Helper — "Drakensang" system.
+        Parchment-brown surfaces, old-gold accents, crimson primary buttons, ivory text.
     -->
 
-    <!-- Backgrounds & surfaces -->
-    <Color x:Key="ObsidianBlackColor">#121316</Color>
-    <Color x:Key="DeepDungeonColor">#1A1C23</Color>
-    <Color x:Key="ElevatedSurfaceColor">#242834</Color>
-    <Color x:Key="BorderColor">#373C4A</Color>
+    <!-- Surfaces -->
+    <Color x:Key="AppBackgroundColor">#FF171411</Color>
+    <Color x:Key="HeaderSurfaceColor">#FF1A1714</Color>
+    <Color x:Key="CardSurfaceColor">#FF201C18</Color>
+    <Color x:Key="SunkenSurfaceColor">#FF28231F</Color>
+    <Color x:Key="ChipSurfaceColor">#FF28231F</Color>
+    <Color x:Key="TabActiveSurfaceColor">#FF29241B</Color>
+    <Color x:Key="BorderColor">#FF3B342E</Color>
 
-    <!-- Brand & accents -->
-    <Color x:Key="AncientGoldColor">#E0A93B</Color>
-    <Color x:Key="CrimsonRedColor">#C93B3B</Color>
-    <Color x:Key="MysticArcaneColor">#8A5CF5</Color>
-    <Color x:Key="EssenceCyanColor">#2CB67D</Color>
+    <!-- Interaction steps derived from the surface scale -->
+    <Color x:Key="SurfaceHoverColor">#FF302A24</Color>
+    <Color x:Key="SurfacePressedColor">#FF221D19</Color>
+    <Color x:Key="BorderHoverColor">#FF4A423A</Color>
+
+    <!-- Accent: crimson (primary actions) -->
+    <Color x:Key="CrimsonColor">#FF942832</Color>
+    <Color x:Key="CrimsonHoverColor">#FFA63641</Color>
+    <Color x:Key="CrimsonPressedColor">#FF7C2029</Color>
+    <Color x:Key="OnCrimsonTextColor">#FFEEE4D1</Color>
+
+    <!-- Accent: old gold -->
+    <Color x:Key="GoldColor">#FFC59B53</Color>
+    <Color x:Key="GoldLightColor">#FFC5984B</Color>
+    <Color x:Key="GoldTintColor">#33C59B53</Color>
+    <Color x:Key="GoldOnTextColor">#FF171411</Color>
+    <Color x:Key="GoldBorderColor">#FF795D2E</Color>
 
     <!-- Text -->
-    <Color x:Key="TextPrimaryColor">#E6E8EC</Color>
-    <Color x:Key="TextSecondaryColor">#8C93A2</Color>
-    <Color x:Key="TextDisabledColor">#525866</Color>
+    <Color x:Key="TextPrimaryColor">#FFF7F0DD</Color>
+    <Color x:Key="TextSecondaryColor">#FFB1AC9E</Color>
+    <Color x:Key="TextMutedColor">#FF807C72</Color>
 
-    <!-- Item rarity colors (DSO canonical: общий/улучшенный/магический/экстраординарный/легендарный/уникальный/мифический) -->
-    <Color x:Key="RarityCommonColor">#E6E8EC</Color>
-    <Color x:Key="RarityImprovedColor">#4EC758</Color>
-    <Color x:Key="RarityMagicColor">#3B82F6</Color>
-    <Color x:Key="RarityExtraordinaryColor">#A855F7</Color>
-    <Color x:Key="RarityLegendaryColor">#F97316</Color>
-    <Color x:Key="RarityUniqueColor">#EAB308</Color>
-    <Color x:Key="RarityMythicColor">#E5484D</Color>
+    <!-- State -->
+    <Color x:Key="SuccessColor">#FF76BE9B</Color>
+    <Color x:Key="SuccessSurfaceColor">#FF1E2A24</Color>
+    <Color x:Key="ErrorColor">#FFD97065</Color>
+    <Color x:Key="WarningSurfaceColor">#FF2A2319</Color>
 
-    <!-- Brushes -->
-    <SolidColorBrush x:Key="ObsidianBlackBrush" Color="{StaticResource ObsidianBlackColor}" />
-    <SolidColorBrush x:Key="DeepDungeonBrush" Color="{StaticResource DeepDungeonColor}" />
-    <SolidColorBrush x:Key="ElevatedSurfaceBrush" Color="{StaticResource ElevatedSurfaceColor}" />
+    <!-- Brushes: surfaces -->
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="HeaderSurfaceBrush" Color="{StaticResource HeaderSurfaceColor}" />
+    <SolidColorBrush x:Key="CardSurfaceBrush" Color="{StaticResource CardSurfaceColor}" />
+    <SolidColorBrush x:Key="SunkenSurfaceBrush" Color="{StaticResource SunkenSurfaceColor}" />
+    <SolidColorBrush x:Key="ChipSurfaceBrush" Color="{StaticResource ChipSurfaceColor}" />
+    <SolidColorBrush x:Key="TabActiveSurfaceBrush" Color="{StaticResource TabActiveSurfaceColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
 
-    <SolidColorBrush x:Key="AncientGoldBrush" Color="{StaticResource AncientGoldColor}" />
-    <SolidColorBrush x:Key="CrimsonRedBrush" Color="{StaticResource CrimsonRedColor}" />
-    <SolidColorBrush x:Key="MysticArcaneBrush" Color="{StaticResource MysticArcaneColor}" />
-    <SolidColorBrush x:Key="EssenceCyanBrush" Color="{StaticResource EssenceCyanColor}" />
+    <!-- Brushes: interaction steps -->
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="SurfacePressedBrush" Color="{StaticResource SurfacePressedColor}" />
+    <SolidColorBrush x:Key="BorderHoverBrush" Color="{StaticResource BorderHoverColor}" />
 
+    <!-- Brushes: crimson -->
+    <SolidColorBrush x:Key="CrimsonBrush" Color="{StaticResource CrimsonColor}" />
+    <SolidColorBrush x:Key="CrimsonHoverBrush" Color="{StaticResource CrimsonHoverColor}" />
+    <SolidColorBrush x:Key="CrimsonPressedBrush" Color="{StaticResource CrimsonPressedColor}" />
+    <SolidColorBrush x:Key="OnCrimsonTextBrush" Color="{StaticResource OnCrimsonTextColor}" />
+
+    <!-- Brushes: brand -->
+    <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="GoldLightBrush" Color="{StaticResource GoldLightColor}" />
+    <SolidColorBrush x:Key="GoldTintBrush" Color="{StaticResource GoldTintColor}" />
+    <SolidColorBrush x:Key="GoldOnTextBrush" Color="{StaticResource GoldOnTextColor}" />
+    <SolidColorBrush x:Key="GoldBorderBrush" Color="{StaticResource GoldBorderColor}" />
+
+    <!-- Brushes: text -->
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
-    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
 
+    <!-- Rarity scale for the inventory grid — цвета из клиента DSO.
+         Common #CFCFCF · Uncommon #28ED00 · Magic #0078FF · Rare #FF17FF ·
+         Epic #FF6C00 · Unique #FFDB11 · Set #00AEDA · Mythic #BD1F00 -->
+    <Color x:Key="RarityCommonColor">#FFCFCFCF</Color>
+    <Color x:Key="RarityImprovedColor">#FF28ED00</Color>
+    <Color x:Key="RarityMagicColor">#FF0078FF</Color>
+    <Color x:Key="RarityExtraordinaryColor">#FFFF17FF</Color>
+    <Color x:Key="RarityLegendaryColor">#FFFF6C00</Color>
+    <Color x:Key="RarityUniqueColor">#FFFFDB11</Color>
+    <!-- Сетовые предметы: цвет есть в клиенте, чекер пока не выделяет их отдельной редкостью. -->
+    <Color x:Key="RaritySetColor">#FF00AEDA</Color>
+    <Color x:Key="RarityMythicColor">#FFBD1F00</Color>
+
+    <!-- Brushes: state -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="SuccessSurfaceBrush" Color="{StaticResource SuccessSurfaceColor}" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+    <SolidColorBrush x:Key="WarningSurfaceBrush" Color="{StaticResource WarningSurfaceColor}" />
+    <SolidColorBrush x:Key="WarningTextBrush" Color="{StaticResource GoldLightColor}" />
+
+    <!-- Brushes: rarity scale -->
     <SolidColorBrush x:Key="RarityCommonBrush" Color="{StaticResource RarityCommonColor}" />
     <SolidColorBrush x:Key="RarityImprovedBrush" Color="{StaticResource RarityImprovedColor}" />
     <SolidColorBrush x:Key="RarityMagicBrush" Color="{StaticResource RarityMagicColor}" />
@@ -54,86 +104,59 @@
     <SolidColorBrush x:Key="RarityLegendaryBrush" Color="{StaticResource RarityLegendaryColor}" />
     <SolidColorBrush x:Key="RarityUniqueBrush" Color="{StaticResource RarityUniqueColor}" />
     <SolidColorBrush x:Key="RarityMythicBrush" Color="{StaticResource RarityMythicColor}" />
+    <SolidColorBrush x:Key="RaritySetBrush" Color="{StaticResource RaritySetColor}" />
 
-    <!-- Additional medieval framing tones -->
-    <SolidColorBrush x:Key="ObsidianDeepBrush" Color="#0E0F12" />
-    <SolidColorBrush x:Key="CardInnerBorderBrush" Color="#2B303D" />
-    <SolidColorBrush x:Key="AncientGoldLightBrush" Color="#F2C15E" />
-    <SolidColorBrush x:Key="AncientGoldDarkBrush" Color="#C98E2B" />
+    <!-- Brushes: legacy aliases still referenced by SlotPickerWindow -->
+    <SolidColorBrush x:Key="AncientGoldBrush" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="AncientGoldBorderFaintBrush" Color="#66C59B53" />
+    <SolidColorBrush x:Key="AncientGoldTintBrush" Color="#33C59B53" />
+    <SolidColorBrush x:Key="ElevatedSurfaceBrush" Color="{StaticResource ChipSurfaceColor}" />
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextMutedColor}" />
+    <SolidColorBrush x:Key="WindowBackdropBrush" Color="{StaticResource AppBackgroundColor}" />
 
-    <!-- Translucent tints for glows and accent fills -->
-    <SolidColorBrush x:Key="AncientGoldTintBrush" Color="#33E0A93B" />
-    <SolidColorBrush x:Key="AncientGoldFaintBrush" Color="#1FE0A93B" />
-    <SolidColorBrush x:Key="MysticArcaneTintBrush" Color="#338A5CF5" />
-    <SolidColorBrush x:Key="EssenceCyanTintBrush" Color="#332CB67D" />
-    <SolidColorBrush x:Key="CrimsonRedTintBrush" Color="#33C93B3B" />
-    <SolidColorBrush x:Key="AncientGoldBorderFaintBrush" Color="#66E0A93B" />
+    <!-- Typography -->
+    <FontFamily x:Key="UiFont">avares://DsoHelper/Assets/Fonts#Inter</FontFamily>
+    <FontFamily x:Key="BodyFont">avares://DsoHelper/Assets/Fonts#Inter</FontFamily>
+    <FontFamily x:Key="DisplayFont">avares://DsoHelper/Assets/Fonts#Inter</FontFamily>
 
-    <!-- Typography: both fonts include Cyrillic -->
-    <FontFamily x:Key="DisplayFont">avares://DsoHelper/Assets/Fonts#Forum</FontFamily>
-    <FontFamily x:Key="BodyFont">avares://DsoHelper/Assets/Fonts#PT Serif</FontFamily>
+    <!-- Accent for Fluent built-in controls (sliders, focus rings, selection) -->
+    <Color x:Key="SystemAccentColor">#FFC59B53</Color>
+    <Color x:Key="SystemAccentColorLight1">#FFC5984B</Color>
+    <Color x:Key="SystemAccentColorLight2">#FFD5AC67</Color>
+    <Color x:Key="SystemAccentColorLight3">#FFE4C48D</Color>
+    <Color x:Key="SystemAccentColorDark1">#FFA87F3F</Color>
+    <Color x:Key="SystemAccentColorDark2">#FF8A6531</Color>
+    <Color x:Key="SystemAccentColorDark3">#FF6B4E27</Color>
 
-    <!-- Gradients -->
-    <LinearGradientBrush x:Key="WindowBackdropBrush" StartPoint="0%,0%" EndPoint="100%,100%">
-        <GradientStop Color="#1A1C23" Offset="0" />
-        <GradientStop Color="#121316" Offset="0.55" />
-        <GradientStop Color="#0E0F12" Offset="1" />
-    </LinearGradientBrush>
+    <SolidColorBrush x:Key="SystemAccentColorBrush" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="SystemControlForegroundAccentBrush" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="{StaticResource GoldColor}" />
 
-    <LinearGradientBrush x:Key="GoldButtonBrush" StartPoint="0%,0%" EndPoint="100%,100%">
-        <GradientStop Color="#F2C15E" Offset="0" />
-        <GradientStop Color="#E0A93B" Offset="0.55" />
-        <GradientStop Color="#C98E2B" Offset="1" />
-    </LinearGradientBrush>
+    <!-- Fluent slider parts -->
+    <SolidColorBrush x:Key="SliderTrackFill" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="{StaticResource BorderHoverColor}" />
+    <SolidColorBrush x:Key="SliderTrackFillPressed" Color="{StaticResource BorderHoverColor}" />
+    <SolidColorBrush x:Key="SliderTrackFillDisabled" Color="#FF2A251F" />
+    <SolidColorBrush x:Key="SliderTrackValueFill" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="{StaticResource GoldLightColor}" />
+    <SolidColorBrush x:Key="SliderTrackValueFillPressed" Color="{StaticResource GoldLightColor}" />
+    <SolidColorBrush x:Key="SliderTrackValueFillDisabled" Color="#FF5A4A2A" />
+    <SolidColorBrush x:Key="SliderThumbBackground" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="{StaticResource GoldLightColor}" />
+    <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="{StaticResource GoldLightColor}" />
+    <SolidColorBrush x:Key="SliderThumbBackgroundDisabled" Color="#FF5A4A2A" />
 
-    <LinearGradientBrush x:Key="RaritySpectrumBrush" StartPoint="0%,0%" EndPoint="100%,0%">
-        <GradientStop Color="#E6E8EC" Offset="0" />
-        <GradientStop Color="#4EC758" Offset="0.17" />
-        <GradientStop Color="#3B82F6" Offset="0.34" />
-        <GradientStop Color="#A855F7" Offset="0.5" />
-        <GradientStop Color="#F97316" Offset="0.67" />
-        <GradientStop Color="#EAB308" Offset="0.84" />
-        <GradientStop Color="#E5484D" Offset="1" />
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="GoldRuleLeftBrush" StartPoint="0%,0%" EndPoint="100%,0%">
-        <GradientStop Color="#00E0A93B" Offset="0" />
-        <GradientStop Color="#99E0A93B" Offset="1" />
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="GoldRuleRightBrush" StartPoint="0%,0%" EndPoint="100%,0%">
-        <GradientStop Color="#99E0A93B" Offset="0" />
-        <GradientStop Color="#00E0A93B" Offset="1" />
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="HeaderGlowBrush" StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="#24E0A93B" Offset="0" />
-        <GradientStop Color="#00E0A93B" Offset="1" />
-    </LinearGradientBrush>
-
-    <!-- Let Fluent controls (checkboxes, focus rings, selection) use the gold accent -->
-    <Color x:Key="SystemAccentColor">#E0A93B</Color>
-    <Color x:Key="SystemAccentColorLight1">#F0BA55</Color>
-    <Color x:Key="SystemAccentColorLight2">#F6CC7A</Color>
-    <Color x:Key="SystemAccentColorLight3">#FBE0A6</Color>
-    <Color x:Key="SystemAccentColorDark1">#C98E2B</Color>
-    <Color x:Key="SystemAccentColorDark2">#A9741F</Color>
-    <Color x:Key="SystemAccentColorDark3">#875A14</Color>
-
-    <SolidColorBrush x:Key="SystemAccentColorBrush" Color="{StaticResource AncientGoldColor}" />
-    <SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="{StaticResource AncientGoldColor}" />
-    <SolidColorBrush x:Key="SystemControlForegroundAccentBrush" Color="{StaticResource AncientGoldColor}" />
-    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="{StaticResource AncientGoldColor}" />
-
-    <!-- Fluent scrollbars recolored to look like a gilded rail -->
-    <SolidColorBrush x:Key="ScrollBarPanningThumbBackground" Color="#4DE0A93B" />
-    <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#99E0A93B" />
-    <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#E0A93B" />
-    <SolidColorBrush x:Key="ScrollBarThumbBackgroundColor" Color="#66E0A93B" />
+    <!-- Fluent scrollbars: thin parchment rail -->
+    <SolidColorBrush x:Key="ScrollBarPanningThumbBackground" Color="#4D807C72" />
+    <SolidColorBrush x:Key="ScrollBarThumbFill" Color="#4D807C72" />
+    <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#80807C72" />
+    <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#A6807C72" />
+    <SolidColorBrush x:Key="ScrollBarThumbBackgroundColor" Color="#4D807C72" />
     <SolidColorBrush x:Key="ScrollBarBackground" Color="Transparent" />
-    <SolidColorBrush x:Key="ScrollBarTrackFill" Color="#14151A" />
-    <SolidColorBrush x:Key="ScrollBarTrackStroke" Color="#373C4A" />
+    <SolidColorBrush x:Key="ScrollBarTrackFill" Color="Transparent" />
+    <SolidColorBrush x:Key="ScrollBarTrackStroke" Color="Transparent" />
     <SolidColorBrush x:Key="ScrollBarBorderBrush" Color="Transparent" />
-    <SolidColorBrush x:Key="ScrollBarForeground" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="ScrollBarForeground" Color="{StaticResource TextMutedColor}" />
 
 </ResourceDictionary>

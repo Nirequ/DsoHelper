@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -9,12 +10,15 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using DsoHelper.FastMount;
 using DsoHelper.Infrastructure;
 using DsoHelper.UI;
+using HAlign = Avalonia.Layout.HorizontalAlignment;
+using VAlign = Avalonia.Layout.VerticalAlignment;
 
 namespace DsoHelper;
 
@@ -24,30 +28,49 @@ public partial class MainWindow : Window
     private const int DelayMaxMs = 1000;
     private const int DelayStepMs = 15;
 
-    // Mirrors UI/Palette.axaml (Drakensang helper palette).
-    private static readonly IBrush IdleBrush = new SolidColorBrush(Color.Parse("#8C93A2"));
-    private static readonly IBrush BusyBrush = new SolidColorBrush(Color.Parse("#E0A93B"));
-    private static readonly IBrush SuccessBrush = new SolidColorBrush(Color.Parse("#2CB67D"));
-    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#C93B3B"));
+    /// <summary>Индекс вкладки «Настройки» в MainTabControl.</summary>
+    private const int SettingsTabIndex = 4;
+
+    /// <summary>Индекс вкладки «Инвентарь» — домашняя страница.</summary>
+    private const int InventoryTabIndex = 0;
+
+    // Mirrors UI/Palette.axaml (Drakensang palette).
+    private static readonly IBrush IdleBrush = new SolidColorBrush(Color.Parse("#B1AC9E"));
+    private static readonly IBrush BusyBrush = new SolidColorBrush(Color.Parse("#C59B53"));
+    private static readonly IBrush SuccessBrush = new SolidColorBrush(Color.Parse("#76BE9B"));
+    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#D97065"));
+
+    /// <summary>Рамки ячеек визуализации инвентаря (7 × 4, индекс = номер слота − 1).</summary>
+    private readonly Border[] _invCells = new Border[InventoryGridResolver.SlotCount];
+
+    /// <summary>Символ внутри ячейки: «#1»/«#28», «·», «?» или «•».</summary>
+    private readonly TextBlock[] _invCellGlyphs = new TextBlock[InventoryGridResolver.SlotCount];
+
+    /// <summary>Золотая точка-якорь у слотов #1 и #28, когда сетка уже проверена.</summary>
+    private readonly Border[] _invCellMarks = new Border[InventoryGridResolver.SlotCount];
 
     private readonly FastMountSettings _settings;
     private readonly DispatcherTimer _saveTimer;
 
     private GlobalHotkey? _hotkey;
     private GlobalHotkey? _sellHotkey;
+    private GlobalHotkey? _meltHotkey;
     private SlotPickerWindow? _slotPicker;
     private SlotPickerWindow? _tabPicker;
     private SlotPickerWindow? _tabStepPicker;
     private SlotPickerWindow? _invSlot1Picker;
     private SlotPickerWindow? _invSlot28Picker;
+    private SlotPickerWindow? _meltButtonPicker;
     private CancellationTokenSource? _runCts;
     private CancellationTokenSource? _hoverCts;
     private CancellationTokenSource? _sellCts;
+    private CancellationTokenSource? _meltCts;
     private bool _running;
     private bool _picking;
     private bool _checking;
     private bool _hovering;
     private bool _selling;
+    private bool _melting;
     private bool _checkingUpdates;
     private string _pendingUpdateTag = string.Empty;
     private string? _pendingUpdateUrl;
@@ -73,9 +96,14 @@ public partial class MainWindow : Window
     /// <summary>Максимальная пауза после вызова маунта, мс.</summary>
     private const int MountDelayMaxMs = 1500;
 
+    /// <summary>Максимальная пауза после переплавки партии, мс.</summary>
+    private const int MeltProcessDelayMaxMs = 2000;
+
     public MainWindow()
     {
         InitializeComponent();
+        BuildInvGrid();
+        ApplyInvSlotRarities(null);
 
         _settings = FastMountSettings.Load();
         LoadSettingsIntoUi();
@@ -92,6 +120,7 @@ public partial class MainWindow : Window
         Topmost = _settings.AlwaysOnTop;
         ApplyHotkey(showError: false);
         ApplySellHotkey(showError: false);
+        ApplyMeltHotkey(showError: false);
         SetStatus("Готово к работе", StatusKind.Idle);
 
         Closing += OnClosing;
@@ -247,6 +276,9 @@ public partial class MainWindow : Window
         SellHotkeyBox.LostFocus += (_, _) => CommitSellHotkey();
         SellHotkeyBox.TextChanged += (_, _) => ScheduleSave();
 
+        MeltHotkeyBox.LostFocus += (_, _) => CommitMeltHotkey();
+        MeltHotkeyBox.TextChanged += (_, _) => ScheduleSave();
+
         WireQualityChecks();
 
         WireDelayControls();
@@ -255,6 +287,9 @@ public partial class MainWindow : Window
             v => _settings.MountDelayMs = v, MountDelayMaxMs);
         WireDelayPair(SellSwitchSlider, SellSwitchValueBox, 200, v => _settings.SellSwitchDelayMs = v);
         WireDelayPair(SellItemSlider, SellItemValueBox, 150, v => _settings.SellItemDelayMs = v);
+        WireDelayPair(MeltSwitchSlider, MeltSwitchValueBox, 200, v => _settings.MeltSwitchDelayMs = v);
+        WireDelayPair(MeltItemSlider, MeltItemValueBox, 150, v => _settings.MeltItemDelayMs = v);
+        WireDelayPair(MeltProcessSlider, MeltProcessValueBox, 900, v => _settings.MeltProcessDelayMs = v, MeltProcessDelayMaxMs);
 
         SwitchTabCheck.IsCheckedChanged += (_, _) =>
         {
@@ -337,6 +372,9 @@ public partial class MainWindow : Window
         SellHotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.SellHotkey, out var sellHotkey, out _)
             ? sellHotkey.Display
             : _settings.SellHotkey;
+        MeltHotkeyBox.Text = HotkeyParser.TryParseHotkey(_settings.MeltHotkey, out var meltHotkey, out _)
+            ? meltHotkey.Display
+            : _settings.MeltHotkey;
         InventoryKeyBox.Text = CanonicalKey(_settings.InventoryKey, "I");
         MountKeyBox.Text = CanonicalKey(_settings.MountKey, "M");
 
@@ -348,6 +386,13 @@ public partial class MainWindow : Window
         SellItemSlider.Value = Math.Clamp(_settings.SellItemDelayMs, 0, SellDelayMaxMs);
         SellSwitchValueBox.Text = SellSwitchSlider.Value.ToString("0");
         SellItemValueBox.Text = SellItemSlider.Value.ToString("0");
+
+        MeltSwitchSlider.Value = Math.Clamp(_settings.MeltSwitchDelayMs, 0, SellDelayMaxMs);
+        MeltItemSlider.Value = Math.Clamp(_settings.MeltItemDelayMs, 0, SellDelayMaxMs);
+        MeltProcessSlider.Value = Math.Clamp(_settings.MeltProcessDelayMs, 0, MeltProcessDelayMaxMs);
+        MeltSwitchValueBox.Text = MeltSwitchSlider.Value.ToString("0");
+        MeltItemValueBox.Text = MeltItemSlider.Value.ToString("0");
+        MeltProcessValueBox.Text = MeltProcessSlider.Value.ToString("0");
 
         MountDelaySlider.Value = Math.Clamp(_settings.MountDelayMs, 0, MountDelayMaxMs);
         MountDelayValueBox.Text = MountDelaySlider.Value.ToString("0");
@@ -367,6 +412,8 @@ public partial class MainWindow : Window
         UpdateTabUi();
         UpdateInvUi();
         UpdateSellTabsUi();
+        UpdateMeltUi();
+        UpdateMeltTabsUi();
     }
 
     private void ReadSettingsFromUi()
@@ -478,6 +525,10 @@ public partial class MainWindow : Window
         else if (ReferenceEquals(box, SellHotkeyBox))
         {
             HandleSellHotkeyKey(e);
+        }
+        else if (ReferenceEquals(box, MeltHotkeyBox))
+        {
+            HandleMeltHotkeyKey(e);
         }
         else if (ReferenceEquals(box, InventoryKeyBox) || ReferenceEquals(box, MountKeyBox))
         {
@@ -657,6 +708,118 @@ public partial class MainWindow : Window
         ApplySellHotkey(showError: true);
     }
 
+    private void ApplyMeltHotkey(bool showError)
+    {
+        _meltHotkey?.Dispose();
+        _meltHotkey = null;
+
+        var text = MeltHotkeyBox.Text?.Trim() ?? string.Empty;
+        if (!HotkeyParser.TryParseHotkey(text, out var definition, out var error))
+        {
+            MeltHotkeyStatusText.Text = "некорректный хоткей";
+            MeltHotkeyStatusText.Foreground = ErrorBrush;
+            if (showError)
+            {
+                SetStatus(error, StatusKind.Error);
+            }
+
+            return;
+        }
+
+        try
+        {
+            var hotkey = new GlobalHotkey(definition.Modifiers, definition.VirtualKey);
+            hotkey.Pressed += OnMeltHotkeyPressed;
+            _meltHotkey = hotkey;
+
+            MeltHotkeyBox.Text = definition.Display;
+            MeltHotkeyStatusText.Text = $"активен · {definition.Display}";
+            MeltHotkeyStatusText.Foreground = SuccessBrush;
+            _settings.MeltHotkey = definition.Display;
+            ScheduleSave();
+
+            if (showError)
+            {
+                SetStatus($"Хоткей авторасплавки {definition.Display} активен", StatusKind.Idle);
+            }
+        }
+        catch (Exception ex)
+        {
+            MeltHotkeyStatusText.Text = "недоступен";
+            MeltHotkeyStatusText.Foreground = ErrorBrush;
+            if (showError)
+            {
+                SetStatus(ex.Message, StatusKind.Error);
+            }
+        }
+    }
+
+    private void OnMeltHotkeyPressed()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!GameWindow.IsForeground())
+            {
+                return;
+            }
+
+            // Повторное нажатие хоткея во время прогона — остановка.
+            if (_melting)
+            {
+                _meltCts?.Cancel();
+                SetStatus("Останавливаю авторасплавку…", StatusKind.Busy);
+                return;
+            }
+
+            _ = RunAutoMeltAsync();
+        });
+    }
+
+    private void HandleMeltHotkeyKey(KeyEventArgs e)
+    {
+        if (e.Key == Key.Tab)
+        {
+            return;
+        }
+
+        e.Handled = true;
+
+        if (e.Key == Key.Escape)
+        {
+            MeltHotkeyBox.Text = _settings.MeltHotkey;
+            return;
+        }
+
+        if (!KeyCatalog.TryDescribe(e.Key, out var key))
+        {
+            return;
+        }
+
+        if (key.IsModifier)
+        {
+            var preview = KeyCatalog.DescribeModifiers(e.KeyModifiers);
+            if (!string.IsNullOrEmpty(preview))
+            {
+                MeltHotkeyBox.Text = preview;
+            }
+
+            return;
+        }
+
+        MeltHotkeyBox.Text = KeyCatalog.ComposeHotkey(e.KeyModifiers, key.Display);
+        ApplyMeltHotkey(showError: true);
+    }
+
+    private void CommitMeltHotkey()
+    {
+        if (!HotkeyParser.TryParseHotkey(MeltHotkeyBox.Text, out _, out _))
+        {
+            MeltHotkeyBox.Text = _settings.MeltHotkey;
+        }
+
+        ApplyMeltHotkey(showError: true);
+    }
+
     private void RevertKeyIfInvalid(TextBox box, string fallback)
     {
         var canonical = CanonicalKey(box.Text, fallback);
@@ -666,7 +829,7 @@ public partial class MainWindow : Window
 
     private async Task RunFastMountAsync(bool interactive)
     {
-        if (_running || _picking || _checking || _hovering || _selling)
+        if (_running || _picking || _checking || _hovering || _selling || _melting)
         {
             return;
         }
@@ -778,6 +941,39 @@ public partial class MainWindow : Window
             cancelStatus: "Выбор слота #28 отменён",
             busyStatus: "Наведите квадрат на ЦЕНТР правой нижней ячейки инвентаря и кликните (Esc — отмена)");
 
+    private void OnPickMeltButtonClick(object? sender, RoutedEventArgs e) =>
+        ShowSlotPicker(
+            () => _meltButtonPicker,
+            picker => _meltButtonPicker = picker,
+            enabled => PickMeltButtonButton.IsEnabled = enabled,
+            precondition: null,
+            markerSize: SlotPickerWindow.SlotMarkerSize,
+            point =>
+            {
+                MeltFurnaceResolver.CaptureButton(_settings, point.X, point.Y);
+                UpdateMeltUi();
+                SaveSettings();
+                SetStatus("Кнопка «Переплавить» сохранена", StatusKind.Success);
+            },
+            cancelStatus: "Выбор кнопки отменён",
+            busyStatus: "Наведите квадрат на кнопку «Переплавить» в окне плавильни и кликните (Esc — отмена)");
+
+    /// <summary>Статус калибровки кнопки «Переплавить» в окне плавильни.</summary>
+    private void UpdateMeltUi()
+    {
+        if (!MeltFurnaceResolver.HasButton(_settings))
+        {
+            MeltButtonStatusText.Text = "Кнопка «Переплавить» не указана.";
+            MeltButtonStatusText.Foreground = ErrorBrush;
+            return;
+        }
+
+        MeltButtonStatusText.Text = _settings.MeltButtonRightRatio is not null
+            ? "Кнопка «Переплавить» указана — позиция подстроится под окно игры."
+            : "Кнопка «Переплавить» указана (координаты экрана).";
+        MeltButtonStatusText.Foreground = SuccessBrush;
+    }
+
     private void UpdateInvUi()
     {
         var has1 = InventoryGridResolver.HasSlot1(_settings);
@@ -787,7 +983,7 @@ public partial class MainWindow : Window
         {
             InvStatusText.Text = "Сетка не откалибрована";
             InvStatusText.Foreground = ErrorBrush;
-            InvSummaryText.Text = "Укажите центр левой верхней ячейки (слот #1) и правой нижней (слот #28).";
+            ApplyInvSlotRarities(null);
             return;
         }
 
@@ -795,7 +991,6 @@ public partial class MainWindow : Window
         {
             InvStatusText.Text = "Слот #28 указан";
             InvStatusText.Foreground = IdleBrush;
-            InvSummaryText.Text = "Осталось указать слот #1 — левой верхней ячейки.";
             return;
         }
 
@@ -803,7 +998,6 @@ public partial class MainWindow : Window
         {
             InvStatusText.Text = "Слот #1 указан";
             InvStatusText.Foreground = IdleBrush;
-            InvSummaryText.Text = "Осталось указать слот #28 — правой нижней ячейки.";
             return;
         }
 
@@ -811,49 +1005,179 @@ public partial class MainWindow : Window
         {
             InvStatusText.Text = "Сетка готова";
             InvStatusText.Foreground = SuccessBrush;
-            InvSummaryText.Text = $"Ячеек: {InventoryGridResolver.SlotCount}, прямоугольник ~{slots[0].W} × {slots[0].H} px. Откройте вкладку инвентаря и запустите проверку.";
+            ToolTip.SetTip(
+                InvGridBox,
+                $"Сетка {InventoryGridResolver.Cols} × {InventoryGridResolver.Rows} · ячеек: {InventoryGridResolver.SlotCount} · " +
+                $"прямоугольник ~{slots[0].W} × {slots[0].H} px");
         }
         else
         {
             InvStatusText.Text = "Игровое окно не найдено";
             InvStatusText.Foreground = IdleBrush;
-            InvSummaryText.Text = "Точки сохранены как экранные координаты — проверка требует открытого окна игры.";
         }
     }
 
     /// <summary>Захватывает клиент игры и классифицирует сетку.</summary>
-    private async Task<(List<InventorySlotResult>? Results, string Error)> CaptureAndClassifyAsync(List<InventorySlotRect> slots)
+    private async Task<(List<InventorySlotResult>? Results, string Error)> CaptureAndClassifyAsync(List<InventorySlotRect> slots) =>
+        await InventoryScanner.CaptureAndClassifyAsync(slots);
+
+    /// <summary>Строит 28 ячеек сетки инвентаря (7 × 4) для визуализации редкостей.</summary>
+    private void BuildInvGrid()
     {
-        if (!GameWindow.TryGetClientBounds(out var client))
+        if (InvCellsHost is null)
         {
-            return (null, "Окно игры не найдено — откройте Drakensang.");
+            return;
         }
 
-        var shot = await Task.Run(() =>
+        InvCellsHost.Children.Clear();
+
+        for (var row = 0; row < InventoryGridResolver.Rows; row++)
         {
-            if (!ScreenCapture.TryCapture(
-                    client.Left, client.Top, client.Width, client.Height,
-                    out var frame, out var captureError))
+            var rowPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 };
+
+            for (var col = 0; col < InventoryGridResolver.Cols; col++)
             {
-                return (Frame: (byte[]?)null, Error: captureError, Results: (List<InventorySlotResult>?)null);
+                var index = (row * InventoryGridResolver.Cols) + col;
+
+                var glyph = new TextBlock
+                {
+                    FontSize = 10,
+                    HorizontalAlignment = HAlign.Center,
+                    VerticalAlignment = VAlign.Center,
+                };
+
+                // Точка-якорь: помечает опорные ячейки #1 и #28, когда сетка уже проверена.
+                var mark = new Border
+                {
+                    Width = 4,
+                    Height = 4,
+                    CornerRadius = new CornerRadius(2),
+                    Background = ResBrush("GoldBrush"),
+                    HorizontalAlignment = HAlign.Left,
+                    VerticalAlignment = VAlign.Top,
+                    Margin = new Thickness(2),
+                    IsVisible = false,
+                };
+
+                var overlay = new Grid();
+                overlay.Children.Add(glyph);
+                overlay.Children.Add(mark);
+
+                var cell = new Border
+                {
+                    Width = 27,
+                    Height = 32,
+                    CornerRadius = new CornerRadius(4),
+                    BorderThickness = new Thickness(1),
+                    Child = overlay,
+                };
+
+                rowPanel.Children.Add(cell);
+                _invCells[index] = cell;
+                _invCellGlyphs[index] = glyph;
+                _invCellMarks[index] = mark;
             }
 
-            var results = InventoryChecker.CheckByGrid(
-                frame!, client.Width, client.Height, slots, client.Left, client.Top);
-            return (Frame: (byte[]?)frame, Error: string.Empty, Results: (List<InventorySlotResult>?)results);
-        });
+            InvCellsHost.Children.Add(rowPanel);
+        }
+    }
 
-        if (shot.Error.Length > 0 || shot.Results is null)
+    /// <summary>
+    /// Раскрашивает ячейки по редкости. <paramref name="results"/> = null возвращает
+    /// исходный вид сетки (опорные ячейки #1/#28 подсвечены золотом).
+    /// </summary>
+    private void ApplyInvSlotRarities(IReadOnlyList<InventorySlotResult>? results)
+    {
+        var count = _invCells.Length;
+        for (var i = 0; i < count; i++)
         {
-            return (null, shot.Error);
+            var cell = _invCells[i];
+            var glyph = _invCellGlyphs[i];
+            var mark = _invCellMarks[i];
+            if (cell is null || glyph is null)
+            {
+                continue;
+            }
+
+            var slotNumber = i + 1;
+            var isAnchor = i == 0 || i == count - 1;
+            var result = results is null ? null : results.FirstOrDefault(r => r.Index == slotNumber);
+
+            if (mark is not null)
+            {
+                mark.IsVisible = isAnchor && result is not null;
+            }
+
+            if (result is null)
+            {
+                // Ещё не проверяли: опорные ячейки остаются золотыми с номером.
+                glyph.Text = isAnchor ? $"#{slotNumber}" : "·";
+                glyph.FontSize = 10;
+                glyph.Foreground = isAnchor ? ResBrush("GoldBrush") : ResBrush("TextMutedBrush");
+                cell.BorderThickness = new Thickness(1);
+                cell.Background = isAnchor ? ResBrush("GoldTintBrush", Brushes.Transparent) : ResBrush("CardSurfaceBrush", Brushes.Transparent);
+                cell.BorderBrush = isAnchor ? ResBrush("GoldBrush") : ResBrush("BorderBrush");
+                ToolTip.SetTip(cell, isAnchor
+                    ? $"Слот #{slotNumber} · опорная ячейка сетки"
+                    : $"Слот #{slotNumber}");
+                continue;
+            }
+
+            if (result.IsEmpty)
+            {
+                glyph.Text = "·";
+                glyph.FontSize = 10;
+                glyph.Foreground = ResBrush("TextMutedBrush");
+                cell.BorderThickness = new Thickness(1);
+                cell.Background = ResBrush("CardSurfaceBrush", Brushes.Transparent);
+                cell.BorderBrush = ResBrush("BorderBrush");
+                ToolTip.SetTip(cell, $"Слот #{slotNumber} · пусто");
+                continue;
+            }
+
+            var rarityBrush = InvRarityBrush(result.Rarity);
+            var rarityLabel = InventoryChecker.RarityLabel(result.Rarity);
+
+            glyph.Text = result.Unidentified ? "?" : "•";
+            glyph.FontSize = result.Unidentified ? 11 : 13;
+            glyph.Foreground = rarityBrush;
+            cell.BorderThickness = new Thickness(2);
+            cell.Background = ResBrush("CardSurfaceBrush", Brushes.Transparent);
+            cell.BorderBrush = rarityBrush;
+            ToolTip.SetTip(cell, result.Unidentified
+                ? $"Слот #{slotNumber} · {rarityLabel} · неопознан"
+                : $"Слот #{slotNumber} · {rarityLabel}");
+        }
+    }
+
+    /// <summary>Кисть рамки для конкретной редкости из палитры UI/Palette.axaml.</summary>
+    private static IBrush InvRarityBrush(InventoryRarity rarity) => rarity switch
+    {
+        InventoryRarity.Improved => ResBrush("RarityImprovedBrush"),
+        InventoryRarity.Magic => ResBrush("RarityMagicBrush"),
+        InventoryRarity.Extraordinary => ResBrush("RarityExtraordinaryBrush"),
+        InventoryRarity.Legendary => ResBrush("RarityLegendaryBrush"),
+        InventoryRarity.Unique => ResBrush("RarityUniqueBrush"),
+        InventoryRarity.Mythic => ResBrush("RarityMythicBrush"),
+        _ => ResBrush("RarityCommonBrush"),
+    };
+
+    /// <summary>Берёт кисть из ресурсов приложения (палитра) с запасным вариантом.</summary>
+    private static IBrush ResBrush(string key, IBrush? fallback = null)
+    {
+        if (Application.Current is { } app &&
+            app.TryFindResource(key, out var value) &&
+            value is IBrush brush)
+        {
+            return brush;
         }
 
-        return (shot.Results, string.Empty);
+        return fallback ?? IdleBrush;
     }
 
     private async Task RunInventoryCheckAsync()
     {
-        if (_running || _picking || _checking || _hovering || _selling)
+        if (_running || _picking || _checking || _hovering || _selling || _melting)
         {
             return;
         }
@@ -879,7 +1203,9 @@ public partial class MainWindow : Window
             }
 
             var summary = InventoryChecker.Summarize(results);
-            InvSummaryText.Text = summary;
+            //  Сводка по ячейкам — в подсказке к сетке: отдельного текста в карточке больше нет.
+            ToolTip.SetTip(InvGridBox, summary);
+            ApplyInvSlotRarities(results);
 
             var empty = results.Count(r => r.IsEmpty);
             SetStatus(
@@ -904,7 +1230,7 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task RunHoverInventoryAsync()
     {
-        if (_running || _picking || _checking || _hovering || _selling)
+        if (_running || _picking || _checking || _hovering || _selling || _melting)
         {
             return;
         }
@@ -939,6 +1265,7 @@ public partial class MainWindow : Window
             }
 
             var items = results.Where(r => !r.IsEmpty).ToList();
+            ApplyInvSlotRarities(results);
             if (items.Count == 0)
             {
                 SetStatus("Занятых ячеек нет — обходить нечего.", StatusKind.Idle);
@@ -1013,7 +1340,7 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task RunAutoSellAsync()
     {
-        if (_running || _picking || _checking || _hovering || _selling)
+        if (_running || _picking || _checking || _hovering || _selling || _melting)
         {
             return;
         }
@@ -1053,7 +1380,6 @@ public partial class MainWindow : Window
 
         _selling = true;
         _sellCts = new CancellationTokenSource();
-        AutoSellButton.IsEnabled = false;
         var token = _sellCts.Token;
 
         var hasOriginalCursor = NativeMethods.GetCursorPos(out var originalCursor);
@@ -1092,6 +1418,7 @@ public partial class MainWindow : Window
                 }
 
                 var targets = results.Where(MatchesAutoSellFilter).ToList();
+                ApplyInvSlotRarities(results);
                 if (targets.Count == 0)
                 {
                     continue;
@@ -1135,23 +1462,86 @@ public partial class MainWindow : Window
             _sellCts?.Dispose();
             _sellCts = null;
             _selling = false;
-            AutoSellButton.IsEnabled = true;
         }
     }
 
-    private void OnAutoSellClick(object? sender, RoutedEventArgs e) =>
-        _ = RunAutoSellAsync();
+    /// <summary>
+    /// Авторасплавка: обходит выбранные вкладки инвентаря, отправляет правой
+    /// кнопкой опознанные предметы отмеченных качеств в плавильню и каждые
+    /// 9 предметов нажимает «Переплавить».
+    /// </summary>
+    private async Task RunAutoMeltAsync()
+    {
+        if (_running || _picking || _checking || _hovering || _selling || _melting)
+        {
+            return;
+        }
+
+        ReadSettingsFromUi();
+        if (!AutoMeltRunner.TryValidate(_settings, out var error))
+        {
+            SetStatus(error, StatusKind.Error);
+            return;
+        }
+
+        _melting = true;
+        _meltCts = new CancellationTokenSource();
+        AutoMeltStatusText.Text = "Авторасплавка запущена";
+        AutoMeltStatusText.Foreground = IdleBrush;
+        AutoMeltSummaryText.Text = "Активирую окно игры…";
+        var token = _meltCts.Token;
+
+        try
+        {
+            if (GameWindow.TryActivate())
+            {
+                SetStatus("Окно игры активировано…", StatusKind.Busy);
+                await Task.Delay(200, token);
+            }
+
+            var result = await AutoMeltRunner.RunAsync(
+                _settings,
+                message => Dispatcher.UIThread.Post(() =>
+                {
+                    AutoMeltSummaryText.Text = message;
+                    SetStatus(message, StatusKind.Busy);
+                }),
+                token);
+
+            AutoMeltStatusText.Text = result.SentToFurnace == 0
+                ? "Готово · подходящих предметов не найдено"
+                : $"Готово · в печь: {result.SentToFurnace} · запусков печи: {result.MeltPresses}";
+            AutoMeltStatusText.Foreground = SuccessBrush;
+            AutoMeltSummaryText.Text = result.Summary;
+            SetStatus(result.Summary, StatusKind.Success);
+        }
+        catch (OperationCanceledException)
+        {
+            AutoMeltStatusText.Text = "Авторасплавка прервана";
+            AutoMeltStatusText.Foreground = IdleBrush;
+            AutoMeltSummaryText.Text =
+                "Прогон остановлен досрочно: остаток партии может остаться в печи — проверьте окно плавильни.";
+            SetStatus("Авторасплавка прервана", StatusKind.Idle);
+        }
+        catch (Exception ex)
+        {
+            AutoMeltStatusText.Text = "Авторасплавка остановлена";
+            AutoMeltStatusText.Foreground = ErrorBrush;
+            AutoMeltSummaryText.Text = ex.Message;
+            SetStatus("Ошибка авторасплавки: " + ex.Message, StatusKind.Error);
+        }
+        finally
+        {
+            _meltCts?.Dispose();
+            _meltCts = null;
+            _melting = false;
+        }
+    }
 
     /// <summary>Список вкладок автопродажи в порядке обхода.</summary>
-    private static List<string> ParseSellTabs(string raw) =>
-        raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(key => TabResolver.IndexOf(key) > 0)
-            .Distinct()
-            .OrderBy(TabResolver.IndexOf)
-            .ToList();
+    private static List<string> ParseSellTabs(string raw) => TabResolver.ParseSelection(raw);
 
-    private static string JoinSellTabs(IEnumerable<string> tabs) =>
-        string.Join(",", tabs.OrderBy(TabResolver.IndexOf).Select(TabResolver.DisplayName));
+    private static string JoinSellTabs(IEnumerable<string> tabs) => TabResolver.JoinSelection(tabs);
 
     private void UpdateSellTabsUi()
     {
@@ -1184,6 +1574,45 @@ public partial class MainWindow : Window
 
         _settings.SellTabs = JoinSellTabs(tabs);
         UpdateSellTabsUi();
+        ScheduleSave();
+    }
+
+    /// <summary>Список вкладок авторасплавки в порядке обхода.</summary>
+    private static List<string> ParseMeltTabs(string raw) => TabResolver.ParseSelection(raw);
+
+    private static string JoinMeltTabs(IEnumerable<string> tabs) => TabResolver.JoinSelection(tabs);
+
+    private void UpdateMeltTabsUi()
+    {
+        var selected = ParseMeltTabs(_settings.MeltTabs);
+
+        foreach (var child in MeltTabsPanel.Children)
+        {
+            if (child is not Button button)
+            {
+                continue;
+            }
+
+            var isSelected = button.Tag is string key && selected.Contains(key);
+            button.Classes.Set("selected", isSelected);
+        }
+    }
+
+    private void OnMeltTabToggleClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string key } || TabResolver.IndexOf(key) == 0)
+        {
+            return;
+        }
+
+        var tabs = ParseMeltTabs(_settings.MeltTabs);
+        if (!tabs.Remove(key))
+        {
+            tabs.Add(key);
+        }
+
+        _settings.MeltTabs = JoinMeltTabs(tabs);
+        UpdateMeltTabsUi();
         ScheduleSave();
     }
 
@@ -1348,7 +1777,7 @@ public partial class MainWindow : Window
         string cancelStatus,
         string busyStatus)
     {
-        if (_running || _checking || _hovering || _selling)
+        if (_running || _checking || _hovering || _selling || _melting)
         {
             return;
         }
@@ -1519,14 +1948,31 @@ public partial class MainWindow : Window
 
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 
-    private void OnSettingsClick(object? sender, RoutedEventArgs e)
+    private void OnSettingsClick(object? sender, RoutedEventArgs e) => ShowSettingsTab();
+
+    /// <summary>
+    /// Открывает вкладку настроек и подтягивает в неё свежие строки о версии и обновлении.
+    /// </summary>
+    private void ShowSettingsTab()
     {
-        SettingsVersionText.Text = "Версия: " + GitHubUpdater.BuildVersionDisplay(
+        var version = GitHubUpdater.BuildVersionDisplay(
             Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0));
+        SettingsVersionText.Text = "Версия " + version;
+        SettingsBuildVersionText.Text = version;
         UpdateStatusText.Text = DescribeUpdateStatus();
         UpdateStatusText.Foreground = UpdateStatusBrush();
-        MainContentGrid.IsVisible = false;
-        SettingsPanel.IsVisible = true;
+        MainTabControl.SelectedIndex = SettingsTabIndex;
+    }
+
+    /// <summary>Пользователь переключил вкладку — обновляем содержимое настроек, когда она открыта.</summary>
+    private void OnMainTabSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (MainTabControl is null || MainTabControl.SelectedIndex != SettingsTabIndex)
+        {
+            return;
+        }
+
+        ShowSettingsTab();
     }
 
     /// <summary>Строка состояния в настройках: что известно об обновлении на этот момент.</summary>
@@ -1562,10 +2008,10 @@ public partial class MainWindow : Window
         return _startupUpToDate ? SuccessBrush : IdleBrush;
     }
 
-    /// <summary>Обновляет строку в настройках, если панель открыта прямо сейчас.</summary>
+    /// <summary>Обновляет строку в настройках, если вкладка настроек открыта прямо сейчас.</summary>
     private void RefreshSettingsUpdateStatus()
     {
-        if (!SettingsPanel.IsVisible || _checkingUpdates)
+        if (_checkingUpdates || MainTabControl is null || MainTabControl.SelectedIndex != SettingsTabIndex)
         {
             return;
         }
@@ -1574,10 +2020,24 @@ public partial class MainWindow : Window
         UpdateStatusText.Foreground = UpdateStatusBrush();
     }
 
-    private void OnSettingsBackClick(object? sender, RoutedEventArgs e)
+    private void OnSettingsBackClick(object? sender, RoutedEventArgs e) =>
+        MainTabControl.SelectedIndex = InventoryTabIndex;
+
+    /// <summary>Открывает страницу релизов проекта в браузере по умолчанию.</summary>
+    private void OnOpenReleasesClick(object? sender, RoutedEventArgs e)
     {
-        SettingsPanel.IsVisible = false;
-        MainContentGrid.IsVisible = true;
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/Nirequ/DsoHelper/releases/latest",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception)
+        {
+            // Браузер не открылся — приложение продолжает работать как обычно.
+        }
     }
 
     private async void OnCheckUpdatesClick(object? sender, RoutedEventArgs e)
@@ -1707,12 +2167,15 @@ public partial class MainWindow : Window
         _runCts?.Cancel();
         _hoverCts?.Cancel();
         _sellCts?.Cancel();
+        _meltCts?.Cancel();
         _saveTimer.Stop();
         SaveSettings();
         _hotkey?.Dispose();
         _hotkey = null;
         _sellHotkey?.Dispose();
         _sellHotkey = null;
+        _meltHotkey?.Dispose();
+        _meltHotkey = null;
     }
 
     private void SetStatus(string text, StatusKind kind)

@@ -1,0 +1,1215 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:materialIcons="using:Material.Icons.Avalonia"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DsoHelper.MainWindow"
+        x:CompileBindings="False"
+        Title="DSO Helper"
+        Width="560" Height="820"
+        MinWidth="560" MaxWidth="560"
+        MinHeight="560"
+        CanResize="True"
+        WindowDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="{StaticResource UiFont}"
+        FontSize="13">
+
+    <Border x:Name="Root"
+            Background="{StaticResource AppBackgroundBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="14"
+            ClipToBounds="True">
+        <Grid x:Name="MainContentGrid" RowDefinitions="76,Auto,*,46">
+
+            <!-- ================= Window header ================= -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource HeaderSurfaceBrush}"
+                    PointerPressed="OnTitleBarPointerPressed">
+                <Grid ColumnDefinitions="*,Auto" Margin="28,0">
+
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Border Width="38" Height="42" CornerRadius="8" Background="{StaticResource GoldTintBrush}">
+                        <Grid>
+                            <materialIcons:MaterialIcon Kind="ShieldOutline" Classes="ic big" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="D" FontSize="12" FontWeight="Bold"
+                                       Foreground="{StaticResource GoldBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="DSO HELPER" FontSize="19" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="DRAKENSANG · ПОМОЩНИК ИГРОКА" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="22"
+                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <CheckBox x:Name="AlwaysOnTopCheck"
+                              Classes="pin"
+                              Content="Поверх окон"
+                              VerticalAlignment="Center" />
+                    <Border Width="1" Height="20" Background="{StaticResource BorderBrush}" />
+                    <Button Classes="window" Click="OnMinimizeClick" ToolTip.Tip="Свернуть">
+                        <materialIcons:MaterialIcon Kind="WindowMinimize" Classes="ic plain" Width="18" Height="18" />
+                    </Button>
+                    <Button Classes="window" Click="OnCloseClick" ToolTip.Tip="Закрыть">
+                        <materialIcons:MaterialIcon Kind="WindowClose" Classes="ic plain" Width="18" Height="18" />
+                    </Button>
+                </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ================= Update banner ================= -->
+            <Border x:Name="UpdateBanner"
+                    Grid.Row="1"
+                    IsVisible="False"
+                    Margin="28,14,28,0"
+                    Background="{StaticResource CardSurfaceBrush}"
+                    BorderBrush="{StaticResource GoldBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="16">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <materialIcons:MaterialIcon Kind="DownloadOutline" Classes="ic" Width="18" Height="18" VerticalAlignment="Top" Margin="0,2,0,0" />
+                    <StackPanel Grid.Column="1" Margin="12,0,16,0" Spacing="4">
+                        <TextBlock x:Name="UpdateBannerTitle" FontSize="13" FontWeight="SemiBold"
+                                   Text="Доступно обновление" />
+                        <TextBlock x:Name="UpdateBannerText" Classes="small"
+                                   Text="Новая версия готова к загрузке." />
+                        <ProgressBar x:Name="UpdateBannerProgressBar" IsVisible="False" Margin="0,6,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button x:Name="UpdateBannerButton" Classes="primary" Height="34"
+                                Content="Обновить" Click="OnBannerUpdateClick" />
+                        <Button x:Name="UpdateBannerCloseButton" Classes="window"
+                                Click="OnBannerCloseClick" ToolTip.Tip="Скрыть уведомление">
+                            <materialIcons:MaterialIcon Kind="WindowClose" Classes="ic muted" Width="16" Height="16" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ================= Navigation + pages ================= -->
+            <TabControl x:Name="MainTabControl" Grid.Row="2" SelectionChanged="OnMainTabSelectionChanged">
+                <TabControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="6" />
+                    </ItemsPanelTemplate>
+                </TabControl.ItemsPanel>
+
+                <!-- ==================================================== ИНВЕНТАРЬ -->
+                <TabItem>
+                    <TabItem.Header>
+                        <TextBlock Text="Инвентарь" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{Binding $parent[TabItem].Foreground}" />
+                    </TabItem.Header>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="28" Spacing="20">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="6" Margin="0,0,16,0">
+                                    <TextBlock Classes="pageTitle" Text="Инвентарь" />
+                                    <TextBlock Classes="pageDesc"
+                                               Text="Калибровка и проверка сетки — основа для всех инструментов." />
+                                </StackPanel>
+                                <Border Grid.Column="1" Classes="chip" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                 Fill="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Classes="chipLabel" Text="{Binding Text, ElementName=StatusText}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- 01 Калибровка сетки -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="CropFree" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Калибровка сетки" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="01 / ПОДГОТОВКА" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="176,24,*">
+                                        <StackPanel Spacing="16">
+                                            <Border Classes="chip" HorizontalAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                             Fill="{Binding Foreground, ElementName=InvStatusText}" />
+                                                    <TextBlock x:Name="InvStatusText" Classes="chipLabel"
+                                                               Text="Сетка не откалибрована" />
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock Classes="bodyStrong"
+                                                       Text="28 ячеек · сетка 7 × 4 · прямоугольник ~80 × 80 px" />
+                                            <TextBlock x:Name="InvSummaryText" Classes="body"
+                                                       Text="Шаг 1: укажите центр ячейки №1 (левая верхняя) и ячейки №28 (правая нижняя). Шаг 2: нажмите «Проверить инвентарь»." />
+                                            <StackPanel Spacing="8" HorizontalAlignment="Left">
+                                                <Button x:Name="PickInvSlot1Button" Classes="outline" Padding="12,0"
+                                                        Click="OnPickInvSlot1Click">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                                        <TextBlock Text="Слот #1" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button x:Name="PickInvSlot28Button" Classes="outline" Padding="12,0"
+                                                        Click="OnPickInvSlot28Click">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                                        <TextBlock Text="Слот #28" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                    <Border Grid.Column="2" Height="224" Padding="16" CornerRadius="8"
+                                            Background="{StaticResource SunkenSurfaceBrush}">
+                                        <DockPanel>
+                                            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto">
+                                                <TextBlock Text="СЕТКА ИНВЕНТАРЯ" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}" />
+                                                <TextBlock Grid.Column="1" Text="7 × 4" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}" />
+                                            </Grid>
+                                            <TextBlock DockPanel.Dock="Bottom" FontSize="10"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       Text="Крайние ячейки задают всю сетку" />
+                                            <StackPanel Spacing="5" Margin="0,8">
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource GoldTintBrush}"
+                                                    BorderBrush="{StaticResource GoldBrush}" BorderThickness="1">
+                                                <TextBlock Text="#1" FontSize="10"
+                                                           Foreground="{StaticResource GoldBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource CardSurfaceBrush}"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="·" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Width="27" Height="32" CornerRadius="4"
+                                                    Background="{StaticResource GoldTintBrush}"
+                                                    BorderBrush="{StaticResource GoldBrush}" BorderThickness="1">
+                                                <TextBlock Text="#28" FontSize="10"
+                                                           Foreground="{StaticResource GoldBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+                                    </Grid>
+
+                                    <Border Classes="note">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <materialIcons:MaterialIcon Kind="AlertOutline" Classes="ic" Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0" Foreground="{StaticResource WarningTextBrush}" />
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="4">
+                                                <TextBlock Text="Калибруйте только в полноэкранном режиме игры, без рамки"
+                                                           FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                           Foreground="{StaticResource WarningTextBrush}" />
+                                                <TextBlock Text="Проверку также запускайте только в этом режиме. Сетка привязана к размеру окна: после смены разрешения или размера окна откалибруйте её заново, иначе результаты будут неверными."
+                                                           Classes="small" Foreground="{StaticResource WarningTextBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <TextBlock Classes="small"
+                                               Text="Как калибровать: откройте инвентарь → нажмите «Слот #1» и кликните по центру левой верхней ячейки → нажмите «Слот #28» и кликните по центру правой нижней. Положение остальных ячеек программа рассчитает сама." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 02 Калибровка вкладок -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="ViewDashboardOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Калибровка вкладок" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="02 / ПЕРЕКЛЮЧЕНИЕ" />
+                                    </Grid>
+
+                                    <WrapPanel Orientation="Horizontal" ItemSpacing="10" LineSpacing="10">
+                                        <Border Classes="chip" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                         Fill="{Binding Foreground, ElementName=TabStatusText}" />
+                                                <TextBlock x:Name="TabStatusText" Classes="chipLabel"
+                                                           Text="Калибровка вкладок не требуется" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Button x:Name="PickTabButton" Classes="outline"
+                                                Click="OnPickTabClick" Content="Указать вкладку 1" />
+                                        <Button x:Name="PickTabStepButton" Classes="outline"
+                                                Click="OnPickTabStepClick" Content="Указать вкладку 2" />
+                                    </WrapPanel>
+
+                                    <TextBlock Classes="body"
+                                               Text="Нужно для Fast Mount и автопродажи, чтобы программа умела переключать вкладки инвентаря. Нажмите «Указать вкладку 1» и кликните по заголовку первой вкладки, затем «Указать вкладку 2» — по заголовку второй." />
+                                    <TextBlock Classes="body"
+                                               Text="Расстояние между ними программа применит к остальным вкладкам. Нужная вкладка выбирается на странице Fast Mount." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 03 Проверка инвентаря -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="FormatListChecks" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Проверка инвентаря 7 × 4" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="03 / ДИАГНОСТИКА" />
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button x:Name="CheckInventoryButton" Classes="primary" Click="OnCheckInventoryClick"
+                                                ToolTip.Tip="Делает снимок окна игры и определяет, что лежит в каждой из 28 ячеек: пусто, обычный, улучшенный, магический, экстраординарный, легендарный, уникальный, мифический или неопознанный («?»). Запускайте в полноэкранном режиме игры.">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <materialIcons:MaterialIcon Kind="MagnifyScan" Classes="ic" Width="18" Height="18" Foreground="{StaticResource OnCrimsonTextBrush}" />
+                                                <TextBlock Text="Проверить инвентарь" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="HoverInventoryButton" Classes="outline" Click="OnHoverInventoryClick"
+                                                ToolTip.Tip="Курсор по очереди наводится на каждую занятую ячейку и ненадолго задерживается, чтобы успела появиться подсказка предмета. В конце курсор возвращается на прежнее место. Запускайте в полноэкранном режиме игры.">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <materialIcons:MaterialIcon Kind="CursorDefaultOutline" Classes="ic" Width="18" Height="18" />
+                                                <TextBlock Text="Наводить на предметы" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <TextBlock Classes="body"
+                                               Text="Перед запуском откройте инвентарь в игре. Итог проверки — сколько ячеек каждого качества — появится в статусной строке внизу окна." />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ==================================================== FAST MOUNT -->
+                <TabItem>
+                    <TabItem.Header>
+                        <TextBlock Text="Fast Mount" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{Binding $parent[TabItem].Foreground}" />
+                    </TabItem.Header>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="28" Spacing="20">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="6" Margin="0,0,16,0">
+                                    <TextBlock Classes="pageTitle" Text="Fast Mount" />
+                                    <TextBlock Classes="pageDesc"
+                                               Text="Быстрый вызов маунта и работа со слотом плаща." />
+                                </StackPanel>
+                                <Border Grid.Column="1" Classes="chip" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                 Fill="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Classes="chipLabel" Text="{Binding Text, ElementName=StatusText}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- 01 Слот плаща -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Слот плаща" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="01 / ПРЕДМЕТ" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                        <StackPanel Spacing="14">
+                                            <Border Classes="chip" HorizontalAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                             Fill="{Binding Foreground, ElementName=SlotStatusText}" />
+                                                    <TextBlock x:Name="SlotStatusText" Classes="chipLabel"
+                                                               Text="Слот не выбран" />
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock x:Name="SlotCoordsText" Classes="body"
+                                                       Text="Нажмите «Выбрать слот» и кликните по ячейке, где лежит плащ: квадрат следует за курсором." />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="PickSlotButton" Classes="outline"
+                                                VerticalAlignment="Center" Click="OnPickSlotClick">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                                <TextBlock Text="Выбрать слот" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 02 Вкладка инвентаря -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="ViewDashboardOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Вкладка инвентаря" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="02 / ПЕРЕКЛЮЧЕНИЕ" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Classes="settingLabel" Text="Переключать вкладку" />
+                                        <CheckBox Grid.Column="1" x:Name="SwitchTabCheck" Classes="toggle"
+                                                  Content="Переключать вкладку" ToolTip.Tip="Переключать вкладку" />
+                                    </Grid>
+
+                                    <StackPanel x:Name="TabButtonsPanel" Orientation="Horizontal" Spacing="6">
+                                        <Button Classes="tabTile" Tag="1" Content="1" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="2" Content="2" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="3" Content="3" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="4" Content="4" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="5" Content="5" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="6" Content="6" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="7" Content="7" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="8" Content="8" Click="OnTabSelectClick" />
+                                        <Button Classes="tabTile" Tag="prem" Content="prem" Click="OnTabSelectClick" />
+                                    </StackPanel>
+
+                                    <TextBlock x:Name="TabSelectStatusText" Classes="small"
+                                               Text="Выбранная вкладка — 1." />
+                                    <TextBlock Classes="smallMuted"
+                                               Text="Позиции вкладок задаются на странице «Инвентарь», в блоке «Калибровка вкладок»." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 03 Клавиши -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="KeyboardOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Клавиши" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="03 / УПРАВЛЕНИЕ" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="24">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="fieldLabel" Text="Инвентарь" />
+                                            <Border Classes="field">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="InventoryKeyBox" Classes="bare" IsReadOnly="True"
+                                                             PlaceholderText="Нажмите клавишу" />
+                                                    <materialIcons:MaterialIcon Kind="KeyboardOutline" Grid.Column="1" Classes="ic muted" Width="16" Height="16" />
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Classes="caption" Text="Клавиша инвентаря в игре" TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Spacing="8">
+                                            <TextBlock Classes="fieldLabel" Text="Кнопка маунта" />
+                                            <Border Classes="field">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="MountKeyBox" Classes="bare" IsReadOnly="True"
+                                                             PlaceholderText="Нажмите клавишу" />
+                                                    <materialIcons:MaterialIcon Kind="KeyboardOutline" Grid.Column="1" Classes="ic muted" Width="16" Height="16" />
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Classes="caption" Text="Кнопка маунта в игре" TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" Spacing="8">
+                                            <TextBlock Classes="fieldLabel" Text="Хоткей Fast Mount" />
+                                            <Border Classes="field">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="HotkeyBox" Classes="bare" IsReadOnly="True"
+                                                             PlaceholderText="Нажмите клавишу" />
+                                                    <materialIcons:MaterialIcon Kind="KeyboardOutline" Grid.Column="1" Classes="ic muted" Width="16" Height="16" />
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock x:Name="HotkeyStatusText" Classes="caption" Text="Активен · F8" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Classes="body"
+                                               Text="«Инвентарь» и «Кнопка маунта» — клавиши, назначенные в игре. «Хоткей» запускает Fast Mount. Кликните по полю и нажмите нужную клавишу: название подставится само, например Space, F1, ←. Esc отменяет ввод." />
+
+                                    <Border Classes="note">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <materialIcons:MaterialIcon Kind="AlertOutline" Classes="ic" Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0" Foreground="{StaticResource WarningTextBrush}" />
+                                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="Хоткей работает только пока активно окно Drakensang."
+                                                       Classes="small" Foreground="{StaticResource WarningTextBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 04 Задержки -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="TimerOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Задержки" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="МИЛЛИСЕКУНДЫ" />
+                                    </Grid>
+
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="settingLabel" Text="Пауза между действиями" />
+                                            <Border Grid.Column="1" Classes="fieldNumeric">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="DelayValueBox" Classes="bare" Text="300" />
+                                                    <TextBlock Grid.Column="1" Classes="caption" Text="мс"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                        <Slider x:Name="DelaySlider" Minimum="0" Maximum="1000" Value="300"
+                                                SmallChange="15" LargeChange="60" />
+                                        <TextBlock Classes="small"
+                                                   Text="Шаг ползунка — 15 мс. Точное значение (0–1000) можно ввести вручную. Если игра не успевает реагировать, увеличьте паузу." />
+                                    </StackPanel>
+
+                                    <Border Classes="divider" />
+
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="settingLabel" Text="Пауза после вызова маунта" />
+                                            <Border Grid.Column="1" Classes="fieldNumeric">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="MountDelayValueBox" Classes="bare" Text="700" />
+                                                    <TextBlock Grid.Column="1" Classes="caption" Text="мс"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                        <Slider x:Name="MountDelaySlider" Minimum="0" Maximum="1500" Value="700"
+                                                SmallChange="15" LargeChange="75" />
+                                        <TextBlock Classes="small"
+                                                   Text="Пока идёт призыв, игра не принимает клики по инвентарю. Если старый плащ иногда остаётся в сумке — увеличьте эту паузу." />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ==================================================== АВТОПРОДАЖА -->
+                <TabItem>
+                    <TabItem.Header>
+                        <TextBlock Text="Автопродажа" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{Binding $parent[TabItem].Foreground}" />
+                    </TabItem.Header>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="28" Spacing="20">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="6" Margin="0,0,16,0">
+                                    <TextBlock Classes="pageTitle" Text="Автопродажа" />
+                                    <TextBlock Classes="pageDesc"
+                                               Text="Продажа неопознанных предметов выбранного качества" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Classes="chip" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                 Fill="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Classes="chipLabel" Text="{Binding Text, ElementName=StatusText}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- 01 Запуск и хоткей -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="PlayOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Запуск и хоткей" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="01 / УПРАВЛЕНИЕ" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,190" ColumnSpacing="18">
+                                        <StackPanel Spacing="14">
+                                            <Border Classes="chip" HorizontalAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                             Fill="{Binding Foreground, ElementName=AutoSellStatusText}" />
+                                                    <TextBlock x:Name="AutoSellStatusText" Classes="chipLabel"
+                                                               Text="Автопродажа ещё не запускалась" />
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock x:Name="AutoSellSummaryText" Classes="body"
+                                                       Text="Проходит по сетке 7 × 4 и продаёт правой кнопкой мыши только неопознанные предметы («?») отмеченного ниже качества. Опознанные предметы не затрагиваются." />
+                                            <Button x:Name="AutoSellButton" Classes="primary" HorizontalAlignment="Left"
+                                                    Click="OnAutoSellClick"
+                                                    ToolTip.Tip="Программа сканирует сетку и кликает правой кнопкой по каждой ячейке с неопознанным предметом отмеченного качества. В конце курсор возвращается на прежнее место. Нужен открытый магазин торговца.">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <materialIcons:MaterialIcon Kind="PlayOutline" Classes="ic" Width="18" Height="18" Foreground="{StaticResource OnCrimsonTextBrush}" />
+                                                    <TextBlock Text="Запустить автопродажу" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Spacing="10">
+                                            <TextBlock Classes="fieldLabel" Text="Хоткей автопродажи" />
+                                            <Border Classes="field">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="SellHotkeyBox" Classes="bare" IsReadOnly="True"
+                                                             PlaceholderText="Нажмите клавишу" />
+                                                    <materialIcons:MaterialIcon Kind="KeyboardOutline" Grid.Column="1" Classes="ic muted" Width="16" Height="16" />
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock x:Name="SellHotkeyStatusText" Classes="caption" Text="Активен · F9" />
+                                            <TextBlock Classes="small"
+                                                       Text="По умолчанию F9. Кликните по полю и нажмите клавишу. Esc отменяет ввод." />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Classes="body"
+                                               Text="Откройте инвентарь и магазин торговца, затем нажмите кнопку или хоткей. Пока идёт продажа, калибровка и другие действия недоступны. Хоткей работает только пока активно окно Drakensang." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 02 Вкладки для обхода -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="ViewDashboardOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Вкладки для обхода" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="02 / ИНВЕНТАРЬ" />
+                                    </Grid>
+
+                                    <StackPanel x:Name="SellTabsPanel" Orientation="Horizontal" Spacing="6">
+                                        <Button Classes="tabTile" Tag="1" Content="1" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="2" Content="2" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="3" Content="3" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="4" Content="4" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="5" Content="5" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="6" Content="6" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="7" Content="7" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="8" Content="8" Click="OnSellTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="prem" Content="prem" Click="OnSellTabToggleClick" />
+                                    </StackPanel>
+
+                                    <TextBlock Classes="small"
+                                               Text="Для каждой отмеченной вкладки программа открывает её, просматривает 28 ячеек, продаёт подходящие предметы и переходит к следующей. Неотмеченные вкладки пропускаются. Для всех вкладок, кроме 1-й, нужна калибровка на странице «Инвентарь», в блоке «Калибровка вкладок»." />
+                                    <TextBlock Classes="smallMuted"
+                                               Text="Магазин торговца должен быть открыт: он действует на все вкладки." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 03 Качество -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="FilterVariant" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Качество предметов" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="03 / ФИЛЬТР ПРОДАЖИ" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,*" RowDefinitions="38,38,38" ColumnSpacing="8" RowSpacing="8">
+                                        <CheckBox x:Name="SellImprovedCheck" Classes="quality" Content="Улучшенный" />
+                                        <CheckBox Grid.Column="1" x:Name="SellMagicCheck" Classes="quality" Content="Магический" />
+                                        <CheckBox Grid.Row="1" x:Name="SellExtraordinaryCheck" Classes="quality" Content="Экстраординарный" />
+                                        <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SellLegendaryCheck" Classes="quality" Content="Легендарный" />
+                                        <CheckBox Grid.Row="2" x:Name="SellUniqueCheck" Classes="quality" Content="Уникальный" />
+                                        <CheckBox Grid.Row="2" Grid.Column="1" x:Name="SellMythicCheck" Classes="quality" Content="Мифический" />
+                                    </Grid>
+
+                                    <TextBlock Classes="small"
+                                               Text="Продаются только неопознанные предметы («?») и только отмеченных качеств. Качество определяется по цвету знака вопроса. Опознанные предметы не продаются, даже если их качество отмечено. По умолчанию выбраны низкие качества: Улучшенный и Магический." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 04 Задержки -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="TimerOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Задержки" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="04 / МИЛЛИСЕКУНДЫ" />
+                                    </Grid>
+
+                                    <StackPanel Spacing="18">
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Classes="settingLabel" Text="Пауза после вкладки" />
+                                                <Border Grid.Column="1" Classes="fieldNumeric">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBox x:Name="SellSwitchValueBox" Classes="bare" Text="200" />
+                                                        <TextBlock Grid.Column="1" Classes="caption" Text="мс"
+                                                                   VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
+                                            <Slider x:Name="SellSwitchSlider" Minimum="0" Maximum="1000" Value="200"
+                                                    SmallChange="15" LargeChange="60" />
+                                            <TextBlock Classes="small" Text="Перед сканом сетки." />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Classes="settingLabel" Text="Пауза после предмета" />
+                                                <Border Grid.Column="1" Classes="fieldNumeric">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBox x:Name="SellItemValueBox" Classes="bare" Text="150" />
+                                                        <TextBlock Grid.Column="1" Classes="caption" Text="мс"
+                                                                   VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
+                                            <Slider x:Name="SellItemSlider" Minimum="0" Maximum="1000" Value="150"
+                                                    SmallChange="15" LargeChange="60" />
+                                            <TextBlock Classes="small" Text="Перед кликом по предмету." />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <Border Classes="divider" />
+
+                                    <TextBlock Classes="small"
+                                               Text="Шаг ползунка — 15 мс, значения можно ввести вручную. Ниже ~100 мс на предмет клики игры могут теряться." />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ==================================================== MELT -->
+                <TabItem>
+                    <TabItem.Header>
+                        <TextBlock Text="Melt" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{Binding $parent[TabItem].Foreground}" />
+                    </TabItem.Header>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="28" Spacing="20">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="6" Margin="0,0,16,0">
+                                    <TextBlock Classes="pageTitle" Text="Melt" />
+                                    <TextBlock Classes="pageDesc"
+                                               Text="Авторасплавка неопознанных предметов в плавильне." />
+                                </StackPanel>
+                                <Border Grid.Column="1" Classes="chip" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                 Fill="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Classes="chipLabel" Text="{Binding Text, ElementName=StatusText}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- 01 Запуск и хоткей -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="PlayOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Запуск и хоткей" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="01 / УПРАВЛЕНИЕ" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,190" ColumnSpacing="18">
+                                        <StackPanel Spacing="14">
+                                            <Border Classes="chip" HorizontalAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                             Fill="{Binding Foreground, ElementName=AutoMeltStatusText}" />
+                                                    <TextBlock x:Name="AutoMeltStatusText" Classes="chipLabel"
+                                                               Text="Авторасплавка ещё не запускалась" />
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock x:Name="AutoMeltSummaryText" Classes="body"
+                                                       Text="Обходит вкладки и отправляет в плавильню только предметы с «?». Каждые 9 штук — «Переплавить»." />
+                                            <Button x:Name="AutoMeltButton" Classes="primary" HorizontalAlignment="Left"
+                                                    Click="OnAutoMeltClick"
+                                                    ToolTip.Tip="Сканирует сетку 7 × 4 и правой кнопкой отправляет в плавильню предметы с «?», каждые 9 — нажимает «Переплавить». Нужны открытые инвентарь и окно плавильни.">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <materialIcons:MaterialIcon Kind="PlayOutline" Classes="ic" Width="18" Height="18" Foreground="{StaticResource OnCrimsonTextBrush}" />
+                                                    <TextBlock Text="Запустить авторасплавку" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Spacing="10">
+                                            <TextBlock Classes="fieldLabel" Text="Хоткей авторасплавки" />
+                                            <Border Classes="field">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="MeltHotkeyBox" Classes="bare" IsReadOnly="True"
+                                                             PlaceholderText="Нажмите клавишу" />
+                                                    <materialIcons:MaterialIcon Kind="KeyboardOutline" Grid.Column="1" Classes="ic muted" Width="16" Height="16" />
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock x:Name="MeltHotkeyStatusText" Classes="caption" Text="Активен · F10" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Border Classes="note">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <materialIcons:MaterialIcon Kind="AlertOutline" Classes="ic" Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0" Foreground="{StaticResource WarningTextBrush}" />
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="4">
+                                                <TextBlock Text="Нужны открытые инвентарь и окно плавильни"
+                                                           FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                           Foreground="{StaticResource WarningTextBrush}" />
+                                                <TextBlock Text="Плавильня не должна перекрывать инвентарь."
+                                                           Classes="small" Foreground="{StaticResource WarningTextBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 02 Вкладки -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="ViewDashboardOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Вкладки" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="02 / ОБХОД ИНВЕНТАРЯ" />
+                                    </Grid>
+
+                                    <StackPanel x:Name="MeltTabsPanel" Orientation="Horizontal" Spacing="6">
+                                        <Button Classes="tabTile" Tag="1" Content="1" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="2" Content="2" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="3" Content="3" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="4" Content="4" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="5" Content="5" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="6" Content="6" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="7" Content="7" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="8" Content="8" Click="OnMeltTabToggleClick" />
+                                        <Button Classes="tabTile" Tag="prem" Content="prem" Click="OnMeltTabToggleClick" />
+                                    </StackPanel>
+
+                                    <TextBlock Classes="small"
+                                               Text="Отмеченные вкладки обходятся по очереди, остальные пропускаются. Для вкладок, кроме первой, нужна калибровка на странице «Инвентарь»." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 03 Плавильня -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Плавильня" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="03 / КАЛИБРОВКА КНОПКИ" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="24">
+                                        <StackPanel Spacing="8">
+                                            <Border Classes="chip" HorizontalAlignment="Left">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                             Fill="{Binding Foreground, ElementName=MeltButtonStatusText}" />
+                                                    <TextBlock x:Name="MeltButtonStatusText" Classes="chipLabel"
+                                                               Text="Кнопка «Переплавить» не указана." />
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock Classes="small" Text="Позиция подстроится под окно игры." />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="PickMeltButtonButton" Classes="outline"
+                                                VerticalAlignment="Center" Click="OnPickMeltButtonClick"
+                                                ToolTip.Tip="Запомнит точку клика по кнопке «Melt Down» / «Переплавить» в открытом окне плавильни.">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <materialIcons:MaterialIcon Kind="Crosshairs" Classes="ic" Width="18" Height="18" />
+                                                <TextBlock Text="Указать кнопку" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+
+                                    <TextBlock Classes="small"
+                                               Text="Откройте плавильню, нажмите кнопку и кликните по «Melt Down». Esc отменяет выбор; точка привязана к размеру окна игры." />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 04 Задержки -->
+                            <Border Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="TimerOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Задержки" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="МИЛЛИСЕКУНДЫ" />
+                                    </Grid>
+
+                                    <StackPanel Spacing="18">
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Classes="settingLabel" Text="Пауза после вкладки" />
+                                                <Border Grid.Column="1" Classes="fieldNumeric">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBox x:Name="MeltSwitchValueBox" Classes="bare" Text="200" />
+                                                        <TextBlock Grid.Column="1" Classes="caption" Text="мс"
+                                                                   VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
+                                            <Slider x:Name="MeltSwitchSlider" Minimum="0" Maximum="1000" Value="200"
+                                                    SmallChange="15" LargeChange="60" />
+                                            <TextBlock Classes="small" Text="Перед сканом сетки." />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="12">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Classes="settingLabel" Text="Пауза после предмета" />
+                                                <Border Grid.Column="1" Classes="fieldNumeric">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBox x:Name="MeltItemValueBox" Classes="bare" Text="150" />
+                                                        <TextBlock Grid.Column="1" Classes="caption" Text="мс"
+                                                                   VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
+                                            <Slider x:Name="MeltItemSlider" Minimum="0" Maximum="1000" Value="150"
+                                                    SmallChange="15" LargeChange="60" />
+                                            <TextBlock Classes="small" Text="Перед кликом по предмету." />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <Border Classes="divider" />
+
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="settingLabel" Text="Пауза после переплавки" />
+                                            <Border Grid.Column="1" Classes="fieldNumeric">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox x:Name="MeltProcessValueBox" Classes="bare" Text="900" />
+                                                    <TextBlock Grid.Column="1" Classes="caption" Text="мс"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                        <Slider x:Name="MeltProcessSlider" Minimum="0" Maximum="2000" Value="900"
+                                                SmallChange="15" LargeChange="100" />
+                                        <TextBlock Classes="small"
+                                                   Text="Плавильне нужно время на партию; ниже ~100 мс клики теряются." />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ==================================================== НАСТРОЙКИ -->
+                <TabItem>
+                    <TabItem.Header>
+                        <TextBlock Text="Настройки" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{Binding $parent[TabItem].Foreground}" />
+                    </TabItem.Header>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <Grid x:Name="SettingsPanel" Margin="28" RowDefinitions="Auto,Auto,Auto" RowSpacing="20">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="6" Margin="0,0,16,0">
+                                    <TextBlock Classes="pageTitle" Text="Настройки" />
+                                    <TextBlock Classes="pageDesc" Text="Обновления и информация о сборке." />
+                                </StackPanel>
+                                <Border Grid.Column="1" Classes="chip" VerticalAlignment="Center"
+                                        Background="{StaticResource GoldTintBrush}"
+                                        BorderBrush="{StaticResource GoldBorderBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                                                 Fill="{StaticResource GoldBrush}" />
+                                        <TextBlock x:Name="SettingsVersionText" Classes="chipLabel"
+                                                   Foreground="{StaticResource GoldBrush}" Text="Версия: 1.5" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                <Button x:Name="SettingsBackButton" Classes="outline" Click="OnSettingsBackClick">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <materialIcons:MaterialIcon Kind="ArrowLeft" Classes="ic" Width="18" Height="18" />
+                                        <TextBlock Text="Назад" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <Border Grid.Row="2" Classes="card">
+                                <StackPanel Spacing="18">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <materialIcons:MaterialIcon Kind="DownloadOutline" Classes="ic" Width="18" Height="18" />
+                                            <TextBlock Classes="cardTitle" Text="Центр обновлений" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Classes="meta" Text="GITHUB RELEASES" />
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                        <Border Width="48" Height="48" CornerRadius="12"
+                                                Background="{StaticResource GoldTintBrush}">
+                                            <materialIcons:MaterialIcon Kind="DownloadOutline" Classes="ic" Width="24" Height="24" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                                            <TextBlock Text="Проверить обновления" FontSize="16" FontWeight="SemiBold" />
+                                            <TextBlock Text="Поиск новых релизов на GitHub." Classes="pageDesc" />
+                                        </StackPanel>
+                                        <Button Grid.Column="2" x:Name="CheckUpdatesButton" Classes="primary"
+                                                Content="Проверить сейчас" Click="OnCheckUpdatesClick"
+                                                VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <Border Classes="noteOk">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <materialIcons:MaterialIcon Kind="CheckCircleOutline" Classes="ic" Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0" Foreground="{StaticResource SuccessBrush}" />
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="4">
+                                                <TextBlock x:Name="UpdateStatusText" Classes="small"
+                                                           Foreground="{StaticResource SuccessBrush}"
+                                                           Text="Проверяется при каждом запуске приложения." />
+                                                <ProgressBar x:Name="UpdateProgressBar" IsVisible="False" Margin="0,4,0,0" />
+                                                <TextBlock x:Name="UpdatePercentText" Classes="caption" IsVisible="False"
+                                                           Foreground="{StaticResource SuccessBrush}" Text="0%" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Classes="divider" />
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Spacing="6" Margin="0,0,16,0">
+                                            <TextBlock Text="УСТАНОВЛЕННАЯ ВЕРСИЯ" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock x:Name="SettingsBuildVersionText" Text="1.5" FontSize="22" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Classes="outline" Click="OnOpenReleasesClick"
+                                                VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <materialIcons:MaterialIcon Kind="OpenInNew" Classes="ic" Width="16" Height="16" />
+                                                <TextBlock Text="GitHub Releases" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+
+            <!-- ================= Status bar ================= -->
+            <Border Grid.Row="3"
+                    Background="{StaticResource HeaderSurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    Padding="28,0">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse x:Name="StatusDot" Width="6" Height="6" VerticalAlignment="Center"
+                                 Fill="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock x:Name="StatusText" FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Готово к работе" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                        <materialIcons:MaterialIcon Kind="CodeJson" Classes="ic muted" Width="14" Height="14" />
+                        <TextBlock Text="CONFIG.JSON" FontSize="10" FontWeight="Medium"
+                                   Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
