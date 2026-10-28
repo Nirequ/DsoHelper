@@ -38,26 +38,23 @@ internal static class FastMountRunner
             return false;
         }
 
-        if (settings.SwitchInventoryTab)
+        var tabIndex = TabResolver.IndexOf(settings.TabKey);
+        if (tabIndex == 0)
         {
-            var tabIndex = TabResolver.IndexOf(settings.TabKey);
-            if (tabIndex == 0)
-            {
-                error = "Выбрана неизвестная вкладка инвентаря.";
-                return false;
-            }
+            error = "Выбрана неизвестная вкладка инвентаря.";
+            return false;
+        }
 
-            if (!TabResolver.HasBase(settings))
-            {
-                error = "Укажите позицию 1-й вкладки: нажмите «Указать вкладку 1» во вкладке «ИНВЕНТАРЬ».";
-                return false;
-            }
+        if (!TabResolver.HasBase(settings))
+        {
+            error = "Укажите позицию 1-й вкладки: нажмите «Указать вкладку 1» во вкладке «ИНВЕНТАРЬ».";
+            return false;
+        }
 
-            if (tabIndex > 1 && !TabResolver.HasStep(settings))
-            {
-                error = "Задайте шаг вкладок: нажмите «Указать вкладку 2» во вкладке «ИНВЕНТАРЬ».";
-                return false;
-            }
+        if (tabIndex > 1 && !TabResolver.HasStep(settings))
+        {
+            error = "Задайте шаг вкладок: нажмите «Указать вкладку 2» во вкладке «ИНВЕНТАРЬ».";
+            return false;
         }
 
         if (settings.DelayMs < 0)
@@ -157,11 +154,6 @@ internal static class FastMountRunner
         report("Открываю инвентарь");
         InputSimulator.KeyPress(inventoryKey);
         await DelayAsync(settings.DelayMs, cancellationToken);
-
-        if (!settings.SwitchInventoryTab)
-        {
-            return;
-        }
 
         if (!TabResolver.TryResolve(settings, settings.TabKey, out var tabX, out var tabY))
         {

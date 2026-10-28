@@ -27,12 +27,6 @@ internal sealed class FastMountSettings
     /// <summary>Distance from the top edge of the game client area, in client-height units.</summary>
     public double? SlotTopRatio { get; set; }
 
-    /// <summary>
-    /// Click an inventory tab right after opening the inventory so the cape is
-    /// always in the same cell (like the reference tool).
-    /// </summary>
-    public bool SwitchInventoryTab { get; set; }
-
     /// <summary>Selected inventory tab: "1".."8" or "prem".</summary>
     public string TabKey { get; set; } = "1";
 
@@ -236,7 +230,6 @@ internal sealed class FastMountSettings
             TabRightRatio = ReadDouble(first, "RightRatio");
             TabTopRatio = ReadDouble(first, "TopRatio");
             TabKey = "1";
-            SwitchInventoryTab = true;
         }
         catch (JsonException)
         {

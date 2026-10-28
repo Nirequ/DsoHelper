@@ -328,12 +328,6 @@
                                         <TextBlock Grid.Column="1" Classes="meta" Text="02 / ПЕРЕКЛЮЧЕНИЕ" />
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Classes="settingLabel" Text="Переключать вкладку" />
-                                        <CheckBox Grid.Column="1" x:Name="SwitchTabCheck" Classes="toggle"
-                                                  Content="Переключать вкладку" ToolTip.Tip="Переключать вкладку" />
-                                    </Grid>
-
                                     <StackPanel x:Name="TabButtonsPanel" Orientation="Horizontal" Spacing="6">
                                         <Button Classes="tabTile" Tag="1" Content="1" Click="OnTabSelectClick" />
                                         <Button Classes="tabTile" Tag="2" Content="2" Click="OnTabSelectClick" />

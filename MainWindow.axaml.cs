@@ -286,13 +286,6 @@ public partial class MainWindow : Window
         WireDelayPair(MeltItemSlider, MeltItemValueBox, 150, v => _settings.MeltItemDelayMs = v);
         WireDelayPair(MeltProcessSlider, MeltProcessValueBox, 900, v => _settings.MeltProcessDelayMs = v, MeltProcessDelayMaxMs);
 
-        SwitchTabCheck.IsCheckedChanged += (_, _) =>
-        {
-            _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
-            UpdateTabUi();
-            ScheduleSave();
-        };
-
         AlwaysOnTopCheck.IsCheckedChanged += (_, _) =>
         {
             Topmost = AlwaysOnTopCheck.IsChecked == true;
@@ -392,8 +385,6 @@ public partial class MainWindow : Window
         MountDelaySlider.Value = Math.Clamp(_settings.MountDelayMs, 0, MountDelayMaxMs);
         MountDelayValueBox.Text = MountDelaySlider.Value.ToString("0");
 
-        SwitchTabCheck.IsChecked = _settings.SwitchInventoryTab;
-
         AlwaysOnTopCheck.IsChecked = _settings.AlwaysOnTop;
 
         SellImprovedCheck.IsChecked = _settings.SellImproved;
@@ -422,7 +413,6 @@ public partial class MainWindow : Window
         _settings.MountKey = CanonicalKey(MountKeyBox.Text, _settings.MountKey);
 
         _settings.DelayMs = (int)DelaySlider.Value;
-        _settings.SwitchInventoryTab = SwitchTabCheck.IsChecked == true;
         _settings.AlwaysOnTop = AlwaysOnTopCheck.IsChecked == true;
     }
     private static string CanonicalKey(string? text, string fallback) =>
@@ -1774,15 +1764,6 @@ public partial class MainWindow : Window
         }
 
         var name = TabResolver.DisplayName(_settings.TabKey);
-
-        if (!_settings.SwitchInventoryTab)
-        {
-            TabSelectStatusText.Text = "Выключено — макрос не будет переключать вкладку.";
-            TabSelectStatusText.Foreground = IdleBrush;
-            TabStatusText.Text = "Калибровка вкладок не требуется.";
-            TabStatusText.Foreground = IdleBrush;
-            return;
-        }
 
         TabSelectStatusText.Text = $"Fast Mount переключается на вкладку {name}.";
         TabSelectStatusText.Foreground = SuccessBrush;
